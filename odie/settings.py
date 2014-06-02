@@ -81,6 +81,6 @@ STATIC_URL = '/static/'
 
 # Import host-specific settings
 try:
-    from local_settings import *
+    from odie.local_settings import *
 except ImportError:
     pass
