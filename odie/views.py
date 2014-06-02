@@ -43,7 +43,7 @@ ORDER BY name
 @require_GET
 def documents_of_lecture(request, lecture):
     return _exec_prfproto('''
-SELECT 2 * id AS id, datum AS date, ARRAY[prof] AS examinants, ARRAY[vorlesung] AS lectures, kommentar AS comment, seiten AS pages, 'written' AS examType
+SELECT 2 * id AS id, datum AS date, ARRAY[prof] AS examinants, ARRAY[vorlesung] AS lectures, kommentar AS comment, seiten AS pages, 'written' AS "examType"
 FROM klausuren
 WHERE datum > '1981-01-01' AND veraltet = FALSE AND vorlesung = %(lecture)s
 UNION
@@ -59,7 +59,7 @@ SELECT 2 * protokolle.id + 1 AS id, datum AS date, (
     JOIN vorlesungen ON vorlesungsid = vorlesungen.id
     WHERE protokollid = protokolle.id
     GROUP BY protokolle.id
-) AS lectures, '' AS comment, seiten AS pages, 'oral' AS examType
+) AS lectures, '' AS comment, seiten AS pages, 'oral' AS "examType"
 FROM protokolle
 JOIN pruefungvorlesung ON protokollid = protokolle.id
 JOIN vorlesungen ON vorlesungsid = vorlesungen.id
