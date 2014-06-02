@@ -40,11 +40,11 @@ ORDER BY name
 @require_GET
 def documents_of_lecture(request, lecture):
     return _exec_prfproto('''
-SELECT id, datum AS date, ARRAY[prof] AS examinants, ARRAY[vorlesung] AS lectures, kommentar AS comment, seiten AS pages, 'written' AS examType
+SELECT 2 * id AS id, datum AS date, ARRAY[prof] AS examinants, ARRAY[vorlesung] AS lectures, kommentar AS comment, seiten AS pages, 'written' AS examType
 FROM klausuren
 WHERE datum > '1981-01-01' AND veraltet = FALSE AND vorlesung = %(lecture)s
 UNION
-SELECT protokolle.id, datum AS date, (
+SELECT 2 * protokolle.id + 1 AS id, datum AS date, (
     SELECT array_agg(pruefername)
     FROM pruefungpruefer
     JOIN pruefer ON prueferid = pruefer.id
