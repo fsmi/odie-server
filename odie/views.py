@@ -64,4 +64,5 @@ FROM protokolle
 JOIN pruefungvorlesung ON protokollid = protokolle.id
 JOIN vorlesungen ON vorlesungsid = vorlesungen.id
 WHERE vorlesung = %(lecture)s
+ORDER BY date DESC
                           ''', lecture=lecture)
