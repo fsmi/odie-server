@@ -19,9 +19,9 @@ def _exec_prfproto(sql, **params):
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(sql, params)
+        return HttpResponse(json.dumps(cur.fetchall(), cls=_JSONEncoder), content_type='application/json')
     finally:
         conn.close()
-    return HttpResponse(json.dumps(cur.fetchall(), cls=_JSONEncoder), content_type='application/json')
 
 @require_GET
 def lectures(request):
