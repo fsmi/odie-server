@@ -4,6 +4,7 @@ import psycopg2
 import psycopg2.extras
 
 from django.http import HttpResponse
+from django.views.decorators.http import require_GET, require_POST
 
 import settings
 
@@ -11,7 +12,7 @@ class _JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime.date):
             return obj.isoformat()
-        return super(self, JSONEncoder).default(obj)
+        return super(json.JSONEncoder, self).default(obj)
 
 def _exec_prfproto(sql, **params):
     with psycopg2.connect(settings.PRFPROTO_DB) as conn:
@@ -19,6 +20,7 @@ def _exec_prfproto(sql, **params):
         cur.execute(sql, params)
         return HttpResponse(json.dumps(cur.fetchall(), cls=_JSONEncoder), content_type='application/json')
 
+@require_GET
 def lectures(request):
     return _exec_prfproto('''
 SELECT vorlesung AS name, COUNT(*) AS document_count
@@ -35,6 +37,7 @@ GROUP BY name
 ORDER BY name
                           ''')
 
+@require_GET
 def documents_of_lecture(request, lecture):
     return _exec_prfproto('''
 SELECT id, datum AS date, ARRAY[prof] AS examinants, ARRAY[vorlesung] AS lectures, kommentar AS comment, seiten AS pages, 'written' AS examType
