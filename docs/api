@@ -1,0 +1,43 @@
+# API is still in flux, expect minor changes throughout development
+# The syntax of this file is largely a mixture of whatever was handy at
+# the time. All data sent over the wire is JSON, type notation is a
+# mixture of python and haskell.
+
+GET /data/lectures : [lecture]
+GET /data/lectures/<lecture>/documents : [document]
+
+POST /data/carts/<string> : [document.id] -> none
+#DELETE /data/carts/<cart.id> : none
+
+POST /data/login : credentials -> auth
+# We'll be using session cookies.
+
+# Authenticated RPCs
+POST /data/print : printjob -> none
+GET /data/carts : [cart]
+
+
+class lecture:
+  name: string
+
+class document:
+  lectures: [string]
+  id: int
+  pages : int
+  date : date
+  examinants : [string]
+  examType : "oral" | "written"
+  comment : string
+
+class cart:
+  id: int
+  documents: [document]
+
+
+class credentials:
+  user: string
+  password: string
+
+class printjob:
+  coverText: string
+  documents: [document.id]
