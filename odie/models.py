@@ -2,7 +2,7 @@ from django.db import models
 
 class Cart(models.Model):
     name = models.CharField(max_length=200)
-    description = models.CharField(max_length=200, default='')
+    date = models.DateField('creation date')
 
     @property
     def document_ids(self):

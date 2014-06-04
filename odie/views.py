@@ -48,14 +48,20 @@ ORDER BY name
 def documents_of_lecture(request, lecture):
     return _JSONResponse(_exec_prfproto('SELECT * FROM documents WHERE %(lecture)s = ANY(lectures)', lecture=lecture))
 
+def _decode_json_body(request):
+    if request.META['CONTENT_TYPE'] != 'application/json; charset=UTF-8':
+        raise Exception('Not a JSON request: ' + request.META['CONTENT_TYPE'])
+
+    return json.loads(str.decode(request.body, 'utf-8'))
+
 @require_POST
 def create_cart(request, name):
     cart = models.Cart()
     cart.name = name
-    cart.description = request.POST.get('description', '')
+    cart.date = datetime.datetime.now()
     cart.save()  # populate cart.id
     cart.cartdocument_set = [models.CartDocument(cart=cart, document_id=int(document_id))
-                             for document_id in request.POST.get('document_ids', '').split(',')]
+                             for document_id in _decode_json_body(request)]
     return HttpResponse()
 
 @require_GET
@@ -66,7 +72,7 @@ def carts(request):
                                                                                            for document_id in cart.document_ids})))
     return _JSONResponse([{
         'id': cart.id,
+        'date': cart.date,
         'name': cart.name,
-        'description': cart.description,
         'documents': [doc for doc in documents if doc['id'] in cart.document_ids]
     } for cart in carts])
