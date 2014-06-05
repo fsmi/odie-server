@@ -3,11 +3,21 @@ import json
 import psycopg2
 import psycopg2.extras
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.views.decorators.http import require_GET, require_POST
+from django.contrib.auth import authenticate
 
-import models
-import settings
+from odie import models, settings
+
+# returns 403 instead of login_required's redirect
+def _login_required(view):
+    def decorator(request, *params):
+        print(request.user.username)
+        if request.user.is_authenticated():
+            return view(request, *params)
+        else:
+            return HttpResponseForbidden('Not logged in')
+    return decorator
 
 class _JSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -64,6 +74,7 @@ def create_cart(request, name):
                              for document_id in _decode_json_body(request)]
     return HttpResponse()
 
+@_login_required
 @require_GET
 def carts(request):
     carts = models.Cart.objects.all()
@@ -76,3 +87,13 @@ def carts(request):
         'name': cart.name,
         'documents': [doc for doc in documents if doc['id'] in cart.document_ids]
     } for cart in carts])
+
+@require_POST
+def login(request):
+    credentials = _decode_json_body(request)
+    user = authenticate(username=credentials.user, password=credentials.password)
+    if user:
+        login(request, user)
+        return HttpResponse()
+    else:
+        return HttpResponseForbidden('Wrong credentials')
