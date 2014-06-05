@@ -5,7 +5,7 @@ import psycopg2.extras
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.views.decorators.http import require_GET, require_POST
-from django.contrib.auth import authenticate
+from django.contrib import auth
 
 from odie import models, settings
 
@@ -91,9 +91,9 @@ def carts(request):
 @require_POST
 def login(request):
     credentials = _decode_json_body(request)
-    user = authenticate(username=credentials.user, password=credentials.password)
+    user = auth.authenticate(username=credentials['user'], password=credentials['password'])
     if user:
-        login(request, user)
+        auth.login(request, user)
         return HttpResponse()
     else:
         return HttpResponseForbidden('Wrong credentials')
