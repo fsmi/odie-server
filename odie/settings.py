@@ -68,6 +68,8 @@ PRFPROTO_DB = 'dbname=prfproto'
 
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
 
+SESSION_COOKIE_HTTPONLY = False
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
