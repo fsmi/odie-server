@@ -12,7 +12,6 @@ from odie import models, settings
 # returns 403 instead of login_required's redirect
 def _login_required(view):
     def decorator(request, *params):
-        print(request.user.username)
         if request.user.is_authenticated():
             return view(request, *params)
         else:
