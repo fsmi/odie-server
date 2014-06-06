@@ -19,6 +19,9 @@ class FsmiUser(models.Model):
     class Meta:
         managed = True  # don't create in db
 
+    def is_authenticated(self):
+        return True
+
     # ignore ignore ignore
     def save(self, *params, **kwargs):
         pass
