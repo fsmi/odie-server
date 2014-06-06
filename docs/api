@@ -33,6 +33,7 @@ class cart:
   id: int
   date: datetime
   documents: [document]
+  name: string
 
 
 class credentials:
