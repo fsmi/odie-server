@@ -43,3 +43,4 @@ class credentials:
 class printjob:
   coverText: string
   documents: [document.id]
+  depositCount: int
