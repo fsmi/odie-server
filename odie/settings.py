@@ -37,7 +37,9 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.staticfiles',
     'corsheaders',
-    'odie'
+    'odie',
+    'fsmi',
+    'prfproto'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -58,13 +60,22 @@ WSGI_APPLICATION = 'odie.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
+DATABASE_ROUTERS = ['odie.db_router.DbRouter']
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'odie',
+    },
+    'fsmi': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'fsmi',
+    },
+    'prfproto': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'prfproto',
     }
 }
-PRFPROTO_DB = 'dbname=prfproto'
 
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
 

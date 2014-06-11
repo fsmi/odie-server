@@ -12,16 +12,3 @@ class CartDocument(models.Model):
     cart = models.ForeignKey(Cart)
     # cannot be a relation since it's cross-db _and_ id-transformed
     document_id = models.IntegerField()
-
-class FsmiUser(models.Model):
-    REQUIRED_FIELDS = []  # irrelevant but necessary field
-
-    class Meta:
-        managed = True  # don't create in db
-
-    def is_authenticated(self):
-        return True
-
-    # ignore ignore ignore
-    def save(self, *params, **kwargs):
-        pass

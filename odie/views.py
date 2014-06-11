@@ -1,8 +1,7 @@
 import datetime
 import json
-import psycopg2
-import psycopg2.extras
 
+from django.db import connections
 from django.http import HttpResponse, HttpResponseForbidden
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import auth
@@ -28,13 +27,16 @@ def _JSONResponse(obj):
     return HttpResponse(json.dumps(obj, cls=_JSONEncoder), content_type='application/json')
 
 def _exec_prfproto(sql, **params):
-    conn = psycopg2.connect(settings.PRFPROTO_DB)
-    try:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(sql, params)
-        return cur.fetchall()
-    finally:
-        conn.close()
+    # from https://docs.djangoproject.com/en/1.6/topics/db/sql/#executing-custom-sql-directly
+    def dictfetchall(cursor):
+        "Returns all rows from a cursor as a dict"
+        desc = cursor.description
+        return [dict(zip([col[0] for col in desc], row))
+                for row in cursor.fetchall()]
+
+    cur = connections['prfproto'].cursor()
+    cur.execute(sql, params)
+    return dictfetchall(cur)
 
 @require_GET
 def lectures(request):
