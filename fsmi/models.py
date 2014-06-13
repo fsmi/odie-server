@@ -6,9 +6,16 @@ class User(models.Model):
     first_name = models.TextField(db_column='vorname')
     last_name = models.TextField(db_column='nachname')
     pw_hash = models.CharField(db_column='passwort', max_length=255)
+    unix_uid = models.IntegerField()
 
     def is_authenticated(self):
         return True
+
+    def get_full_name(self):
+        return self.first_name + ' ' + self.last_name
+
+    def get_short_name(self):
+        return self.username
 
     last_login = None
     def save(self, **kwargs):

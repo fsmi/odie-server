@@ -1,12 +1,15 @@
 import datetime
 import json
+import os
+import print_helper
 
 from django.db import connections
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import auth
 
 from odie import models, settings
+import prfproto.models
 
 # returns 403 instead of login_required's redirect
 def _login_required(view):
@@ -71,14 +74,14 @@ def create_cart(request, name):
     cart.name = name
     cart.date = datetime.datetime.now()
     cart.save()  # populate cart.id
-    cart.cartdocument_set = [models.CartDocument(cart=cart, document_id=int(document_id))
+    cart.cartdocument_set = [models.CartDocument(cart=cart, document_id=document_id)
                              for document_id in _decode_json_body(request)]
     return HttpResponse()
 
 @_login_required
 @require_GET
 def carts(request):
-    carts = models.Cart.objects.all()
+    carts = models.Cart.objects.all().prefetch_related('cartdocument_set')
     documents = _exec_prfproto('SELECT * FROM documents WHERE id IN ({})'.format(','.join({str(document_id)
                                                                                            for cart in carts
                                                                                            for document_id in cart.document_ids})))
@@ -98,3 +101,32 @@ def login(request):
         return HttpResponse()
     else:
         return HttpResponseForbidden('Wrong credentials')
+
+@_login_required
+@require_POST
+def print_job(request):
+    job = _decode_json_body(request)
+    exams = map(prfproto.models.Exam.get, job['documents'])
+    if not exams:
+        return HttpResponseBadRequest('empty print job')
+
+    print_helper.print_external(job['coverText'], what='', documents=[exam.file_path for exam in exams],
+                                debug=True)
+    deposit_count = job['depositCount']
+    deposit = deposit_count * settings.DEPOSIT_AMOUNT
+    price = sum(exam.price for exam in exams)
+
+    if deposit_count:
+        prfproto.models.ProtocolDeposit(student_name=job['coverText'],
+                                        amount=deposit,
+                                        by_user=request.user.get_full_name()).save()
+        prfproto.models.AccountingLog(account_id=0,
+                                      amount=deposit,
+                                      description='Protokollpfand',
+                                      by_uid=request.user.unix_uid).save()
+
+    prfproto.models.AccountingLog(account_id=2222,
+                                  amount=price,
+                                  description='Klausur-/Protokolldruck',
+                                  by_uid=request.user.unix_uid).save()
+    return HttpResponse()

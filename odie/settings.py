@@ -8,10 +8,20 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
+import decimal
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
+decimal.getcontext().prec = 2
+DEPOSIT_AMOUNT = decimal.Decimal(5.00)
+PRICE_PER_PAGE = decimal.Decimal(0.03)
+
+# Paths to exam PDFs
+
+WRITTEN_EXAMS_PATH = os.path.join(BASE_DIR, 'written/')
+ORAL_EXAMS_PATH = os.path.join(BASE_DIR, 'oral/')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
@@ -98,7 +108,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = '/web/'
 
 # Cross Origin Resource Sharing
 # Allow API access from everywhere

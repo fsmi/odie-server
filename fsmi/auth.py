@@ -3,7 +3,7 @@ import psycopg2
 
 from fsmi.models import User
 
-class FsmiAuthBackend(object):
+class AuthBackend(object):
     def authenticate(self, username, password):
         user = User.objects.get(username=username)
         if crypt.crypt(password, user.pw_hash) == user.pw_hash:

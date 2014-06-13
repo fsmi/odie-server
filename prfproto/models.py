@@ -1,18 +1,37 @@
 from __future__ import unicode_literals
 
-from django.db import models
+import os
 
-#class Abrechnung(models.Model):
-#    id = models.IntegerField(primary_key=True)
-#    benutzer = models.IntegerField()
-#    betrag = models.DecimalField(max_digits=10, decimal_places=2)
-#    beschreibung = models.TextField(blank=True)
-#    datumzeit = models.DateTimeField(blank=True, null=True)
-#    abrechnungskonto = models.IntegerField(blank=True, null=True)
-#    class Meta:
-#        managed = False
-#        db_table = 'abrechnung'
-#
+from django.db import models
+from django.utils import timezone
+from odie import settings
+
+class AccountingLog(models.Model):
+    by_uid = models.IntegerField(db_column='benutzer')
+    amount = models.DecimalField(db_column='betrag', max_digits=10, decimal_places=2)
+    description = models.TextField(db_column='beschreibung', blank=True)
+    time = models.DateTimeField(db_column='datumzeit', blank=True, null=True, default=timezone.now)
+    account_id = models.IntegerField(db_column='abrechnungskonto', blank=True, null=True)
+    class Meta:
+        managed = False
+        db_table = 'abrechnung'
+
+class Exam(object):
+    @property
+    def price(self):
+        return settings.PRICE_PER_PAGE * self.page_count
+
+    @property
+    def file_path(self):
+        raise NotImplementedError()
+
+    @staticmethod
+    def get(unified_id):
+        if unified_id % 2 == 0:
+            return WrittenExam.objects.get(id=unified_id // 2)
+        else:
+            return OralExam.objects.get(id=unified_id // 2)
+
 #class Documents(models.Model):
 #    id = models.BigIntegerField(blank=True, null=True)
 #    date = models.DateField(blank=True, null=True)
@@ -43,8 +62,7 @@ from django.db import models
 #        managed = False
 #        db_table = 'gebiet'
 #
-#class Klausuren(models.Model):
-#    id = models.BigIntegerField(primary_key=True)
+class WrittenExam(models.Model, Exam):
 #    vorlesung = models.TextField(blank=True)
 #    prof = models.TextField(blank=True)
 #    datum = models.DateField(blank=True, null=True)
@@ -52,13 +70,18 @@ from django.db import models
 #    bestand = models.IntegerField(blank=True, null=True)
 #    sollbestand = models.IntegerField(blank=True, null=True)
 #    gueltigbis = models.DateField(blank=True, null=True)
-#    seiten = models.IntegerField(blank=True, null=True)
+    page_count = models.IntegerField(db_column='seiten', blank=True, null=True)
 #    verkauft = models.BigIntegerField(blank=True, null=True)
 #    veraltet = models.NullBooleanField()
-#    class Meta:
-#        managed = False
-#        db_table = 'klausuren'
-#
+
+    @property
+    def file_path(self):
+        return os.path.join(settings.ORAL_EXAMS_PATH, str(self.id) + '.pdf')
+
+    class Meta:
+        managed = False
+        db_table = 'klausuren'
+
 #class Klausurenlog(models.Model):
 #    value = models.IntegerField()
 #    klausur = models.BigIntegerField()
@@ -82,29 +105,32 @@ from django.db import models
 #        managed = False
 #        db_table = 'ordner'
 #
-#class Protokolle(models.Model):
-#    id = models.BigIntegerField(primary_key=True)
+class OralExam(models.Model, Exam):
 #    gebiet = models.ForeignKey(Gebiet, db_column='gebiet')
 #    datum = models.DateField()
-#    seiten = models.BigIntegerField()
+    page_count = models.BigIntegerField(db_column='seiten')
 #    ausgedruckt_fuer_ordner = models.BooleanField()
-#    class Meta:
-#        managed = False
-#        db_table = 'protokolle'
-#
-#class Protokollpfand(models.Model):
-#    id = models.BigIntegerField(primary_key=True)
-#    name = models.TextField()
-#    ordner1 = models.ForeignKey(Ordner, db_column='ordner1', blank=True, null=True)
-#    ordner2 = models.ForeignKey(Ordner, db_column='ordner2', blank=True, null=True)
-#    ordner3 = models.ForeignKey(Ordner, db_column='ordner3', blank=True, null=True)
-#    betrag = models.BigIntegerField(blank=True, null=True)
-#    datum = models.DateTimeField(blank=True, null=True)
-#    benutzer = models.TextField(blank=True)
-#    class Meta:
-#        managed = False
-#        db_table = 'protokollpfand'
-#
+
+    @property
+    def file_path(self):
+        return os.path.join(settings.ORAL_EXAMS_PATH, str(self.id) + '.pdf')
+
+    class Meta:
+        managed = False
+        db_table = 'protokolle'
+
+class ProtocolDeposit(models.Model):
+    student_name = models.TextField(db_column='name')
+    #ordner1 = models.ForeignKey(Ordner, db_column='ordner1', blank=True, null=True)
+    #ordner2 = models.ForeignKey(Ordner, db_column='ordner2', blank=True, null=True)
+    #ordner3 = models.ForeignKey(Ordner, db_column='ordner3', blank=True, null=True)
+    amount = models.BigIntegerField(db_column='betrag', blank=True, null=True)
+    date = models.DateTimeField(db_column='datum', blank=True, null=True, default=timezone.now)
+    by_user = models.TextField(db_column='benutzer', blank=True)
+    class Meta:
+        managed = False
+        db_table = 'protokollpfand'
+
 #class ProtokollpfandLog(models.Model):
 #    log_id = models.IntegerField()
 #    time = models.DateTimeField(blank=True, null=True)
