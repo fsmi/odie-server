@@ -1,7 +1,6 @@
 import datetime
 import json
 import os
-import print_helper
 
 from django.db import connections
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
@@ -110,8 +109,7 @@ def print_job(request):
     if not exams:
         return HttpResponseBadRequest('empty print job')
 
-    print_helper.print_external(job['coverText'], what='', documents=[exam.file_path for exam in exams],
-                                debug=True)
+    settings.do_print('external "{}" "{}" {}'.format(job['coverText'], '', ' '.join(exam.file_path for exam in exams)))
     deposit_count = job['depositCount']
     deposit = deposit_count * settings.DEPOSIT_AMOUNT
     price = sum(exam.price for exam in exams)

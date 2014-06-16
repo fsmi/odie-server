@@ -23,6 +23,9 @@ PRICE_PER_PAGE = decimal.Decimal(0.03)
 WRITTEN_EXAMS_PATH = os.path.join(BASE_DIR, 'written/')
 ORAL_EXAMS_PATH = os.path.join(BASE_DIR, 'oral/')
 
+def do_print(cmd):
+    raise Exception(cmd)
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
