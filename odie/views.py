@@ -109,7 +109,7 @@ def print_job(request):
     if not exams:
         return HttpResponseBadRequest('empty print job')
 
-    settings.do_print('external "{}" "{}" {}'.format(job['coverText'], '', ' '.join(exam.file_path for exam in exams)))
+    settings.do_print(['external', job['coverText'], ''] + [exam.file_path for exam in exams])
     deposit_count = job['depositCount']
     deposit = deposit_count * settings.DEPOSIT_AMOUNT
     price = sum(exam.price for exam in exams)
