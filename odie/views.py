@@ -1,6 +1,6 @@
 import datetime
+import decimal
 import json
-import os
 
 from django.db import connections
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
@@ -113,6 +113,9 @@ def print_job(request):
     deposit_count = job['depositCount']
     deposit = deposit_count * settings.DEPOSIT_AMOUNT
     price = sum(exam.price for exam in exams)
+    # round up to next 10 cents
+    decimal.getcontext().rounding = decimal.ROUND_FLOOR
+    price = decimal.getcontext().quantize(price, decimal.Decimal('0.1'))
 
     if deposit_count:
         prfproto.models.ProtocolDeposit(student_name=job['coverText'],
