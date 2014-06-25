@@ -76,7 +76,7 @@ class WrittenExam(models.Model, Exam):
 
     @property
     def file_path(self):
-        return os.path.join(settings.ORAL_EXAMS_PATH, str(self.id) + '.pdf')
+        return os.path.join(settings.WRITTEN_EXAMS_PATH, str(self.id) + '.pdf')
 
     class Meta:
         managed = False
