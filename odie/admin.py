@@ -6,7 +6,7 @@ class CartDocumentInline(admin.TabularInline):
     model = models.CartDocument
 
 class CartAdmin(admin.ModelAdmin):
-    list_display = ('name', 'date')
+    list_display = ('name', 'creation_time')
     inlines = [
         CartDocumentInline
     ]

@@ -23,7 +23,7 @@ class _JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime.date):
             return obj.isoformat()
-        return super(json.JSONEncoder, self).default(obj)
+        return json.JSONEncoder.default(self, obj)
 
 def _JSONResponse(obj):
     return HttpResponse(json.dumps(obj, cls=_JSONEncoder), content_type='application/json')
@@ -71,7 +71,6 @@ def _decode_json_body(request):
 def create_cart(request, name):
     cart = models.Cart()
     cart.name = name
-    cart.date = datetime.datetime.now()
     cart.save()  # populate cart.id
     cart.cartdocument_set = [models.CartDocument(cart=cart, document_id=document_id)
                              for document_id in _decode_json_body(request)]
@@ -86,7 +85,7 @@ def carts(request):
                                                                                            for document_id in cart.document_ids})))
     return _JSONResponse([{
         'id': cart.id,
-        'date': cart.date,
+        'creationTime': cart.creation_time,
         'name': cart.name,
         'documents': [doc for doc in documents if doc['id'] in cart.document_ids]
     } for cart in carts])

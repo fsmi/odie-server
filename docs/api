@@ -31,7 +31,7 @@ class document:
 
 class cart:
   id: int
-  date: datetime
+  creationTime: timestamp with time zone
   documents: [document]
   name: string
 
