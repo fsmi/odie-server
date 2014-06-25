@@ -113,7 +113,7 @@ def print_job(request):
     deposit = deposit_count * settings.DEPOSIT_AMOUNT
     price = sum(exam.price for exam in exams)
     # round up to next 10 cents
-    decimal.getcontext().rounding = decimal.ROUND_FLOOR
+    decimal.getcontext().rounding = decimal.ROUND_CEILING
     price = decimal.getcontext().quantize(price, decimal.Decimal('0.1'))
 
     if deposit_count:
