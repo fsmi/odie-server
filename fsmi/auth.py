@@ -5,8 +5,12 @@ from fsmi.models import User
 
 class AuthBackend(object):
     def authenticate(self, username, password):
-        user = User.objects.get(username=username)
-        if crypt.crypt(password, user.pw_hash) == user.pw_hash:
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return None
+
+        if crypt.crypt(password.encode('utf8'), user.pw_hash) == user.pw_hash:
             return user
         else:
             return None
