@@ -106,7 +106,8 @@ def login(request):
 def user(request):
     return _JSONResponse({
         'user': request.user.username,
-        'fullName': request.user.get_full_name(),
+        'firstName': request.user.first_name,
+        'lastName': request.user.last_name,
     })
 
 @_login_required

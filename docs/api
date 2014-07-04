@@ -44,7 +44,8 @@ class credentials:
 
 class userInfo:
   user : string
-  fullName : string
+  firstName : string
+  lastName : string
 
 class printjob:
   coverText: string
