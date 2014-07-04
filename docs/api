@@ -15,6 +15,8 @@ POST /data/login : credentials -> auth
 # Authenticated RPCs
 POST /data/print : printjob -> none
 GET /data/carts : [cart]
+POST /data/logout : none
+GET /data/user : userInfo
 
 
 class lecture:
@@ -39,6 +41,10 @@ class cart:
 class credentials:
   user: string
   password: string
+
+class userInfo:
+  user : string
+  fullName : string
 
 class printjob:
   coverText: string

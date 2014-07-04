@@ -12,5 +12,7 @@ urlpatterns = patterns('',
     url(r'^data/carts$', views.carts),
     url(r'^data/carts/(.+)$', views.create_cart),
     url(r'^data/login$', views.login),
+    url(r'^data/logout$', views.logout),
+    url(r'^data/user$', views.user),
     url(r'^data/print$', views.print_job),
 )

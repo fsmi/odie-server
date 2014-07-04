@@ -102,6 +102,20 @@ def login(request):
         return HttpResponseForbidden('Wrong credentials')
 
 @_login_required
+@require_GET
+def user(request):
+    return _JSONResponse({
+        'user': request.user.username,
+        'fullName': request.user.get_full_name(),
+    })
+
+@_login_required
+@require_POST
+def logout(request):
+    auth.logout(request)
+    return HttpResponse()
+
+@_login_required
 @require_POST
 def print_job(request):
     job = _decode_json_body(request)
