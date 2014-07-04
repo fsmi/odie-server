@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import json
+import urllib
 
 from django.db import connections
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
@@ -59,7 +60,7 @@ ORDER BY name
 
 @require_GET
 def documents_of_lecture(request, lecture):
-    return _JSONResponse(_exec_prfproto('SELECT * FROM documents WHERE %(lecture)s = ANY(lectures)', lecture=lecture))
+    return _JSONResponse(_exec_prfproto('SELECT * FROM documents WHERE %(lecture)s = ANY(lectures)', lecture=urllib.unquote(lecture)))
 
 def _decode_json_body(request):
     if request.META['CONTENT_TYPE'] != 'application/json; charset=UTF-8':
