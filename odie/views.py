@@ -72,7 +72,7 @@ def _decode_json_body(request):
 def modify_cart(request, name):
     if request.method == 'POST':
         return create_cart(request, name)
-    else:
+    if request.method == 'DELETE':
         return delete_cart(request, int(name))
 
 def create_cart(request, name):
@@ -86,6 +86,7 @@ def create_cart(request, name):
 @_login_required
 def delete_cart(request, cart_id):
     models.Cart.objects.get(id=cart_id).delete()
+    return HttpResponse()
 
 @require_GET
 @_login_required
