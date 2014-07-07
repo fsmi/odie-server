@@ -71,7 +71,7 @@ def _decode_json_body(request):
 @require_POST
 def create_cart(request, name):
     cart = models.Cart()
-    cart.name = name
+    cart.name = urllib.unquote(name)
     cart.save()  # populate cart.id
     cart.cartdocument_set = [models.CartDocument(cart=cart, document_id=document_id)
                              for document_id in _decode_json_body(request)]
@@ -124,14 +124,15 @@ def print_job(request):
     if not exams:
         return HttpResponseBadRequest('empty print job')
 
-    settings.do_print(['external', job['coverText'], ''] + [exam.file_path for exam in exams])
     deposit_count = job['depositCount']
+    assert type(deposit_count) is int and deposit_count >= 0
     deposit = deposit_count * settings.DEPOSIT_AMOUNT
     price = sum(exam.price for exam in exams)
     # round up to next 10 cents
     decimal.getcontext().rounding = decimal.ROUND_CEILING
     price = decimal.getcontext().quantize(price, decimal.Decimal('0.1'))
 
+    settings.do_print(['external', job['coverText'], ''] + [exam.file_path for exam in exams])
     if deposit_count:
         prfproto.models.ProtocolDeposit(student_name=job['coverText'],
                                         amount=deposit,
