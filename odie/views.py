@@ -5,7 +5,7 @@ import urllib
 
 from django.db import connections
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.contrib import auth
 
 from odie import models, settings
@@ -68,7 +68,13 @@ def _decode_json_body(request):
 
     return json.loads(str.decode(request.body, 'utf-8'))
 
-@require_POST
+@require_http_methods(['POST', 'DELETE'])
+def modify_cart(request, name):
+    if request.method == 'POST':
+        return create_cart(request, name)
+    else:
+        return delete_cart(request, int(name))
+
 def create_cart(request, name):
     cart = models.Cart()
     cart.name = urllib.unquote(name)
@@ -78,7 +84,11 @@ def create_cart(request, name):
     return HttpResponse()
 
 @_login_required
+def delete_cart(request, cart_id):
+    models.Cart.objects.get(id=cart_id).delete()
+
 @require_GET
+@_login_required
 def carts(request):
     carts = models.Cart.objects.all().prefetch_related('cartdocument_set')
     documents = _exec_prfproto('SELECT * FROM documents WHERE id IN ({})'.format(','.join({str(document_id)
