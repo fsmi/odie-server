@@ -8,15 +8,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
-import decimal
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-decimal.getcontext().prec = 2
-DEPOSIT_AMOUNT = decimal.Decimal(5.00)
-PRICE_PER_PAGE = decimal.Decimal(0.03)
+DEPOSIT_AMOUNT = 500 # in cents
+PRICE_PER_PAGE = 3   # in cents
 
 # Paths to exam PDFs
 

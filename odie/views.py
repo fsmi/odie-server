@@ -1,6 +1,6 @@
 import datetime
-import decimal
 import json
+import logging
 import urllib
 
 from django.db import connections
@@ -139,22 +139,22 @@ def print_job(request):
     assert type(deposit_count) is int and deposit_count >= 0
     deposit = deposit_count * settings.DEPOSIT_AMOUNT
     price = sum(exam.price for exam in exams)
+    logging.debug('price %s, deposit %s', price, deposit)
     # round up to next 10 cents
-    decimal.getcontext().rounding = decimal.ROUND_CEILING
-    price = decimal.getcontext().quantize(price, decimal.Decimal('0.1'))
+    price = 10 * (price/10 + (1 if price % 10 else 0))
 
     settings.do_print(['external', job['coverText'], ''] + [exam.file_path for exam in exams])
     if deposit_count:
         prfproto.models.ProtocolDeposit(student_name=job['coverText'],
-                                        amount=deposit,
+                                        amount=deposit / 100.0,
                                         by_user=request.user.get_full_name()).save()
         prfproto.models.AccountingLog(account_id=0,
-                                      amount=deposit,
+                                      amount=deposit / 100.0,
                                       description='Protokollpfand',
                                       by_uid=request.user.unix_uid).save()
 
     prfproto.models.AccountingLog(account_id=2222,
-                                  amount=price,
+                                  amount=price / 100.0,
                                   description='Klausur-/Protokolldruck',
                                   by_uid=request.user.unix_uid).save()
     return HttpResponse()
