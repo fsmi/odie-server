@@ -110,10 +110,6 @@ USE_TZ = True
 
 STATIC_URL = '/web/'
 
-# Cross Origin Resource Sharing
-# Allow API access from everywhere
-CORS_ORIGIN_ALLOW_ALL = True
-
 # Import host-specific settings
 try:
     from odie.local_settings import *
