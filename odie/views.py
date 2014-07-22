@@ -143,7 +143,7 @@ def print_job(request):
     # round up to next 10 cents
     price = 10 * (price/10 + (1 if price % 10 else 0))
 
-    settings.do_print(['external', job['coverText'], ''] + [exam.file_path for exam in exams])
+    settings.do_print(['external', request.user.username, job['coverText'], ''] + [exam.file_path for exam in exams])
     if deposit_count:
         prfproto.models.ProtocolDeposit(student_name=job['coverText'],
                                         amount=deposit / 100.0,
