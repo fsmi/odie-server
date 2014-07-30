@@ -137,19 +137,18 @@ def print_job(request):
 
     deposit_count = job['depositCount']
     assert type(deposit_count) is int and deposit_count >= 0
-    deposit = deposit_count * settings.DEPOSIT_AMOUNT
     price = sum(exam.price for exam in exams)
-    logging.debug('price %s, deposit %s', price, deposit)
+    logging.debug('price %s, deposit %s', price, deposit_count * settings.DEPOSIT_AMOUNT)
     # round up to next 10 cents
     price = 10 * (price/10 + (1 if price % 10 else 0))
 
     settings.do_print(['external', request.user.username, job['coverText'], ''] + [exam.file_path for exam in exams])
-    if deposit_count:
+    for _ in range(deposit_count):
         prfproto.models.ProtocolDeposit(student_name=job['coverText'],
-                                        amount=deposit / 100.0,
+                                        amount=settings.DEPOSIT_AMOUNT / 100.0,
                                         by_user=request.user.get_full_name()).save()
         prfproto.models.AccountingLog(account_id=0,
-                                      amount=deposit / 100.0,
+                                      amount=settings.DEPOSIT_AMOUNT / 100.0,
                                       description='Protokollpfand',
                                       by_uid=request.user.unix_uid).save()
 
