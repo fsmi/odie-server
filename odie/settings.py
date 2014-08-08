@@ -13,7 +13,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 DEPOSIT_AMOUNT = 500 # in cents
-PRICE_PER_PAGE = 3   # in cents
+PRICE_PER_PAGE = 4   # in cents
 
 # Paths to exam PDFs
 
