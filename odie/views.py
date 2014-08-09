@@ -145,8 +145,6 @@ def log_erroneous_copies(request):
 def print_job(request):
     job = _decode_json_body(request)
     exams = map(prfproto.models.Exam.get, job['documents'])
-    if not exams:
-        return HttpResponseBadRequest('empty print job')
 
     deposit_count = job['depositCount']
     assert type(deposit_count) is int and deposit_count >= 0
@@ -155,7 +153,12 @@ def print_job(request):
     # round up to next 10 cents
     price = 10 * (price/10 + (1 if price % 10 else 0))
 
-    settings.do_print(['external', request.user.username, job['coverText'], ''] + [exam.file_path for exam in exams])
+    if exams:
+        settings.do_print(['external', request.user.username, job['coverText'], ''] + [exam.file_path for exam in exams])
+        prfproto.models.AccountingLog(account_id=2222,
+                                      amount=price / 100.0,
+                                      description='Klausur-/Protokolldruck',
+                                      by_uid=request.user.unix_uid).save()
     for _ in range(deposit_count):
         prfproto.models.ProtocolDeposit(student_name=job['coverText'],
                                         amount=settings.DEPOSIT_AMOUNT / 100.0,
@@ -165,8 +168,4 @@ def print_job(request):
                                       description='Protokollpfand',
                                       by_uid=request.user.unix_uid).save()
 
-    prfproto.models.AccountingLog(account_id=2222,
-                                  amount=price / 100.0,
-                                  description='Klausur-/Protokolldruck',
-                                  by_uid=request.user.unix_uid).save()
     return HttpResponse()
