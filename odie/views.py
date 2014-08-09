@@ -129,6 +129,19 @@ def logout(request):
 
 @_login_required
 @require_POST
+def log_erroneous_copies(request):
+    cents = int(_decode_json_body(request)['cents'])
+    if cents <= 0:
+        return HttpResponseBadRequest('non-positive correction amount')
+
+    prfproto.models.AccountingLog(account_id=2222,
+                                  amount=-cents / 100.0,
+                                  description='Fehlkopien',
+                                  by_uid=request.user.unix_uid).save()
+    return HttpResponse()
+
+@_login_required
+@require_POST
 def print_job(request):
     job = _decode_json_body(request)
     exams = map(prfproto.models.Exam.get, job['documents'])

@@ -7,7 +7,6 @@ GET /data/lectures : [lecture]
 GET /data/lectures/<lecture>/documents : [document]
 
 POST /data/carts/<string> : [document.id] -> none
-#DELETE /data/carts/<cart.id> : none
 
 POST /data/login : credentials -> auth
 # We'll be using session cookies.
@@ -17,6 +16,8 @@ POST /data/print : printjob -> none
 GET /data/carts : [cart]
 POST /data/logout : none
 GET /data/user : userInfo
+POST /data/log_erroneous_copies : {cents : int} -> none
+DELETE /data/carts/<cart.id> : none
 
 
 class lecture:
