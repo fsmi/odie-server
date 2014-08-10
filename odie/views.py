@@ -169,3 +169,29 @@ def print_job(request):
                                       by_uid=request.user.unix_uid).save()
 
     return HttpResponse()
+
+@_login_required
+@require_http_methods(['GET', 'DELETE'])
+def deposits(request, name):
+    if request.method == 'GET':
+        return get_deposits(request, name)
+    if request.method == 'DELETE':
+        return delete_deposit(request, int(name))
+
+def get_deposits(request, name):
+    deposits = prfproto.models.ProtocolDeposit.objects.filter(student_name__icontains=name)
+    if not deposits.exists():
+        # avoid populating queryset cache if there's no hits anyways
+        return _JSONResponse([])
+    response_deposits = [{'name': dep.student_name, 'id': dep.id} for dep in deposits.iterator()]
+    return _JSONResponse(response_deposits)
+
+def delete_deposit(request, deposit_id):
+    prfproto.models.ProtocolDeposit.objects.get(id=deposit_id).delete()
+    prfproto.models.AccountingLog(account_id=0,
+                                  amount=(-1) * settings.DEPOSIT_AMOUNT / 100.0,
+                                  description='Protokollrueckgabe',
+                                  by_uid=request.user.unix_uid).save()
+    logging.debug('deposit %s deleted' % deposit_id)
+    return HttpResponse()
+

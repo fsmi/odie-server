@@ -18,6 +18,8 @@ POST /data/logout : none
 GET /data/user : userInfo
 POST /data/log_erroneous_copies : {cents : int} -> none
 DELETE /data/carts/<cart.id> : none
+GET /data/deposits/<name> : [deposit]
+DELETE /data/deposits/<deposit.id> : none
 
 
 class lecture:
@@ -52,3 +54,7 @@ class printjob:
   coverText: string
   documents: [document.id]
   depositCount: int
+
+class deposit:
+  name : string
+  id: int

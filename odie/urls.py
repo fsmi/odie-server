@@ -15,5 +15,6 @@ urlpatterns = patterns('',
     url(r'^data/logout$', views.logout),
     url(r'^data/user$', views.user),
     url(r'^data/print$', views.print_job),
-    url(r'^data/log_erroneous_copies$', views.log_erroneous_copies)
+    url(r'^data/log_erroneous_copies$', views.log_erroneous_copies),
+    url(r'^data/deposits/(.+)$', views.deposits)
 )
