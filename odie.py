@@ -11,6 +11,10 @@ from models import documents
 from models import odie
 
 
+# Why is this here if we're also using flask-login's login_required decorator in routes.py?
+# Because its API doesn't fit use as a flask-restless preprocessor, which we need to
+# protect auto-generated api endpoints. This means that some endpoints will generate differing
+# 'not authorized' messages when queried while not logged in, but that's okay.
 def auth_preproc(**kw):
     if not current_user.is_authenticated():
         raise ProcessingException(description='Not Authorized', code=401)
