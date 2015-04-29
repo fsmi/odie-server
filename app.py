@@ -4,12 +4,19 @@ from functools import partial
 
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.login import LoginManager
 from sqlalchemy.dialects import postgres
 
 app = Flask("odie")
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres:///fsmi'
-app.config['DEBUG'] = True  # TODO change me in production
+
+# TODO change me in production
+app.config['SECRET_KEY'] = 'supersikkrit'
+app.config['DEBUG'] = True
+
 db = SQLAlchemy(app)
+login_manager = LoginManager()
+login_manager.setup_app(app)
 
 # TODO until I've changed the model to use a common declarative_base with the right
 # schema, we have to tell it explicitly for every model (see models.py)
