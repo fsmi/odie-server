@@ -14,7 +14,7 @@ class Lecture(db.Model):
     name = app.Column(db.String(256))
     aliases = app.Column(postgres.ARRAY(db.String(256)))
     subject = app.Column(postgres.ENUM('mathematics', 'computer science', 'both', name='subject'))
-    comment = app.Column(db.String(256), nullable=True)
+    comment = app.Column(db.String(256), default='')
 
 
 lectureDocs = db.Table('lecture_docs',
@@ -41,7 +41,7 @@ class Document(db.Model):
     date = app.Column(postgres.DATE)
     number_of_pages = app.Column(db.Integer)
     solution = app.Column(postgres.ENUM('official', 'inofficial', 'none', name='solution'), default='none')
-    comment = app.Column(db.String(80), nullable=True)
+    comment = app.Column(db.String(80), default='')
     documentType = app.Column(postgres.ENUM('oral', 'written', 'oral reexam', name='type'))
     file_id = app.Column(db.String(256), nullable=True)  # usually sha256sum of file
 

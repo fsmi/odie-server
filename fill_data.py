@@ -6,30 +6,18 @@
 import app
 import models
 import crypt
-from models.documents import Lecture, Document, Examinant, Deposit, db
+
+from app import db
+
+from models.documents import Lecture, Document, Examinant, Deposit
 from models.public import User
 from models.acl import Permission
 from models.odie import Cart, CartDocument
+
 from datetime import datetime as time
 
-# create 'acl' and 'odie' schemas if necessary
-import sqlalchemy
-from sqlalchemy.schema import CreateSchema
-
-def createSchema(name):
-    try:
-        db.engine.execute(CreateSchema(name))
-    except sqlalchemy.exc.ProgrammingError:
-        # schema already exists... do nothing
-        pass
-
-createSchema('acl')
-createSchema('odie')
-createSchema('documents')
-
-# create tables if necessary
-db.create_all()
-
+# force creation of schemas and tables
+import create_schemas_and_tables
 
 
 lectures = [
