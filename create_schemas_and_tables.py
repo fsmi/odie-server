@@ -7,14 +7,15 @@ import app
 from sqlalchemy.schema import CreateSchema
 from app import db
 
-def createSchema(name):
+def createSchema(name, bind=None):
     try:
-        db.engine.execute(CreateSchema(name))
+        engine = db.get_engine(app.app, bind)
+        engine.execute(CreateSchema(name))
     except sqlalchemy.exc.ProgrammingError:
         # schema already exists... do nothing
         pass
 
-createSchema('acl')
+createSchema('acl', 'fsmi')
 createSchema('odie')
 createSchema('documents')
 
