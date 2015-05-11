@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import app
+import config
 
 from app import db
 from sqlalchemy.dialects import postgres
@@ -8,7 +9,7 @@ from sqlalchemy.dialects import postgres
 
 class Lecture(db.Model):
     __tablename__ = 'lectures'
-    __table_args__ = app.documents_table_args
+    __table_args__ = config.documents_table_args
 
     id = app.Column(db.Integer, primary_key=True)
     name = app.Column(db.String(256))
@@ -20,17 +21,17 @@ class Lecture(db.Model):
 lectureDocs = db.Table('lecture_docs',
         app.Column('lecture_id', db.Integer, db.ForeignKey('documents.lectures.id')),
         app.Column('document_id', db.Integer, db.ForeignKey('documents.documents.id')),
-        **app.documents_table_args)
+        **config.documents_table_args)
 
 documentExaminants = db.Table('document_examinants',
         app.Column('document_id', db.Integer, db.ForeignKey('documents.documents.id')),
         app.Column('examinant_id', db.Integer, db.ForeignKey('documents.examinants.id')),
-        **app.documents_table_args)
+        **config.documents_table_args)
 
 
 class Document(db.Model):
     __tablename__ = 'documents'
-    __table_args__ = app.documents_table_args
+    __table_args__ = config.documents_table_args
 
     id = app.Column(db.Integer, primary_key=True)
     legacy_id = app.Column(db.Integer, default=0)
@@ -48,7 +49,7 @@ class Document(db.Model):
 
 class Examinant(db.Model):
     __tablename__ = 'examinants'
-    __table_args__ = app.documents_table_args
+    __table_args__ = config.documents_table_args
 
     id = app.Column(db.Integer, primary_key=True)
     name = app.Column(db.String(80))
@@ -57,12 +58,12 @@ class Examinant(db.Model):
 depositLectures = db.Table('deposit_lectures',
         app.Column('deposit_id', db.Integer, db.ForeignKey('documents.deposits.id')),
         app.Column('lecture_id', db.Integer, db.ForeignKey('documents.lectures.id')),
-        **app.documents_table_args)
+        **config.documents_table_args)
 
 
 class Deposit(db.Model):
     __tablename__ = 'deposits'
-    __table_args__ = app.documents_table_args
+    __table_args__ = config.documents_table_args
 
     id = app.Column(db.Integer, primary_key=True)
     price = app.Column(db.Integer)

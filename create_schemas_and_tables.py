@@ -15,6 +15,10 @@ def createSchema(name, bind=None):
         # schema already exists... do nothing
         pass
 
+# these two should kind of be a given, but... you never know.
+createSchema('public', 'fsmi')
+createSchema('public')
+
 createSchema('acl', 'fsmi')
 createSchema('odie')
 createSchema('documents')
