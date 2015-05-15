@@ -3,6 +3,7 @@
 import crypt
 
 import app
+import config
 import models.acl as acl
 
 from flask.ext.login import UserMixin
@@ -10,7 +11,7 @@ from app import db, login_manager
 
 class User(db.Model, UserMixin):
     __tablename__ = 'benutzer'
-    __table_args__ = app.public_table_args
+    __table_args__ = config.public_table_args
 
     id = app.Column(db.Integer, name='benutzer_id', primary_key=True)
     username = app.Column(db.String(255), name='benutzername', unique=True)
