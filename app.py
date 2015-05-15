@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgres
 
 app = Flask("odie")
 
-app.config.from_object('config.Config')
+app.config.from_object('config.FlaskConfig')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
