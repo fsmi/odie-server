@@ -8,21 +8,21 @@ from app import db
 from sqlalchemy.dialects import postgres
 
 
-class CartDocument(db.Model):
-    __tablename__ = 'cart_documents'
+class OrderDocument(db.Model):
+    __tablename__ = 'order_documents'
     __table_args__ = config.odie_table_args
 
-    cart_id = app.Column(db.Integer, db.ForeignKey('odie.carts.id'), primary_key=True)
-    cart = db.relationship('Cart', backref=db.backref('items'))
+    order_id = app.Column(db.Integer, db.ForeignKey('odie.orders.id'), primary_key=True)
+    order = db.relationship('Order', backref=db.backref('items'))
     document_id = app.Column(db.ForeignKey('documents.documents.id'), primary_key=True)
 
 
-class Cart(db.Model):
-    __tablename__ = 'carts'
+class Order(db.Model):
+    __tablename__ = 'orders'
     __table_args__ = config.odie_table_args
 
     id = app.Column(db.Integer, primary_key=True)
     name = app.Column(db.String(256))
     creation_time = app.Column(postgres.DATE, default=db.func.now())
-    documents = db.relationship('Document', secondary='odie.cart_documents')
+    documents = db.relationship('Document', secondary='odie.order_documents')
 

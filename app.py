@@ -1,6 +1,9 @@
 #! /usr/bin/env python3
 
 import config
+# extend query operators
+import jsonquery
+import jsonquery_operators
 
 from functools import partial
 

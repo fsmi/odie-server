@@ -12,7 +12,7 @@ from app import db
 from models.documents import Lecture, Document, Examinant, Deposit
 from models.public import User
 from models.acl import Permission
-from models.odie import Cart, CartDocument
+from models.odie import Order, OrderDocument
 
 from datetime import datetime as time
 
@@ -62,24 +62,24 @@ for d in docs:
 
 
 
-# Cart
+# Order
 db.session.commit()
 
-c = Cart(name='Hatsune Miku', creation_time=time(2009, 4, 2))
+c = Order(name='Hatsune Miku', creation_time=time(2009, 4, 2))
 db.session.add(c)
-db.session.add(CartDocument(cart=c, document_id=docs[0].id))
-db.session.add(CartDocument(cart=c, document_id=docs[3].id))
-c = Cart(name='Megurine Luka', creation_time=time(2012, 10, 10))
+db.session.add(OrderDocument(order=c, document_id=docs[0].id))
+db.session.add(OrderDocument(order=c, document_id=docs[3].id))
+c = Order(name='Megurine Luka', creation_time=time(2012, 10, 10))
 db.session.add(c)
-db.session.add(CartDocument(cart=c, document_id=docs[2].id))
-db.session.add(CartDocument(cart=c, document_id=docs[3].id))
-db.session.add(CartDocument(cart=c, document_id=docs[1].id))
-c = Cart(name='Kagamine Rin', creation_time=time(2011, 1, 3))
+db.session.add(OrderDocument(order=c, document_id=docs[2].id))
+db.session.add(OrderDocument(order=c, document_id=docs[3].id))
+db.session.add(OrderDocument(order=c, document_id=docs[1].id))
+c = Order(name='Kagamine Rin', creation_time=time(2011, 1, 3))
 db.session.add(c)
-db.session.add(CartDocument(cart=c, document_id=docs[1].id))
-c = Cart(name='Kagamine Len', creation_time=time(2014, 1, 2))
+db.session.add(OrderDocument(order=c, document_id=docs[1].id))
+c = Order(name='Kagamine Len', creation_time=time(2014, 1, 2))
 db.session.add(c)
-db.session.add(CartDocument(cart=c, document_id=docs[1].id))
+db.session.add(OrderDocument(order=c, document_id=docs[1].id))
 
 
 
