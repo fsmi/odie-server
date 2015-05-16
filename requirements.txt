@@ -1,3 +1,4 @@
 jsonquery
 Flask-SQLAlchemy
 Flask-Login
+marshmallow
