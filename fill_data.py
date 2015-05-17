@@ -53,6 +53,7 @@ docs = [
             Document(lectures=[lectures[6], lectures[7]], examinants=[profs[1]], date=time(2004, 10, 4), number_of_pages=1, document_type='oral'),
             Document(lectures=[lectures[4], lectures[3], lectures[2]], examinants=[profs[1], profs[0]], date=time(2004, 8, 2), number_of_pages=2, document_type='oral'),
             Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 1, 1), number_of_pages=7, document_type='oral'),
+            Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 2, 3), number_of_pages=7, document_type='oral')
        ]
 
 for d in docs:
