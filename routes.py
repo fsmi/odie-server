@@ -11,7 +11,7 @@ from apigen import login_required_for_methods, collection_endpoint, instance_end
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
 from models.public import User
-from serialization_schemas import OrderLoadSchema, OrderDumpSchema, LectureSchema, LectureDocumentsSchema, DocumentSchema, ExaminantSchema
+from serialization_schemas import OrderLoadSchema, OrderDumpSchema, LectureSchema, LectureDocumentsSchema, DocumentSchema, ExaminantSchema, DepositSchema
 
 
 @app.route('/api/login', methods=['POST'])
@@ -59,6 +59,7 @@ instance_endpoint(
         methods=['GET', 'DELETE'],
         auth_methods=['GET', 'DELETE'])
 
+
 collection_endpoint(
         url='/api/lectures',
         serdes={'GET': dumpSchema(LectureSchema, many=True)},
@@ -69,12 +70,27 @@ instance_endpoint(
         serializer=dumpSchema(LectureDocumentsSchema),
         model=Lecture)
 
+
 collection_endpoint(
         url='/api/documents',
         serdes={'GET': dumpSchema(DocumentSchema, many=True)},
         model=Document)
 
+
 collection_endpoint(
         url='/api/examinants',
         serdes={'GET': dumpSchema(ExaminantSchema, many=True)},
         model=Examinant)
+
+
+collection_endpoint(
+        url='/api/deposits',
+        serdes={'GET': dumpSchema(DepositSchema, many=True)},
+        model=Deposit,
+        auth_methods=['GET'])
+
+instance_endpoint(
+        url='/api/deposits/<int:instance_id>',
+        model=Deposit,
+        methods=['DELETE'],
+        auth_methods=['DELETE'])

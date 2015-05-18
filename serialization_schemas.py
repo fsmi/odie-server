@@ -50,4 +50,8 @@ class LectureDocumentsSchema(LectureSchema):
     documents = fields.List(fields.Nested(DocumentSchema))
 
 
+class DepositSchema(IdSchema):
+    price = fields.Int()
+    name = fields.Str()
+    lectures = fields.List(fields.Str())
 
