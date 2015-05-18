@@ -1,0 +1,21 @@
+#! /usr/bin/env python3
+
+import json
+import os
+import subprocess
+import unittest
+import app
+
+ODIE_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
+
+class OdieTestCase(unittest.TestCase):
+
+    def fromJsonResponse(self, response):
+        return json.loads(response.data.decode('utf-8'))
+
+    def setUp(self):
+        # this should go without saying, but... don't run these tests in production
+        subprocess.call([os.path.join(ODIE_DIR, 'delete_everything_in_all_databases.sh')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.call([os.path.join(ODIE_DIR, 'fill_data.py')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.app = app.app.test_client()
+
