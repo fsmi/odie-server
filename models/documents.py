@@ -17,6 +17,9 @@ class Lecture(db.Model):
     subject = app.Column(postgres.ENUM('mathematics', 'computer science', 'both', name='subject'))
     comment = app.Column(db.String(256), default='')
 
+    def __str__(self):
+        return self.name
+
 
 lectureDocs = db.Table('lecture_docs',
         app.Column('lecture_id', db.Integer, db.ForeignKey('documents.lectures.id')),
@@ -43,8 +46,16 @@ class Document(db.Model):
     number_of_pages = app.Column(db.Integer)
     solution = app.Column(postgres.ENUM('official', 'inofficial', 'none', name='solution'), default='none')
     comment = app.Column(db.String(80), default='')
-    documentType = app.Column(postgres.ENUM('oral', 'written', 'oral reexam', name='type'))
+    document_type = app.Column(postgres.ENUM('oral', 'written', 'oral reexam', name='type'))
     file_id = app.Column(db.String(256), nullable=True)  # usually sha256sum of file
+
+    @property
+    def examinants_names(self):
+        return [ex.name for ex in self.examinants]
+
+    @property
+    def examinants_ids(self):
+        return [ex.id for ex in self.examinants]
 
 
 class Examinant(db.Model):
@@ -53,6 +64,9 @@ class Examinant(db.Model):
 
     id = app.Column(db.Integer, primary_key=True)
     name = app.Column(db.String(80))
+
+    def __str__(self):
+        return self.name
 
 
 depositLectures = db.Table('deposit_lectures',
