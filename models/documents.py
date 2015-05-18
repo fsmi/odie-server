@@ -57,6 +57,11 @@ class Document(db.Model):
     def examinants_ids(self):
         return [ex.id for ex in self.examinants]
 
+    @property
+    def price(self):
+        return config.PRICE_PER_PAGE * self.number_of_pages
+
+
 
 class Examinant(db.Model):
     __tablename__ = 'examinants'

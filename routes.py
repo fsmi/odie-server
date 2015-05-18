@@ -11,7 +11,7 @@ from apigen import login_required_for_methods, collection_endpoint, instance_end
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
 from models.public import User
-from serialization_schemas import OrderLoadSchema, OrderDumpSchema, LectureSchema, LectureDocumentsSchema, DocumentSchema, ExaminantSchema, DepositSchema
+from serialization_schemas import OrderLoadSchema, OrderDumpSchema, LectureSchema, LectureDocumentsSchema, DocumentSchema, ExaminantSchema, DepositSchema, PrintJobLoadSchema
 
 
 @app.route('/api/login', methods=['POST'])
@@ -37,6 +37,28 @@ def login():
 def logout():
     logout_user()
     return "ok"
+
+
+@app.route('/api/print', methods=['POST'])
+@login_required
+def print_documents():
+    printjob, errors = PrintJobLoadSchema().load(data=request.get_json(force=True))
+    if errors:
+        return (str(errors), 400, [])
+    try:
+        documents = [Document.query.get(i) for i in printjob['documents']]
+        assert printjob['depositCount'] >= 0
+        price = sum(doc.price for doc in documents)
+        # round up to next 10 cents
+        price = 10 * (price/10 + (1 if price % 10 else 0))
+
+        #  TODO actual implementation of printing and accounting
+        print("PRINTING DOCS {docs} FOR {coverText}: PRICE {price} + {depcount} * DEPOSIT".format(docs=printjob['documents'], coverText=printjob['coverText'], price=price, depcount=printjob['depositCount']))
+
+
+        return "ok"
+    except (ValueError, KeyError):
+        return ("malformed request", 400, [])
 
 
 def dumpSchema(schema, many=False):

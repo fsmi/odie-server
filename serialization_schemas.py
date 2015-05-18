@@ -55,3 +55,10 @@ class DepositSchema(IdSchema):
     name = fields.Str()
     lectures = fields.List(fields.Str())
 
+
+class PrintJobLoadSchema(Schema):
+    coverText = fields.Str(required=True)
+    documents = fields.List(fields.Int(), required=True)
+    depositCount = fields.Int(required=True)
+    printer = fields.Str(required=True)
+

@@ -27,3 +27,6 @@ public_table_args = {
     'schema' : 'public',  # if we don't explicitly set this we can't create cross-schema aux tables
     'info': {'bind_key': 'fsmi'}
 }
+
+DEPOSIT_PRICE = 500  # in cents
+PRICE_PER_PAGE = 3   # in cents
