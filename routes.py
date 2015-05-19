@@ -53,9 +53,13 @@ def print_documents():
         # round up to next 10 cents
         price = 10 * (price/10 + (1 if price % 10 else 0))
 
-        print("PRINTING DOCS {docs} FOR {coverText}: PRICE {price} + {depcount} * DEPOSIT".format(docs=printjob['documents'], coverText=printjob['coverText'], price=price, depcount=printjob['depositCount']))
-
-        if not config.FlaskConfig.DEBUG:
+        if config.FlaskConfig.DEBUG:
+            print("PRINTING DOCS {docs} FOR {coverText}: PRICE {price} + {depcount} * DEPOSIT".format(
+                docs=printjob['documents'],
+                coverText=printjob['coverText'],
+                price=price,
+                depcount=printjob['depositCount']))
+        else:
             #  TODO actual implementation of printing and accounting
             print("PC LOAD LETTER")
 

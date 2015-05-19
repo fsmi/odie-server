@@ -11,14 +11,18 @@ class APITest(OdieTestCase):
     VALID_USER = 'guybrush'
     VALID_PASS = 'arrrrr'
 
-    def login(self, user, password):
+    VALID_PRINTJOB = {
+            'coverText': 'Klausuren',
+            'documents': [1,2,2],
+            'depositCount': 1,
+            'printer': 'external'
+        }
+
+    def login(self, user=VALID_USER, password=VALID_PASS):
         return self.app.post('/api/login', data=json.dumps({
                 'username': user,
                 'password': password
             }))
-
-    def logout(self):
-        return self.app.post('/api/logout')
 
     def validate_lecture(self, lecture):
         assert 'name' in lecture
@@ -78,6 +82,16 @@ class APITest(OdieTestCase):
         assert is_logged_in()
         self.logout()
         assert not is_logged_in()
+
+    def test_no_printing_unauthenticated(self):
+        res = self.app.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
+        assert res.status_code != 200
+
+    def test_print(self):
+        self.login()
+        res = self.app.post('api/print', data=json.dumps(self.VALID_PRINTJOB))
+        assert res.status_code == 200
+        self.logout()
 
 
 
