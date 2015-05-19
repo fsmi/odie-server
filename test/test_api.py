@@ -8,6 +8,8 @@ import random
 from test.harness import OdieTestCase
 
 class APITest(OdieTestCase):
+    VALID_USER = 'guybrush'
+    VALID_PASS = 'arrrrr'
 
     def login(self, user, password):
         return self.app.post('/api/login', data=json.dumps({
@@ -49,11 +51,11 @@ class APITest(OdieTestCase):
         data = self.fromJsonResponse(res)
 
     def test_get_examinants(self):
-        res = self.app.get('/api/documents')
+        res = self.app.get('/api/examinants')
         data = self.fromJsonResponse(res)
 
     def test_malformed_login(self):
-        res = self.app.post('/api/login', data=json.dumps({'user':'guybrush'}))
+        res = self.app.post('/api/login', data=json.dumps({'user':self.VALID_USER}))
         assert res.status_code != 200
 
     def test_invalid_login(self):
@@ -61,12 +63,22 @@ class APITest(OdieTestCase):
         assert res.status_code != 200
 
     def test_valid_login(self):
-        res = self.login(user='guybrush', password='arrrrr')
+        res = self.login(self.VALID_USER, self.VALID_PASS)
         assert res.status_code == 200
 
     def test_login_no_get(self):
-        res = self.app.post('/api/login')
+        res = self.app.get('/api/login')
         assert res.status_code == 405
+
+    def test_login_logout(self):
+        def is_logged_in():
+            return self.app.post('/api/login', data=json.dumps({})).status_code == 200
+        assert not is_logged_in()
+        self.login(self.VALID_USER, self.VALID_PASS)
+        assert is_logged_in()
+        self.logout()
+        assert not is_logged_in()
+
 
 
 if __name__ == '__main__':

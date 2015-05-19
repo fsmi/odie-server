@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import config
 import json
 import os
 import subprocess
@@ -15,6 +16,7 @@ class OdieTestCase(unittest.TestCase):
 
     def setUp(self):
         # this should go without saying, but... don't run these tests in production
+        assert config.FlaskConfig.DEBUG, "These tests are destructive, I refuse to run them in production"
         subprocess.call([os.path.join(ODIE_DIR, 'delete_everything_in_all_databases.sh')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.call([os.path.join(ODIE_DIR, 'fill_data.py')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         self.app = app.app.test_client()
