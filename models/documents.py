@@ -14,7 +14,7 @@ class Lecture(db.Model):
     id = app.Column(db.Integer, primary_key=True)
     name = app.Column(db.String(256))
     aliases = app.Column(postgres.ARRAY(db.String(256)))
-    subject = app.Column(postgres.ENUM('mathematics', 'computer science', 'both', name='subject'))
+    subject = app.Column(db.Enum('mathematics', 'computer science', 'both', name='subject', inherit_schema=True))
     comment = app.Column(db.String(256), default='')
 
     def __str__(self):
@@ -44,9 +44,9 @@ class Document(db.Model):
             backref=db.backref('documents'))
     date = app.Column(postgres.DATE)
     number_of_pages = app.Column(db.Integer)
-    solution = app.Column(postgres.ENUM('official', 'inofficial', 'none', name='solution'), default='none')
+    solution = app.Column(db.Enum('official', 'inofficial', 'none', name='solution', inherit_schema=True), default='none')
     comment = app.Column(db.String(80), default='')
-    document_type = app.Column(postgres.ENUM('oral', 'written', 'oral reexam', name='type'))
+    document_type = app.Column(db.Enum('oral', 'written', 'oral reexam', name='type', inherit_schema=True))
     file_id = app.Column(db.String(256), nullable=True)  # usually sha256sum of file
 
     @property
