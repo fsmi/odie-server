@@ -18,13 +18,17 @@ class DocumentSchema(IdSchema):
     solution = fields.Str()
     comment = fields.Str()
     documentType = fields.Str(attribute='document_type')
+    available = fields.Method('is_available_for_printing')
+
+    def is_available_for_printing(self, obj):
+        return obj.file_id is not None
 
 
 class ExaminantSchema(IdSchema):
     name = fields.Str()
 
 
-class OrderLoadSchema(Schema):
+class OrderLoadSchema(IdSchema):
     name = fields.Str(required=True)
     creation_time = fields.Date()
     # list of document ids

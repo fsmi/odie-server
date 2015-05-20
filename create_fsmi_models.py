@@ -19,7 +19,7 @@ import sqlalchemy
 import models.public
 
 from sqlalchemy.schema import CreateSchema
-from app import db, app
+from odie import db, app
 
 def createSchema(name, bind=None):
     try:

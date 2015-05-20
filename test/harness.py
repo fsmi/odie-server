@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 import unittest
-import app
+import odie
 
 ODIE_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
 
@@ -22,7 +22,7 @@ class OdieTestCase(unittest.TestCase):
         assert config.FlaskConfig.DEBUG, "These tests are destructive, I refuse to run them in production"
         subprocess.call([os.path.join(ODIE_DIR, 'delete_everything_in_all_databases.sh')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.call([os.path.join(ODIE_DIR, 'fill_data.py')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        self.app = app.app.test_client()
+        self.app = odie.app.test_client()
 
     def tearDown(self):
         # just in case a test failed after logging in
