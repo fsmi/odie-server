@@ -13,11 +13,11 @@ class OrderDocument(db.Model):
     __tablename__ = 'order_documents'
     __table_args__ = config.odie_table_args
 
+    index = app.Column(db.Integer, primary_key=True)
     order_id = app.Column(db.Integer, db.ForeignKey('odie.orders.id'), primary_key=True)
-    order = db.relationship('Order', backref=db.backref('items', cascade='all'))
+    order = db.relationship('Order', backref=db.backref('items', cascade='all', order_by=index))
     document_id = app.Column(db.ForeignKey('documents.documents.id'), primary_key=True)
     document = db.relationship('Document')
-    index = app.Column(db.Integer, primary_key=True)
 
 
 class Order(db.Model):
@@ -36,5 +36,5 @@ class Order(db.Model):
 
     @property
     def documents(self):
-        return [item.document for item in sorted(self.items, key=lambda x: x.index)]
+        return [item.document for item in self.items]
 
