@@ -28,7 +28,7 @@ class ExaminantSchema(IdSchema):
     name = fields.Str()
 
 
-class OrderLoadSchema(Schema):
+class OrderLoadSchema(IdSchema):
     name = fields.Str(required=True)
     creation_time = fields.Date()
     # list of document ids
