@@ -6,16 +6,24 @@
 
 class FlaskConfig(object):
     SQLALCHEMY_DATABASE_URI = 'postgres:///garfield'  # use garfield for everything by default
-    SQLALCHEMY_BINDS = { 'fsmi': 'postgres:///fsmi' }  # we also need to access the fsmi db for auth
+    # we also need to access the fsmi db for auth
+    SQLALCHEMY_BINDS = {
+            'fsmi': 'postgres:///fsmi',
+            'garfield': SQLALCHEMY_DATABASE_URI
+    }
 
     SECRET_KEY = 'supersikkrit'
     DEBUG = True
 
-# TODO until I've changed the model to use a common declarative_base with the right
-# schema, we have to tell it explicitly for every model (see models.py)
-# we set them here for proper reuse (and documentation purposes)
-odie_table_args = {'schema' : 'odie'}  # things specific to odie: saved carts
-documents_table_args = {'schema': 'documents'}
+# things specific to odie: saved orders
+odie_table_args = {
+    'schema': 'odie',
+    'info': {'bind_key': 'garfield'}
+}
+documents_table_args = {
+    'schema': 'documents',
+    'info': {'bind_key': 'garfield'}
+}
 
 
 # auth credentials
@@ -27,3 +35,6 @@ public_table_args = {
     'schema' : 'public',  # if we don't explicitly set this we can't create cross-schema aux tables
     'info': {'bind_key': 'fsmi'}
 }
+
+DEPOSIT_PRICE = 500  # in cents
+PRICE_PER_PAGE = 3   # in cents

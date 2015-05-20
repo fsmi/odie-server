@@ -27,7 +27,7 @@ def login_required_for_methods(methods):
     return _decorator
 
 
-def instance_endpoint(url, serializer, model, methods=['GET'], auth_methods=[]):
+def instance_endpoint(url, model, serializer=None, methods=['GET'], auth_methods=[]):
     """Creates an endpoint for single instance requests (e.g. /api/endpoint/1)
 
     Currently only handles GET and DELETE requests.
