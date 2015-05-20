@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import odie
-import app
+import routes
 import json
 import random
 

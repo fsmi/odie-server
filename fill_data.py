@@ -3,11 +3,11 @@
 """Fills the sample database with some sample data"""
 
 
-import app
+import odie
 import models
 import crypt
 
-from app import db
+from odie import db
 
 from models.documents import Lecture, Document, Examinant, Deposit
 from models.public import User

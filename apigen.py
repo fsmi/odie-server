@@ -2,7 +2,7 @@
 
 import json
 
-from app import app, db
+from odie import app, db
 
 from functools import wraps
 from flask import request

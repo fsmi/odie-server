@@ -1,13 +1,13 @@
 #! /usr/bin/env python3
 
-import app
+import odie
 import config
 import json
 
 from flask import request, jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
-from app import app, db
+from odie import app, db
 from apigen import login_required_for_methods, collection_endpoint, instance_endpoint
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
