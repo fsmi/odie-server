@@ -28,7 +28,7 @@ class APITest(OdieTestCase):
         assert 'name' in lecture
         assert 'aliases' in lecture
         assert 'name' not in lecture['aliases']
-        assert 'subject' in lecture and type(lecture['subject']) is str
+        assert 'subject' in lecture and isinstance(lecture['subject'], str)
         assert 'comment' in lecture
 
     def validate_document(self, document):
@@ -36,10 +36,12 @@ class APITest(OdieTestCase):
         # TODO
         pass
 
+    ## tests for unauthenticated api ##
+
     def test_get_lectures(self):
         res = self.app.get('/api/lectures')
         data = self.fromJsonResponse(res)
-        assert type(data) is list and len(data) > 1
+        assert isinstance(data, list) and len(data) > 1
 
         lecture = random.choice(data)
         self.validate_lecture(lecture)
@@ -47,7 +49,7 @@ class APITest(OdieTestCase):
         res = self.app.get('/api/lectures/' + str(random.randint(1,len(data))))
         lecture = self.fromJsonResponse(res)
         self.validate_lecture(lecture)
-        assert 'documents' in lecture and type(lecture['documents']) is list
+        assert 'documents' in lecture and isinstance(lecture['documents'], list)
         self.validate_document(random.choice(lecture['documents']))
 
     def test_get_documents(self):
@@ -57,6 +59,9 @@ class APITest(OdieTestCase):
     def test_get_examinants(self):
         res = self.app.get('/api/examinants')
         data = self.fromJsonResponse(res)
+
+
+    ## login tests ##
 
     def test_malformed_login(self):
         res = self.app.post('/api/login', data=json.dumps({'user':self.VALID_USER}))
@@ -83,6 +88,8 @@ class APITest(OdieTestCase):
         self.logout()
         assert not is_logged_in()
 
+    ## tests for authenticated api ##
+
     def test_no_printing_unauthenticated(self):
         res = self.app.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
         assert res.status_code != 200
@@ -93,6 +100,41 @@ class APITest(OdieTestCase):
         assert res.status_code == 200
         self.logout()
 
+    def test_orders(self):
+        res = self.app.get('/api/orders')
+        assert res.status_code != 200
+        res = self.app.delete('/api/orders/1')
+        assert res.status_code != 200
+        self.login()
+        res = self.app.get('/api/orders')
+        assert res.status_code == 200
+        orders = self.fromJsonResponse(res)
+        assert isinstance(orders, list)
+        new_order_name = "a747b53e0d942681791b"
+        for order in orders:
+            assert new_order_name != order['name']
+        new_order = {
+                'name': new_order_name,
+                'documents': [1],
+            }
+
+        # ensure POSTing orders is available when not logged in
+        self.logout()
+        res = self.app.post('/api/orders', data=json.dumps(new_order))
+        assert res.status_code == 200
+        self.login()
+
+        res = self.app.get('/api/orders')
+        assert res.status_code == 200
+        posted_order = [order for order in self.fromJsonResponse(res) if order['name'] == new_order_name]
+        assert len(posted_order) == 1
+        assert posted_order[0]['documents'][0]['id'] == 1
+        instance_id = posted_order[0]['id']
+        res = self.app.delete('/api/orders/' + str(instance_id))
+        assert res.status_code == 200
+        res = self.app.get('/api/orders')
+        for order in self.fromJsonResponse(res):
+            assert order['name'] != new_order_name
 
 
 if __name__ == '__main__':
