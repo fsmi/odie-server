@@ -12,10 +12,10 @@ class Lecture(db.Model):
     __table_args__ = config.documents_table_args
 
     id = Column(db.Integer, primary_key=True)
-    name = Column(db.String(256))
-    aliases = Column(postgres.ARRAY(db.String(256)))
+    name = Column(db.String)
+    aliases = Column(postgres.ARRAY(db.String), server_default='{}')
     subject = Column(db.Enum('mathematics', 'computer science', 'both', name='subject', inherit_schema=True))
-    comment = Column(db.String(256), default='')
+    comment = Column(db.String, server_default='')
 
     def __str__(self):
         return self.name
@@ -37,17 +37,16 @@ class Document(db.Model):
     __table_args__ = config.documents_table_args
 
     id = Column(db.Integer, primary_key=True)
-    legacy_id = Column(db.Integer, default=0)
     lectures = db.relationship('Lecture', secondary=lectureDocs,
             backref=db.backref('documents'))
     examinants = db.relationship('Examinant', secondary=documentExaminants,
             backref=db.backref('documents'))
-    date = Column(postgres.DATE)
+    date = Column(db.DateTime)
     number_of_pages = Column(db.Integer)
-    solution = Column(db.Enum('official', 'inofficial', 'none', name='solution', inherit_schema=True), default='none')
-    comment = Column(db.String(80), default='')
+    solution = Column(db.Enum('official', 'inofficial', 'none', name='solution', inherit_schema=True), nullable=True)
+    comment = Column(db.String, server_default='')
     document_type = Column(db.Enum('oral', 'written', 'oral reexam', name='type', inherit_schema=True))
-    file_id = Column(db.String(256), nullable=True)  # usually sha256sum of file
+    file_id = Column(db.String, nullable=True)  # usually sha256sum of file
 
     @property
     def examinants_names(self):
@@ -68,7 +67,7 @@ class Examinant(db.Model):
     __table_args__ = config.documents_table_args
 
     id = Column(db.Integer, primary_key=True)
-    name = Column(db.String(80))
+    name = Column(db.String)
 
     def __str__(self):
         return self.name
@@ -86,7 +85,7 @@ class Deposit(db.Model):
 
     id = Column(db.Integer, primary_key=True)
     price = Column(db.Integer)
-    name = Column(db.String(80))
+    name = Column(db.String)
+    by_user = Column(db.String)
+    date = Column(db.DateTime)
     lectures = db.relationship('Lecture', secondary=depositLectures)
-
-
