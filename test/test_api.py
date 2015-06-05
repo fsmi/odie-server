@@ -38,6 +38,15 @@ class APITest(OdieTestCase):
 
     ## tests for unauthenticated api ##
 
+    def test_get_config(self):
+        res = self.app.get('/api/config')
+        assert res.status_code == 200
+        data = self.fromJsonResponse(res)
+        assert 'DEPOSIT_PRICE' in data
+        assert 'PRINTERS' in data
+        assert 'CASH_BOXES' in data
+        assert 'PRICE_PER_PAGE' in data
+
     def test_get_lectures(self):
         res = self.app.get('/api/lectures')
         data = self.fromJsonResponse(res)

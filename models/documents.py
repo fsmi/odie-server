@@ -58,7 +58,7 @@ class Document(db.Model):
 
     @property
     def price(self):
-        return config.PRICE_PER_PAGE * self.number_of_pages
+        return config.FS_CONFIG['PRICE_PER_PAGE'] * self.number_of_pages
 
 
 

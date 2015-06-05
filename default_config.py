@@ -25,7 +25,6 @@ documents_table_args = {
     'info': {'bind_key': 'garfield'}
 }
 
-
 # auth credentials
 acl_table_args = {
     'schema' : 'acl',
@@ -36,5 +35,15 @@ public_table_args = {
     'info': {'bind_key': 'fsmi'}
 }
 
-DEPOSIT_PRICE = 500  # in cents
-PRICE_PER_PAGE = 3   # in cents
+FS_CONFIG = {
+    'DEPOSIT_PRICE': 500,  # in cents
+    'PRICE_PER_PAGE': 3,   # in cents
+    'PRINTERS': [
+        'emergency',  # ATIS
+        'external',   # print for external customer
+    ],
+    'CASH_BOXES': [
+        'FSI',
+        'FSM',
+    ],
+}
