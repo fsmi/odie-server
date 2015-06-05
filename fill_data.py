@@ -44,9 +44,9 @@ profs = [
 for p in profs:
     db.session.add(p)
 
-db.session.add(Deposit(price=5, name='Sloth', lectures=[lectures[0]]))
-db.session.add(Deposit(price=10, name='Montgomery Montgomery', lectures=[lectures[4],lectures[5],lectures[6],lectures[7]]))
-db.session.add(Deposit(price=5, name='Random J. Hacker', lectures=[lectures[1], lectures[2], lectures[7]]))
+db.session.add(Deposit(by_user="guybrush", price=5, name='Sloth', lectures=[lectures[0]]))
+db.session.add(Deposit(by_user="guybrush", price=10, name='Montgomery Montgomery', lectures=[lectures[4],lectures[5],lectures[6],lectures[7]]))
+db.session.add(Deposit(by_user="guybrush", price=5, name='Random J. Hacker', lectures=[lectures[1], lectures[2], lectures[7]]))
 
 docs = [
             Document(lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=time(2010, 4, 1), number_of_pages=4, document_type='oral', file_id='577c8472f37734e6960c2062a43435ff4823e69a1dbacfe6675e00333ed077f3'),

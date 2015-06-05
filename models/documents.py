@@ -87,5 +87,5 @@ class Deposit(db.Model):
     price = Column(db.Integer)
     name = Column(db.String)
     by_user = Column(db.String)
-    date = Column(db.DateTime)
+    date = Column(db.DateTime, server_default=db.func.now())
     lectures = db.relationship('Lecture', secondary=depositLectures)

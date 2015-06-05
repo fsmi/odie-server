@@ -4,7 +4,6 @@ import odie
 import config
 
 from odie import db, Column
-from sqlalchemy.dialects import postgres
 from datetime import datetime as time
 
 from models.documents import Document
@@ -26,7 +25,7 @@ class Order(db.Model):
 
     id = Column(db.Integer, primary_key=True)
     name = Column(db.String(256))
-    creation_time = Column(postgres.DATE, default=db.func.now())
+    creation_time = Column(db.DateTime, server_default=db.func.now())
 
     def __init__(self, name, document_ids, creation_time=None):
         self.name = name
