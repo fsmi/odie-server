@@ -3,6 +3,7 @@
 from datetime import datetime as time
 from marshmallow import Schema, fields
 
+import config
 from models.documents import Document
 from models.odie import Order
 
@@ -64,5 +65,5 @@ class PrintJobLoadSchema(Schema):
     coverText = fields.Str(required=True)
     documents = fields.List(fields.Int(), required=True)
     depositCount = fields.Int(required=True)
-    printer = fields.Str(required=True)
+    printer = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['PRINTERS'])
 
