@@ -74,11 +74,11 @@ class APITest(OdieTestCase):
 
     def test_malformed_login(self):
         res = self.app.post('/api/login', data=json.dumps({'user':self.VALID_USER}))
-        assert res.status_code != 200
+        assert res.status_code == 400
 
     def test_invalid_login(self):
         res = self.login(user='I am not a username', password='neither am I a password')
-        assert res.status_code != 200
+        assert res.status_code == 401
 
     def test_valid_login(self):
         res = self.login(self.VALID_USER, self.VALID_PASS)
@@ -101,7 +101,7 @@ class APITest(OdieTestCase):
 
     def test_no_printing_unauthenticated(self):
         res = self.app.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
-        assert res.status_code != 200
+        assert res.status_code == 401
 
     def test_print(self):
         self.login()
@@ -111,11 +111,11 @@ class APITest(OdieTestCase):
 
     def test_orders_no_get_unauthenticated(self):
         res = self.app.get('/api/orders')
-        assert res.status_code != 200
+        assert res.status_code == 401
 
     def test_orders_no_delete_unauthenticated(self):
         res = self.app.delete('/api/orders/1')
-        assert res.status_code != 200
+        assert res.status_code == 401
 
     def test_orders_state(self):
         self.login()
@@ -151,11 +151,11 @@ class APITest(OdieTestCase):
 
     def test_deposits_no_get_unauthenticated(self):
         res = self.app.get('/api/deposits')
-        assert res.status_code != 200
+        assert res.status_code == 401
 
     def test_deposits_no_delete_unauthenticated(self):
         res = self.app.delete('/api/deposits/1')
-        assert res.status_code != 200
+        assert res.status_code == 401
 
     def test_deposits_state(self):
         self.login()
