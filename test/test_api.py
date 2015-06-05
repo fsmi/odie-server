@@ -109,11 +109,15 @@ class APITest(OdieTestCase):
         assert res.status_code == 200
         self.logout()
 
-    def test_orders(self):
+    def test_orders_no_get_unauthenticated(self):
         res = self.app.get('/api/orders')
         assert res.status_code != 200
+
+    def test_orders_no_delete_unauthenticated(self):
         res = self.app.delete('/api/orders/1')
         assert res.status_code != 200
+
+    def test_orders_state(self):
         self.login()
         res = self.app.get('/api/orders')
         assert res.status_code == 200
@@ -144,6 +148,26 @@ class APITest(OdieTestCase):
         res = self.app.get('/api/orders')
         for order in self.fromJsonResponse(res):
             assert order['name'] != new_order_name
+
+    def test_deposits_no_get_unauthenticated(self):
+        res = self.app.get('/api/deposits')
+        assert res.status_code != 200
+
+    def test_deposits_no_delete_unauthenticated(self):
+        res = self.app.delete('/api/deposits/1')
+        assert res.status_code != 200
+
+    def test_deposits_state(self):
+        self.login()
+        res = self.app.get('/api/deposits')
+        assert res.status_code == 200
+        deposits = self.fromJsonResponse(res)
+        assert isinstance(deposits, list)
+        id_to_delete = random.choice(deposits)['id']
+        res = self.app.delete('/api/deposits/' + str(id_to_delete))
+        assert res.status_code == 200
+        for deposit in self.fromJsonResponse(self.app.get('/api/deposits')):
+            assert deposit['id'] != id_to_delete
 
 
 if __name__ == '__main__':
