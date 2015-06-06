@@ -15,6 +15,11 @@ from models.public import User
 from serialization_schemas import OrderLoadSchema, OrderDumpSchema, LectureSchema, LectureDocumentsSchema, DocumentSchema, ExaminantSchema, DepositSchema, PrintJobLoadSchema
 
 
+@app.route('/api/config')
+def get_config():
+    return jsonify(config.FS_CONFIG)
+
+
 @app.route('/api/login', methods=['POST'])
 def login():
     if not current_user.is_authenticated():

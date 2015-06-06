@@ -58,7 +58,7 @@ class Document(db.Model):
 
     @property
     def price(self):
-        return config.PRICE_PER_PAGE * self.number_of_pages
+        return config.FS_CONFIG['PRICE_PER_PAGE'] * self.number_of_pages
 
 
 
@@ -87,5 +87,5 @@ class Deposit(db.Model):
     price = Column(db.Integer)
     name = Column(db.String)
     by_user = Column(db.String)
-    date = Column(db.DateTime)
+    date = Column(db.DateTime, server_default=db.func.now())
     lectures = db.relationship('Lecture', secondary=depositLectures)

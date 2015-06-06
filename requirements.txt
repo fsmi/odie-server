@@ -1,4 +1,5 @@
 jsonquery
+psycopg2
 Flask-SQLAlchemy
 Flask-Login
 marshmallow
