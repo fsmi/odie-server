@@ -2,4 +2,5 @@ jsonquery
 psycopg2
 Flask-SQLAlchemy
 Flask-Login
+Flask-CORS
 marshmallow

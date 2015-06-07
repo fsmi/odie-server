@@ -1,23 +1,21 @@
 #! /usr/bin/env python3
 
-import odie
 import config
-import json
 
-from flask import request, jsonify
+from flask import request
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
-from odie import app, db
-from apigen import login_required_for_methods, collection_endpoint, instance_endpoint
+from odie import app, ClientError
+from apigen import collection_endpoint, instance_endpoint
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
 from models.public import User
-from serialization_schemas import OrderLoadSchema, OrderDumpSchema, LectureSchema, LectureDocumentsSchema, DocumentSchema, ExaminantSchema, DepositSchema, PrintJobLoadSchema
+from serialization_schemas import serialize, OrderLoadSchema, OrderDumpSchema, LectureSchema, DocumentSchema, ExaminantSchema, DepositSchema, PrintJobLoadSchema
 
 
 @app.route('/api/config')
 def get_config():
-    return jsonify(config.FS_CONFIG)
+    return config.FS_CONFIG
 
 
 @app.route('/api/login', methods=['POST'])
@@ -27,22 +25,22 @@ def login():
             json = request.get_json(force=True)  # ignore Content-Type
             user = User.authenticate(json['username'], json['password'])
             if not user:
-                return ("invalid login", 401, [])
+                raise ClientError("invalid login", status=401)
             login_user(user)
         except KeyError:
-            return ("malformed request", 400, [])
-    return jsonify({
+            raise ClientError("malformed request")
+    return {
             'user': current_user.username,
             'firstName': current_user.first_name,
             'lastName': current_user.last_name
-        })
+        }
 
 
 @app.route('/api/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
-    return "ok"
+    return {}
 
 
 @app.route('/api/print', methods=['POST'])
@@ -50,9 +48,9 @@ def logout():
 def print_documents():
     printjob, errors = PrintJobLoadSchema().load(data=request.get_json(force=True))
     if errors:
-        return (str(errors), 400, [])
+        raise ClientError(*errors)
     try:
-        documents = [Document.query.get(i) for i in printjob['documents']]
+        documents = [Document.query.get(id) for id in printjob['document_ids']]
         assert printjob['depositCount'] >= 0
         price = sum(doc.price for doc in documents)
         # round up to next 10 cents
@@ -60,7 +58,7 @@ def print_documents():
 
         if config.FlaskConfig.DEBUG:
             print("PRINTING DOCS {docs} FOR {coverText}: PRICE {price} + {depcount} * DEPOSIT".format(
-                docs=printjob['documents'],
+                docs=printjob['document_ids'],
                 coverText=printjob['coverText'],
                 price=price,
                 depcount=printjob['depositCount']))
@@ -68,27 +66,23 @@ def print_documents():
             #  TODO actual implementation of printing and accounting
             print("PC LOAD LETTER")
 
-        return "ok"
+        return {}
     except (ValueError, KeyError):
-        return ("malformed request", 400, [])
-
-
-def dumpSchema(schema, many=False):
-    return lambda obj: schema().dumps(obj, many).data
+        raise ClientError("malformed request")
 
 
 collection_endpoint(
         url='/api/orders',
-        serdes={
-            'GET': dumpSchema(OrderDumpSchema, many=True),
-            'POST': OrderLoadSchema().make_object
+        schemas={
+            'GET': OrderDumpSchema,
+            'POST': OrderLoadSchema
         },
         model=Order,
         auth_methods=['GET'])
 
 instance_endpoint(
         url='/api/orders/<int:instance_id>',
-        serializer= dumpSchema(OrderDumpSchema),
+        schema=OrderDumpSchema,
         model=Order,
         methods=['GET', 'DELETE'],
         auth_methods=['GET', 'DELETE'])
@@ -96,30 +90,35 @@ instance_endpoint(
 
 collection_endpoint(
         url='/api/lectures',
-        serdes={'GET': dumpSchema(LectureSchema, many=True)},
+        schemas={'GET': LectureSchema},
         model=Lecture)
 
-instance_endpoint(
-        url='/api/lectures/<int:instance_id>',
-        serializer=dumpSchema(LectureDocumentsSchema),
-        model=Lecture)
-
-
-collection_endpoint(
-        url='/api/documents',
-        serdes={'GET': dumpSchema(DocumentSchema, many=True)},
-        model=Document)
+@app.route('/api/lectures/<int:id>/documents')
+def lecture_documents(id):
+    lecture = Lecture.query.get(id)
+    return serialize(lecture.documents, DocumentSchema, many=True)
 
 
 collection_endpoint(
         url='/api/examinants',
-        serdes={'GET': dumpSchema(ExaminantSchema, many=True)},
+        schemas={'GET': ExaminantSchema},
         model=Examinant)
+
+@app.route('/api/examinants/<int:id>/documents')
+def examinant_documents(id):
+    examinant = Examinant.query.get(id)
+    return serialize(examinant.documents, DocumentSchema, many=True)
+
+
+collection_endpoint(
+        url='/api/documents',
+        schemas={'GET': DocumentSchema},
+        model=Document)
 
 
 collection_endpoint(
         url='/api/deposits',
-        serdes={'GET': dumpSchema(DepositSchema, many=True)},
+        schemas={'GET': DepositSchema},
         model=Deposit,
         auth_methods=['GET'])
 
