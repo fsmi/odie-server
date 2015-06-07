@@ -7,7 +7,7 @@ import json
 from flask import request, jsonify
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
-from odie import app, db
+from odie import app, db, ClientError
 from apigen import login_required_for_methods, collection_endpoint, instance_endpoint
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
@@ -17,7 +17,7 @@ from serialization_schemas import OrderLoadSchema, OrderDumpSchema, LectureSchem
 
 @app.route('/api/config')
 def get_config():
-    return jsonify(config.FS_CONFIG)
+    return config.FS_CONFIG
 
 
 @app.route('/api/login', methods=['POST'])
@@ -27,22 +27,22 @@ def login():
             json = request.get_json(force=True)  # ignore Content-Type
             user = User.authenticate(json['username'], json['password'])
             if not user:
-                return ("invalid login", 401, [])
+                raise ClientError("invalid login", status=401)
             login_user(user)
         except KeyError:
-            return ("malformed request", 400, [])
-    return jsonify({
+            raise ClientError("malformed request")
+    return {
             'user': current_user.username,
             'firstName': current_user.first_name,
             'lastName': current_user.last_name
-        })
+        }
 
 
 @app.route('/api/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
-    return "ok"
+    return {}
 
 
 @app.route('/api/print', methods=['POST'])
@@ -50,7 +50,7 @@ def logout():
 def print_documents():
     printjob, errors = PrintJobLoadSchema().load(data=request.get_json(force=True))
     if errors:
-        return (str(errors), 400, [])
+        raise ClientError(*errors)
     try:
         documents = [Document.query.get(i) for i in printjob['documents']]
         assert printjob['depositCount'] >= 0
@@ -68,13 +68,13 @@ def print_documents():
             #  TODO actual implementation of printing and accounting
             print("PC LOAD LETTER")
 
-        return "ok"
+        return {}
     except (ValueError, KeyError):
-        return ("malformed request", 400, [])
+        raise ClientError("malformed request")
 
 
 def dumpSchema(schema, many=False):
-    return lambda obj: schema().dumps(obj, many).data
+    return lambda obj: schema().dump(obj, many).data
 
 
 collection_endpoint(

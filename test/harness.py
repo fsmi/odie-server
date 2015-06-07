@@ -12,7 +12,7 @@ ODIE_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
 class OdieTestCase(unittest.TestCase):
 
     def fromJsonResponse(self, response):
-        return json.loads(response.data.decode('utf-8'))
+        return json.loads(response.data.decode('utf-8'))['data']
 
     def logout(self):
         return self.app.post('/api/logout')

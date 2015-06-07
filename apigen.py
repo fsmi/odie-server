@@ -2,7 +2,7 @@
 
 import json
 
-from odie import app, db
+from odie import app, db, ClientError
 
 from functools import wraps
 from flask import request
@@ -42,7 +42,7 @@ def instance_endpoint(url, model, serializer=None, methods=['GET'], auth_methods
             obj = model.query.get(instance_id)
             db.session.delete(obj)
             db.session.commit()
-            return "ok"
+            return {}
         raise NotImplementedError
 
     # flask requires route names and routed urls to be unique. We can use that here.
@@ -68,9 +68,9 @@ def collection_endpoint(url, serdes, model, auth_methods=[]):
                 obj = serdes['POST'](data=request.get_json(force=True))
                 db.session.add(obj)
                 db.session.commit()
-                return "ok"
+                return {}
             except (ValueError, ValidationError):
-                return ("failed to parse json", 400, [])
+                ClientError("failed to parse json")
         if request.method == 'GET':
             q = json.loads(request.args.get('q', '{}'))
             query = jsonquery(db.session, model, q) if q else model.query
