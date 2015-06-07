@@ -20,14 +20,15 @@ def serialize(data, schema, many=False):
 class IdSchema(Schema):
     id = fields.Int()
 
+
 class DocumentSchema(IdSchema):
-    lectures = fields.List(fields.Str())
-    examinants = fields.List(fields.Int(), attribute='examinants_ids')
+    lectures = fields.List(fields.Nested(IdSchema))
+    examinants = fields.List(fields.Nested(IdSchema))
     date = fields.Date()
     number_of_pages = fields.Int()
     solution = fields.Str()
     comment = fields.Str()
-    documentType = fields.Str(attribute='document_type')
+    document_type = fields.Str()
     available = fields.Method('is_available_for_printing')
 
     def is_available_for_printing(self, obj):
@@ -40,14 +41,11 @@ class ExaminantSchema(IdSchema):
 
 class OrderLoadSchema(IdSchema):
     name = fields.Str(required=True)
-    creation_time = fields.Date()
-    # list of document ids
-    documents = fields.List(fields.Int(), required=True)
+    document_ids = fields.List(fields.Int(), required=True)
 
     def make_object(self, data):
         return Order(name=data['name'],
-                     creation_time=time.now(),
-                     document_ids=data['documents'])
+                     document_ids=data['document_ids'])
 
 
 class OrderDumpSchema(OrderLoadSchema):
@@ -60,9 +58,6 @@ class LectureSchema(IdSchema):
     subject = fields.Str()
     comment = fields.Str()
 
-class LectureDocumentsSchema(LectureSchema):
-    documents = fields.List(fields.Nested(DocumentSchema))
-
 
 class DepositSchema(IdSchema):
     price = fields.Int()
@@ -72,7 +67,7 @@ class DepositSchema(IdSchema):
 
 class PrintJobLoadSchema(Schema):
     coverText = fields.Str(required=True)
-    documents = fields.List(fields.Int(), required=True)
+    document_ids = fields.List(fields.Int(), required=True)
     depositCount = fields.Int(required=True)
     printer = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['PRINTERS'])
 

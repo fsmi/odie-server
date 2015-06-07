@@ -53,10 +53,6 @@ class Document(db.Model):
         return [ex.name for ex in self.examinants]
 
     @property
-    def examinants_ids(self):
-        return [ex.id for ex in self.examinants]
-
-    @property
     def price(self):
         return config.FS_CONFIG['PRICE_PER_PAGE'] * self.number_of_pages
 

@@ -1,18 +1,16 @@
 #! /usr/bin/env python3
 
-import odie
 import config
-import json
 
-from flask import request, jsonify
+from flask import request
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
-from odie import app, db, ClientError
-from apigen import login_required_for_methods, collection_endpoint, instance_endpoint
+from odie import app, ClientError
+from apigen import collection_endpoint, instance_endpoint
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
 from models.public import User
-from serialization_schemas import OrderLoadSchema, OrderDumpSchema, LectureSchema, LectureDocumentsSchema, DocumentSchema, ExaminantSchema, DepositSchema, PrintJobLoadSchema
+from serialization_schemas import serialize, OrderLoadSchema, OrderDumpSchema, LectureSchema, DocumentSchema, ExaminantSchema, DepositSchema, PrintJobLoadSchema
 
 
 @app.route('/api/config')
@@ -52,7 +50,7 @@ def print_documents():
     if errors:
         raise ClientError(*errors)
     try:
-        documents = [Document.query.get(i) for i in printjob['documents']]
+        documents = [Document.query.get(id) for id in printjob['document_ids']]
         assert printjob['depositCount'] >= 0
         price = sum(doc.price for doc in documents)
         # round up to next 10 cents
@@ -60,7 +58,7 @@ def print_documents():
 
         if config.FlaskConfig.DEBUG:
             print("PRINTING DOCS {docs} FOR {coverText}: PRICE {price} + {depcount} * DEPOSIT".format(
-                docs=printjob['documents'],
+                docs=printjob['document_ids'],
                 coverText=printjob['coverText'],
                 price=price,
                 depcount=printjob['depositCount']))
@@ -95,16 +93,21 @@ collection_endpoint(
         schemas={'GET': LectureSchema},
         model=Lecture)
 
-instance_endpoint(
-        url='/api/lectures/<int:instance_id>',
-        schemas=dumpSchema(LectureDocumentsSchema),
-        model=Lecture)
+@app.route('/api/lectures/<int:id>/documents')
+def lecture_documents(id):
+    lecture = Lecture.query.get(id)
+    return serialize(lecture.documents, DocumentSchema, many=True)
 
 
 collection_endpoint(
         url='/api/examinants',
         schemas={'GET': ExaminantSchema},
         model=Examinant)
+
+@app.route('/api/examinants/<int:id>/documents')
+def examinant_documents(id):
+    examinant = Examinant.query.get(id)
+    return serialize(examinant.documents, DocumentSchema, many=True)
 
 
 collection_endpoint(

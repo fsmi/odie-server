@@ -13,7 +13,7 @@ class APITest(OdieTestCase):
 
     VALID_PRINTJOB = {
             'coverText': 'Klausuren',
-            'documents': [1,2,2],
+            'document_ids': [1,2,2],
             'depositCount': 1,
             'printer': 'external'
         }
@@ -55,11 +55,11 @@ class APITest(OdieTestCase):
         lecture = random.choice(data)
         self.validate_lecture(lecture)
 
-        res = self.app.get('/api/lectures/' + str(random.randint(1,len(data))))
-        lecture = self.fromJsonResponse(res)
-        self.validate_lecture(lecture)
-        assert 'documents' in lecture and isinstance(lecture['documents'], list)
-        self.validate_document(random.choice(lecture['documents']))
+    def test_get_lecture_documents(self):
+        res = self.app.get('/api/lectures/1/documents')
+        documents = self.fromJsonResponse(res)
+        for doc in documents:
+            self.validate_document(doc)
 
     def test_get_documents(self):
         res = self.app.get('/api/documents')
@@ -106,6 +106,7 @@ class APITest(OdieTestCase):
     def test_print(self):
         self.login()
         res = self.app.post('api/print', data=json.dumps(self.VALID_PRINTJOB))
+        self.fromJsonResponse(res)
         assert res.status_code == 200
         self.logout()
 
@@ -120,20 +121,21 @@ class APITest(OdieTestCase):
     def test_orders_state(self):
         self.login()
         res = self.app.get('/api/orders')
-        assert res.status_code == 200
         orders = self.fromJsonResponse(res)
+        assert res.status_code == 200
         assert isinstance(orders, list)
         new_order_name = "a747b53e0d942681791b"
         for order in orders:
             assert new_order_name != order['name']
         new_order = {
                 'name': new_order_name,
-                'documents': [1],
+                'document_ids': [1],
             }
 
         # ensure POSTing orders is available when not logged in
         self.logout()
         res = self.app.post('/api/orders', data=json.dumps(new_order))
+        self.fromJsonResponse(res)
         assert res.status_code == 200
         self.login()
 
