@@ -12,6 +12,11 @@ app = Flask("odie")
 
 app.config.from_object('config.FlaskConfig')
 
+if app.config['DEBUG']:
+    # allow requests from default broccoli server port
+    from flask.ext.cors import CORS
+    CORS(app, origins=['http://localhost:4200'], supports_credentials=True)
+
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.setup_app(app)
