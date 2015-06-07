@@ -3,6 +3,7 @@
 import json
 
 from odie import app, db, ClientError
+from serialization_schemas import serialize
 
 from functools import wraps
 from flask import request
@@ -27,7 +28,7 @@ def login_required_for_methods(methods):
     return _decorator
 
 
-def instance_endpoint(url, model, serializer=None, methods=['GET'], auth_methods=[]):
+def instance_endpoint(url, model, schema=None, methods=['GET'], auth_methods=[]):
     """Creates an endpoint for single instance requests (e.g. /api/endpoint/1)
 
     Currently only handles GET and DELETE requests.
@@ -37,7 +38,7 @@ def instance_endpoint(url, model, serializer=None, methods=['GET'], auth_methods
     def route(instance_id):
         if request.method == 'GET':
             result = model.query.get(instance_id)
-            return serializer(result)
+            return serialize(result, schema)
         if request.method == 'DELETE':
             obj = model.query.get(instance_id)
             db.session.delete(obj)
@@ -50,7 +51,7 @@ def instance_endpoint(url, model, serializer=None, methods=['GET'], auth_methods
     app.route(url, methods=methods)(route)
 
 
-def collection_endpoint(url, serdes, model, auth_methods=[]):
+def collection_endpoint(url, schemas, model, auth_methods=[]):
     """Creates an endpoint for collection requests (e.g. /api/endpoint)
 
     Currently only handles GET and POST requests.
@@ -63,24 +64,28 @@ def collection_endpoint(url, serdes, model, auth_methods=[]):
     @login_required_for_methods(auth_methods)
     def route():
         if request.method == 'POST':
+            assert 'POST' in schemas, "POST schema missing"
             try:
-                assert 'POST' in serdes, "deserializer missing"
-                obj = serdes['POST'](data=request.get_json(force=True))
-                db.session.add(obj)
-                db.session.commit()
-                return {}
+                (obj, errors) = schemas['POST']().load(request.get_json(force=True))
+                if errors:
+                    raise ClientError(*errors)
+                else:
+                    db.session.add(obj)
+                    db.session.commit()
+                    return {}
             except (ValueError, ValidationError):
-                ClientError("failed to parse json")
+                raise ClientError("failed to parse json")
         if request.method == 'GET':
+            assert 'GET' in schemas, "GET schema missing"
+            schema = schemas['GET']
             q = json.loads(request.args.get('q', '{}'))
             query = jsonquery(db.session, model, q) if q else model.query
             result = query.all()
-            assert 'GET' in serdes, "serializer missing"
-            return serdes['GET'](result)
+            return serialize(result, schema, many=True)
         raise NotImplementedError
 
     # flask requires route names and routed urls to be unique. We can use that here.
     route.__name__ = url
-    app.route(url, methods=serdes.keys())(route)
+    app.route(url, methods=schemas.keys())(route)
 
 

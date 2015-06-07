@@ -6,6 +6,15 @@ from marshmallow import Schema, fields
 import config
 from models.documents import Document
 from models.odie import Order
+from odie import ClientError
+
+
+def serialize(data, schema, many=False):
+    res = schema().dump(data, many)
+    if res.errors:
+        raise ClientError(*res.errors)
+    else:
+        return res.data
 
 
 class IdSchema(Schema):

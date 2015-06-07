@@ -73,22 +73,18 @@ def print_documents():
         raise ClientError("malformed request")
 
 
-def dumpSchema(schema, many=False):
-    return lambda obj: schema().dump(obj, many).data
-
-
 collection_endpoint(
         url='/api/orders',
-        serdes={
-            'GET': dumpSchema(OrderDumpSchema, many=True),
-            'POST': OrderLoadSchema().make_object
+        schemas={
+            'GET': OrderDumpSchema,
+            'POST': OrderLoadSchema
         },
         model=Order,
         auth_methods=['GET'])
 
 instance_endpoint(
         url='/api/orders/<int:instance_id>',
-        serializer= dumpSchema(OrderDumpSchema),
+        schema=OrderDumpSchema,
         model=Order,
         methods=['GET', 'DELETE'],
         auth_methods=['GET', 'DELETE'])
@@ -96,30 +92,30 @@ instance_endpoint(
 
 collection_endpoint(
         url='/api/lectures',
-        serdes={'GET': dumpSchema(LectureSchema, many=True)},
+        schemas={'GET': LectureSchema},
         model=Lecture)
 
 instance_endpoint(
         url='/api/lectures/<int:instance_id>',
-        serializer=dumpSchema(LectureDocumentsSchema),
+        schemas=dumpSchema(LectureDocumentsSchema),
         model=Lecture)
 
 
 collection_endpoint(
-        url='/api/documents',
-        serdes={'GET': dumpSchema(DocumentSchema, many=True)},
-        model=Document)
-
-
-collection_endpoint(
         url='/api/examinants',
-        serdes={'GET': dumpSchema(ExaminantSchema, many=True)},
+        schemas={'GET': ExaminantSchema},
         model=Examinant)
 
 
 collection_endpoint(
+        url='/api/documents',
+        schemas={'GET': DocumentSchema},
+        model=Document)
+
+
+collection_endpoint(
         url='/api/deposits',
-        serdes={'GET': dumpSchema(DepositSchema, many=True)},
+        schemas={'GET': DepositSchema},
         model=Deposit,
         auth_methods=['GET'])
 
