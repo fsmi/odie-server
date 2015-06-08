@@ -72,3 +72,13 @@ class PrintJobLoadSchema(Schema):
     deposit_count = fields.Int(required=True)
     printer = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['PRINTERS'])
 
+
+class DonationLoadSchema(Schema):
+    amount = fields.Int(required=True, validate=lambda i: i > 0)
+    cash_box = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['CASH_BOXES'])
+
+
+class ErroneousSaleLoadSchema(Schema):
+    amount = fields.Int(required=True, validate=lambda i: i > 0)
+    cash_box = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['CASH_BOXES'])
+

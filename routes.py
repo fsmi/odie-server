@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import config
+import serialization_schemas as serdes
 
 from flask import request
 from flask.ext.login import login_user, logout_user, current_user, login_required
@@ -10,7 +11,6 @@ from apigen import collection_endpoint, instance_endpoint
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
 from models.public import User
-from serialization_schemas import serialize, OrderLoadSchema, OrderDumpSchema, LectureSchema, DocumentSchema, ExaminantSchema, DepositSchema, PrintJobLoadSchema
 
 
 @app.route('/api/config')
@@ -42,11 +42,41 @@ def logout():
     logout_user()
     return {}
 
+def _lectures(documents):
+    # gets unique list of lectures associated with list of documents
+    # rather inefficient, does O(len(documents)) queries
+    lects = []
+    for doc in documents:
+        lects.extend(Lecture.query.filter(Lecture.documents.contains(doc)).all())
+    return list({lect.id: lect for lect in lects}.values())
+
+
+@app.route('/api/donation', methods=['POST'])
+@login_required
+def accept_donation():
+    donation, errors = serdes.DonationLoadSchema().load(data=request.get_json(force=True))
+    if errors:
+        raise ClientError(*errors)
+    accounting.log_donation(donation['amount'], donation['cash_box'])
+    db.session.commit()
+    return {}
+
+
+@app.route('/api/log_erroneous_sale', methods=['POST'])
+@login_required
+def accept_erroneous_sale():
+    donation, errors = serdes.ErroneousSaleLoadSchema().load(data=request.get_json(force=True))
+    if errors:
+        raise ClientError(*errors)
+    accounting.log_erroneous_sale(donation['amount'], current_user, donation['cash_box'])
+    db.session.commit()
+    return {}
+
 
 @app.route('/api/print', methods=['POST'])
 @login_required
 def print_documents():
-    printjob, errors = PrintJobLoadSchema().load(data=request.get_json(force=True))
+    printjob, errors = serdes.PrintJobLoadSchema().load(data=request.get_json(force=True))
     if errors:
         raise ClientError(*errors)
     try:
@@ -74,8 +104,9 @@ def print_documents():
                         lectures=_lectures(documents))
                 db.session.add(dep)
                 accounting.log_deposit(dep, current_user, printjob['cash_box'])
-            num_pages = sum(doc.number_of_pages for doc in documents)
-            accounting.log_exam_sale(num_pages, price, current_user, printjob['cash_box'])
+            if documents:
+                num_pages = sum(doc.number_of_pages for doc in documents)
+                accounting.log_exam_sale(num_pages, price, current_user, printjob['cash_box'])
             db.session.commit()
         return {}
     except (ValueError, KeyError):
@@ -85,15 +116,15 @@ def print_documents():
 collection_endpoint(
         url='/api/orders',
         schemas={
-            'GET': OrderDumpSchema,
-            'POST': OrderLoadSchema
+            'GET': serdes.OrderDumpSchema,
+            'POST': serdes.OrderLoadSchema
         },
         model=Order,
         auth_methods=['GET'])
 
 instance_endpoint(
         url='/api/orders/<int:instance_id>',
-        schema=OrderDumpSchema,
+        schema=serdes.OrderDumpSchema,
         model=Order,
         methods=['GET', 'DELETE'],
         auth_methods=['GET', 'DELETE'])
@@ -101,35 +132,35 @@ instance_endpoint(
 
 collection_endpoint(
         url='/api/lectures',
-        schemas={'GET': LectureSchema},
+        schemas={'GET': serdes.LectureSchema},
         model=Lecture)
 
 @app.route('/api/lectures/<int:id>/documents')
 def lecture_documents(id):
     lecture = Lecture.query.get(id)
-    return serialize(lecture.documents, DocumentSchema, many=True)
+    return serdes.serialize(lecture.documents, serdes.DocumentSchema, many=True)
 
 
 collection_endpoint(
         url='/api/examinants',
-        schemas={'GET': ExaminantSchema},
+        schemas={'GET': serdes.ExaminantSchema},
         model=Examinant)
 
 @app.route('/api/examinants/<int:id>/documents')
 def examinant_documents(id):
     examinant = Examinant.query.get(id)
-    return serialize(examinant.documents, DocumentSchema, many=True)
+    return serdes.serialize(examinant.documents, serdes.DocumentSchema, many=True)
 
 
 collection_endpoint(
         url='/api/documents',
-        schemas={'GET': DocumentSchema},
+        schemas={'GET': serdes.DocumentSchema},
         model=Document)
 
 
 collection_endpoint(
         url='/api/deposits',
-        schemas={'GET': DepositSchema},
+        schemas={'GET': serdes.DepositSchema},
         model=Deposit,
         auth_methods=['GET'])
 
