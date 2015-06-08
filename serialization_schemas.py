@@ -48,7 +48,8 @@ class OrderLoadSchema(IdSchema):
                      document_ids=data['document_ids'])
 
 
-class OrderDumpSchema(OrderLoadSchema):
+class OrderDumpSchema(IdSchema):
+    name = fields.Str(required=True)
     documents = fields.List(fields.Nested(DocumentSchema))
 
 
@@ -68,6 +69,6 @@ class DepositSchema(IdSchema):
 class PrintJobLoadSchema(Schema):
     coverText = fields.Str(required=True)
     document_ids = fields.List(fields.Int(), required=True)
-    depositCount = fields.Int(required=True)
+    deposit_count = fields.Int(required=True)
     printer = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['PRINTERS'])
 

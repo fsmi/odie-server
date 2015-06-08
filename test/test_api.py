@@ -14,8 +14,9 @@ class APITest(OdieTestCase):
     VALID_PRINTJOB = {
             'coverText': 'Klausuren',
             'document_ids': [1,2,2],
-            'depositCount': 1,
-            'printer': 'external'
+            'deposit_count': 1,
+            'printer': 'external',
+            'cash_box': 'Sprechstundenkasse Informatik',
         }
 
     def login(self, user=VALID_USER, password=VALID_PASS):

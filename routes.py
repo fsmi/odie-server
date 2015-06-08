@@ -5,7 +5,7 @@ import config
 from flask import request
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
-from odie import app, ClientError
+from odie import app, db, ClientError
 from apigen import collection_endpoint, instance_endpoint
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
@@ -51,7 +51,7 @@ def print_documents():
         raise ClientError(*errors)
     try:
         documents = [Document.query.get(id) for id in printjob['document_ids']]
-        assert printjob['depositCount'] >= 0
+        assert printjob['deposit_count'] >= 0
         price = sum(doc.price for doc in documents)
         # round up to next 10 cents
         price = 10 * (price/10 + (1 if price % 10 else 0))
@@ -61,11 +61,22 @@ def print_documents():
                 docs=printjob['document_ids'],
                 coverText=printjob['coverText'],
                 price=price,
-                depcount=printjob['depositCount']))
+                depcount=printjob['deposit_count']))
         else:
             #  TODO actual implementation of printing and accounting
             print("PC LOAD LETTER")
 
+            for _ in range(printjob['deposit_count']):
+                dep = Deposit(
+                        price=config.FS_CONFIG['DEPOSIT_PRICE'],
+                        name=printjob['student_name'],
+                        by_user=current_user.first_name + ' ' + current_user.last_name,
+                        lectures=_lectures(documents))
+                db.session.add(dep)
+                accounting.log_deposit(dep, current_user, printjob['cash_box'])
+            num_pages = sum(doc.number_of_pages for doc in documents)
+            accounting.log_exam_sale(num_pages, price, current_user, printjob['cash_box'])
+            db.session.commit()
         return {}
     except (ValueError, KeyError):
         raise ClientError("malformed request")
