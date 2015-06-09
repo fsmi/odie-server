@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+import accounting
+import apigen
 import config
 import serialization_schemas as serdes
 
@@ -7,7 +9,6 @@ from flask import request
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
 from odie import app, db, ClientError
-from apigen import collection_endpoint, instance_endpoint
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
 from models.public import User
@@ -51,28 +52,6 @@ def _lectures(documents):
     return list({lect.id: lect for lect in lects}.values())
 
 
-@app.route('/api/donation', methods=['POST'])
-@login_required
-def accept_donation():
-    donation, errors = serdes.DonationLoadSchema().load(data=request.get_json(force=True))
-    if errors:
-        raise ClientError(*errors)
-    accounting.log_donation(donation['amount'], donation['cash_box'])
-    db.session.commit()
-    return {}
-
-
-@app.route('/api/log_erroneous_sale', methods=['POST'])
-@login_required
-def accept_erroneous_sale():
-    donation, errors = serdes.ErroneousSaleLoadSchema().load(data=request.get_json(force=True))
-    if errors:
-        raise ClientError(*errors)
-    accounting.log_erroneous_sale(donation['amount'], current_user, donation['cash_box'])
-    db.session.commit()
-    return {}
-
-
 @app.route('/api/print', methods=['POST'])
 @login_required
 def print_documents():
@@ -113,7 +92,39 @@ def print_documents():
         raise ClientError("malformed request")
 
 
-collection_endpoint(
+@app.route('/api/log_erroneous_sale', methods=['POST'])
+@login_required
+def accept_erroneous_sale():
+    data, errors = serdes.ErroneousSaleLoadSchema().load(data=request.get_json(force=True))
+    if errors:
+        raise ClientError(*errors)
+    accounting.log_erroneous_sale(data['amount'], current_user, data['cash_box'])
+    db.session.commit()
+    return {}
+
+
+@app.route('/api/log_deposit_return', methods=['POST'])
+@login_required
+def log_deposit_return():
+    (obj, errors) = serdes.DepositLoadSchema().load(request.get_json(force=True))
+    if errors:
+        raise ClientError(*errors)
+    dep = Deposit.query.get(obj['id'])
+    db.session.delete(obj)
+    accounting.log_deposit_return(dep, current_user, obj['cash_box'])
+    db.session.commit()
+    return {}
+
+
+apigen.endpoint(
+        url='/api/donation',
+        model=None,
+        schemas={'POST': serdes.DonationLoadSchema},
+        auth_methods=['POST'],
+        callback=lambda obj: accounting.log_donation(obj['amount'], obj['cash_box']))
+
+
+apigen.endpoint(
         url='/api/orders',
         schemas={
             'GET': serdes.OrderDumpSchema,
@@ -122,15 +133,15 @@ collection_endpoint(
         model=Order,
         auth_methods=['GET'])
 
-instance_endpoint(
+apigen.endpoint(
         url='/api/orders/<int:instance_id>',
-        schema=serdes.OrderDumpSchema,
+        schemas={'GET': serdes.OrderDumpSchema},
         model=Order,
-        methods=['GET', 'DELETE'],
+        additional_methods=['DELETE'],
         auth_methods=['GET', 'DELETE'])
 
 
-collection_endpoint(
+apigen.endpoint(
         url='/api/lectures',
         schemas={'GET': serdes.LectureSchema},
         model=Lecture)
@@ -141,7 +152,7 @@ def lecture_documents(id):
     return serdes.serialize(lecture.documents, serdes.DocumentSchema, many=True)
 
 
-collection_endpoint(
+apigen.endpoint(
         url='/api/examinants',
         schemas={'GET': serdes.ExaminantSchema},
         model=Examinant)
@@ -152,20 +163,14 @@ def examinant_documents(id):
     return serdes.serialize(examinant.documents, serdes.DocumentSchema, many=True)
 
 
-collection_endpoint(
+apigen.endpoint(
         url='/api/documents',
         schemas={'GET': serdes.DocumentSchema},
         model=Document)
 
 
-collection_endpoint(
+apigen.endpoint(
         url='/api/deposits',
-        schemas={'GET': serdes.DepositSchema},
+        schemas={'GET': serdes.DepositDumpSchema},
         model=Deposit,
         auth_methods=['GET'])
-
-instance_endpoint(
-        url='/api/deposits/<int:instance_id>',
-        model=Deposit,
-        methods=['DELETE'],
-        auth_methods=['DELETE'])

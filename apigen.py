@@ -28,64 +28,64 @@ def login_required_for_methods(methods):
     return _decorator
 
 
-def instance_endpoint(url, model, schema=None, methods=['GET'], auth_methods=[]):
-    """Creates an endpoint for single instance requests (e.g. /api/endpoint/1)
+def endpoint(url, model, schemas={}, auth_methods=[], additional_methods=[], callback=lambda *_1, **_2: None):
+    """Creates an API endpoint
 
-    Currently only handles GET and DELETE requests.
-    url must specify a single URL parameter which is an int called `instance_id`.
+    Can create both SINGLE-style and MANY-style endpoints. The generated route simply
+    differentiates between the two cases through the presence/absence of an instance_id
+    parameter in the url.
+
+    schemas: dictionary of serializers/deserializers.
+            These keys also define permissible methods.
+    model: The db.Model to query. Mustn't be None for GET-enabled endpoints
+    additional_methods: additional methods to register. Useful in the case of DELETE,
+            which obviously doesn't need a serializer.
+    callback: callback to call before committing. The object relevant to the request
+            is given as parameter (e.g. the deserialized object POSTed)
+            Note: the session is not committed after GET requests, so the callback
+            will have to handle that as needed.
     """
+
     @login_required_for_methods(auth_methods)
-    def route(instance_id):
-        if request.method == 'GET':
-            result = model.query.get(instance_id)
-            return serialize(result, schema)
+    def route(instance_id=None):
         if request.method == 'DELETE':
             obj = model.query.get(instance_id)
             db.session.delete(obj)
+            callback(obj)
             db.session.commit()
             return {}
-        raise NotImplementedError
-
-    # flask requires route names and routed urls to be unique. We can use that here.
-    route.__name__ = url
-    app.route(url, methods=methods)(route)
-
-
-def collection_endpoint(url, schemas, model, auth_methods=[]):
-    """Creates an endpoint for collection requests (e.g. /api/endpoint)
-
-    Currently only handles GET and POST requests.
-
-    serdes: dictionary of serializers/deserializers.
-            These keys also define permissible methods.
-    model: The db.Model to query. Mustn't be None for GET-enabled endpoints
-    """
-
-    @login_required_for_methods(auth_methods)
-    def route():
         if request.method == 'POST':
             assert 'POST' in schemas, "POST schema missing"
             try:
                 (obj, errors) = schemas['POST']().load(request.get_json(force=True))
                 if errors:
                     raise ClientError(*errors)
-                else:
+                if model:
                     db.session.add(obj)
-                    db.session.commit()
-                    return {}
+                callback(obj)
+                db.session.commit()
+                return {}
             except (ValueError, ValidationError):
                 raise ClientError("failed to parse json")
-        if request.method == 'GET':
+        if request.method == 'GET' and instance_id is None:  # GET MANY
             assert 'GET' in schemas, "GET schema missing"
             schema = schemas['GET']
             q = json.loads(request.args.get('q', '{}'))
             query = jsonquery(db.session, model, q) if q else model.query
             result = query.all()
-            return serialize(result, schema, many=True)
+            obj =  serialize(result, schema, many=True)
+            callback(obj)
+            return obj
+        if request.method == 'GET'and instance_id is not None:  # GET SINGLE
+            result = model.query.get(instance_id)
+            obj = serialize(result, schema)
+            callback(obj)
+            return obj
         raise NotImplementedError
 
     # flask requires route names and routed urls to be unique. We can use that here.
-    route.__name__ = url
-    app.route(url, methods=schemas.keys())(route)
+    methods = list(schemas.keys()) + additional_methods
+    route.__name__ = ':'.join(methods) + url
+    app.route(url, methods=methods)(route)
 
 

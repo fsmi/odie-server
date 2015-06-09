@@ -18,7 +18,7 @@ def serialize(data, schema, many=False):
 
 
 class IdSchema(Schema):
-    id = fields.Int()
+    id = fields.Int(required=True)
 
 
 class DocumentSchema(IdSchema):
@@ -60,10 +60,14 @@ class LectureSchema(IdSchema):
     comment = fields.Str()
 
 
-class DepositSchema(IdSchema):
+class DepositDumpSchema(IdSchema):
     price = fields.Int()
     name = fields.Str()
     lectures = fields.List(fields.Str())
+
+
+class DepositLoadSchema(IdSchema):
+    cash_box = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['CASH_BOXES'])
 
 
 class PrintJobLoadSchema(Schema):
