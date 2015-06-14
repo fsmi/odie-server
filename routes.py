@@ -110,7 +110,7 @@ def log_deposit_return():
     if errors:
         raise ClientError(*errors)
     dep = Deposit.query.get(obj['id'])
-    db.session.delete(obj)
+    db.session.delete(dep)
     accounting.log_deposit_return(dep, current_user, obj['cash_box'])
     db.session.commit()
     return {}

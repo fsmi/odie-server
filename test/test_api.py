@@ -10,13 +10,19 @@ from test.harness import OdieTestCase
 class APITest(OdieTestCase):
     VALID_USER = 'guybrush'
     VALID_PASS = 'arrrrr'
+    CASH_BOX = 'Sprechstundenkasse Informatik'
 
     VALID_PRINTJOB = {
             'coverText': 'Klausuren',
             'document_ids': [1,2,2],
             'deposit_count': 1,
             'printer': 'external',
-            'cash_box': 'Sprechstundenkasse Informatik',
+            'cash_box': CASH_BOX,
+        }
+
+    VALID_DEPOSIT_RETURN = {
+            'cash_box': CASH_BOX,
+            'id': 1,
         }
 
     def login(self, user=VALID_USER, password=VALID_PASS):
@@ -156,8 +162,8 @@ class APITest(OdieTestCase):
         res = self.app.get('/api/deposits')
         assert res.status_code == 401
 
-    def test_deposits_no_delete_unauthenticated(self):
-        res = self.app.delete('/api/deposits/1')
+    def test_deposits_no_return_unauthenticated(self):
+        res = self.app.post('/api/log_deposit_return', data=json.dumps(self.VALID_DEPOSIT_RETURN))
         assert res.status_code == 401
 
     def test_deposits_state(self):
@@ -167,7 +173,9 @@ class APITest(OdieTestCase):
         deposits = self.fromJsonResponse(res)
         assert isinstance(deposits, list)
         id_to_delete = random.choice(deposits)['id']
-        res = self.app.delete('/api/deposits/' + str(id_to_delete))
+        data = self.VALID_DEPOSIT_RETURN
+        data['id'] = id_to_delete
+        res = self.app.post('/api/log_deposit_return', data=json.dumps(data))
         assert res.status_code == 200
         for deposit in self.fromJsonResponse(self.app.get('/api/deposits')):
             assert deposit['id'] != id_to_delete

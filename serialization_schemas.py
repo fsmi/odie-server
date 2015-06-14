@@ -42,7 +42,7 @@ class ExaminantSchema(IdSchema):
     name = fields.Str()
 
 
-class OrderLoadSchema(IdSchema):
+class OrderLoadSchema(Schema):
     name = fields.Str(required=True)
     document_ids = fields.List(fields.Int(), required=True)
 
