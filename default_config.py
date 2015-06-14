@@ -43,7 +43,8 @@ FS_CONFIG = {
         'external',   # print for external customer
     ],
     'CASH_BOXES': [
-        'FSI',
-        'FSM',
+        'Sprechstundenkasse Informatik',
+        'Sprechstundenkasse Mathematik',
     ],
 }
+GARFIELD_ACCOUNTING = True
