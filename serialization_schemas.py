@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 from datetime import datetime as time
+from functools import partial
 from marshmallow import Schema, fields
 
 import config
@@ -8,6 +9,8 @@ from models.documents import Document
 from models.odie import Order
 from odie import ClientError
 
+CashBoxField = partial(fields.Str, required=True, validate=lambda s: s in config.FS_CONFIG['CASH_BOXES'])
+PrinterField = partial(fields.Str, required=True, validate=lambda s: s in config.FS_CONFIG['PRINTERS'])
 
 def serialize(data, schema, many=False):
     res = schema().dump(data, many)
@@ -67,22 +70,22 @@ class DepositDumpSchema(IdSchema):
 
 
 class DepositLoadSchema(IdSchema):
-    cash_box = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['CASH_BOXES'])
+    cash_box = CashBoxField()
 
 
 class PrintJobLoadSchema(Schema):
     coverText = fields.Str(required=True)
     document_ids = fields.List(fields.Int(), required=True)
     deposit_count = fields.Int(required=True)
-    printer = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['PRINTERS'])
+    printer = PrinterField()
 
 
 class DonationLoadSchema(Schema):
     amount = fields.Int(required=True, validate=lambda i: i > 0)
-    cash_box = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['CASH_BOXES'])
+    cash_box = CashBoxField()
 
 
 class ErroneousSaleLoadSchema(Schema):
     amount = fields.Int(required=True, validate=lambda i: i > 0)
-    cash_box = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['CASH_BOXES'])
+    cash_box = CashBoxField()
 
