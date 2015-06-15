@@ -58,8 +58,11 @@ class OrderLoadSchema(Schema):
     document_ids = fields.List(fields.Int(), required=True)
 
     def make_object(self, data):
-        return Order(name=data['name'],
-                     document_ids=data['document_ids'])
+        try:
+            return Order(name=data['name'],
+                         document_ids=data['document_ids'])
+        except KeyError:
+            raise ClientError('invalid json. name or document_ids missing?')
 
 
 class OrderDumpSchema(IdSchema):
