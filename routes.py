@@ -19,16 +19,19 @@ def get_config():
     return config.FS_CONFIG
 
 
-@app.route('/api/login', methods=['POST'])
+@app.route('/api/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        if not current_user.is_authenticated():
+            (obj, errors) = schemas.UserLoadSchema().load(request.get_json(force=True))
+            if errors:
+                raise ClientError(*errors)
+            user = User.authenticate(obj['username'], obj['password'])
+            if user:
+                login_user(user)
     if not current_user.is_authenticated():
-        (obj, errors) = schemas.UserLoadSchema().load(request.get_json(force=True))
-        if errors:
-            raise ClientError(*errors)
-        user = User.authenticate(obj['username'], obj['password'])
-        if not user:
-            raise ClientError("invalid login", status=401)
-        login_user(user)
+        raise ClientError('permission denied', status=401)
+
     return apigen.serialize(current_user, schemas.UserDumpSchema)
 
 

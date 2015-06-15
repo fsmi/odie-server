@@ -62,7 +62,7 @@ class OrderLoadSchema(Schema):
             return Order(name=data['name'],
                          document_ids=data['document_ids'])
         except KeyError:
-            raise ClientError('invalid json. name or document_ids missing?')
+            return None
 
 
 class OrderDumpSchema(IdSchema):

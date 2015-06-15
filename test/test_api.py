@@ -96,9 +96,9 @@ class APITest(OdieTestCase):
         res = self.login(self.VALID_USER, self.VALID_PASS)
         assert res.status_code == 200
 
-    def test_login_no_get(self):
+    def test_login_no_get_unauthenticated(self):
         res = self.app.get('/api/login')
-        assert res.status_code == 405
+        assert res.status_code == 401
 
     def test_login_logout(self):
         def is_logged_in():
@@ -108,6 +108,15 @@ class APITest(OdieTestCase):
         assert is_logged_in()
         self.logout()
         assert not is_logged_in()
+
+    def test_login_get_authenticated(self):
+        self.login()
+        res = self.app.get('/api/login')
+        assert res.status_code == 200
+        data = self.fromJsonResponse(res)
+        assert 'username' in data
+        assert 'first_name' in data
+        assert 'last_name' in data
 
     ## tests for authenticated api ##
 
