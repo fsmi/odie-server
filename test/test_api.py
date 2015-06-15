@@ -37,14 +37,15 @@ class APITest(OdieTestCase):
             }))
 
     def validate_lecture(self, lecture):
-        assert 'name' in lecture
-        assert 'aliases' in lecture
-        assert 'name' not in lecture['aliases']
-        assert 'subject' in lecture and isinstance(lecture['subject'], str)
-        assert 'comment' in lecture
+        self.assertIn('name', lecture)
+        self.assertIn('aliases', lecture)
+        self.assertNotIn('name', lecture['aliases'])
+        self.assertIn('subject', lecture)
+        self.assertIsInstance(lecture['subject'], str)
+        self.assertIn('comment', lecture)
 
     def validate_document(self, document):
-        assert 'lectures' in document
+        self.assertIn('lectures', document)
         # TODO
         pass
 
@@ -52,17 +53,18 @@ class APITest(OdieTestCase):
 
     def test_get_config(self):
         res = self.app.get('/api/config')
-        assert res.status_code == 200
+        self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
-        assert 'DEPOSIT_PRICE' in data
-        assert 'PRINTERS' in data
-        assert 'CASH_BOXES' in data
-        assert 'PRICE_PER_PAGE' in data
+        self.assertIn('DEPOSIT_PRICE', data)
+        self.assertIn('PRINTERS', data)
+        self.assertIn('CASH_BOXES', data)
+        self.assertIn('PRICE_PER_PAGE', data)
 
     def test_get_lectures(self):
         res = self.app.get('/api/lectures')
         data = self.fromJsonResponse(res)
-        assert isinstance(data, list) and len(data) > 1
+        self.assertIsInstance(data, list)
+        self.assertTrue(len(data) > 1)
 
         lecture = random.choice(data)
         self.validate_lecture(lecture)
@@ -86,68 +88,68 @@ class APITest(OdieTestCase):
 
     def test_malformed_login(self):
         res = self.app.post('/api/login', data=json.dumps({'username':self.VALID_USER}))
-        assert res.status_code == 400
+        self.assertEqual(res.status_code, 400)
 
     def test_invalid_login(self):
         res = self.login(user='I am not a username', password='neither am I a password')
-        assert res.status_code == 401
+        self.assertEqual(res.status_code, 401)
 
     def test_valid_login(self):
         res = self.login(self.VALID_USER, self.VALID_PASS)
-        assert res.status_code == 200
+        self.assertEqual(res.status_code, 200)
 
     def test_login_no_get_unauthenticated(self):
         res = self.app.get('/api/login')
-        assert res.status_code == 401
+        self.assertEqual(res.status_code, 401)
 
     def test_login_logout(self):
         def is_logged_in():
             return self.app.post('/api/login', data=json.dumps({})).status_code == 200
-        assert not is_logged_in()
+        self.assertFalse(is_logged_in())
         self.login(self.VALID_USER, self.VALID_PASS)
-        assert is_logged_in()
+        self.assertTrue(is_logged_in())
         self.logout()
-        assert not is_logged_in()
+        self.assertFalse(is_logged_in())
 
     def test_login_get_authenticated(self):
         self.login()
         res = self.app.get('/api/login')
-        assert res.status_code == 200
+        self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
-        assert 'username' in data
-        assert 'first_name' in data
-        assert 'last_name' in data
+        self.assertIn('username', data)
+        self.assertIn('first_name', data)
+        self.assertIn('last_name', data)
 
     ## tests for authenticated api ##
 
     def test_no_printing_unauthenticated(self):
         res = self.app.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
-        assert res.status_code == 401
+        self.assertEqual(res.status_code, 401)
 
     def test_print(self):
         self.login()
         res = self.app.post('api/print', data=json.dumps(self.VALID_PRINTJOB))
         self.fromJsonResponse(res)
-        assert res.status_code == 200
+        self.assertEqual(res.status_code, 200)
         self.logout()
 
     def test_orders_no_get_unauthenticated(self):
         res = self.app.get('/api/orders')
-        assert res.status_code == 401
+        self.assertEqual(res.status_code, 401)
 
     def test_orders_no_delete_unauthenticated(self):
         res = self.app.delete('/api/orders/1')
-        assert res.status_code == 401
+        self.assertEqual(res.status_code, 401)
 
     def test_orders_state(self):
         self.login()
         res = self.app.get('/api/orders')
         orders = self.fromJsonResponse(res)
-        assert res.status_code == 200
-        assert isinstance(orders, list)
+        self.assertEqual(res.status_code, 200)
+        self.assertIsInstance(orders, list)
         new_order_name = "a747b53e0d942681791b"
         for order in orders:
-            assert new_order_name != order['name']
+            self.assertNotEqual(new_order_name, order['name'])
         new_order = {
                 'name': new_order_name,
                 'document_ids': [1],
@@ -157,60 +159,60 @@ class APITest(OdieTestCase):
         self.logout()
         res = self.app.post('/api/orders', data=json.dumps(new_order))
         self.fromJsonResponse(res)
-        assert res.status_code == 200
+        self.assertEqual(res.status_code, 200)
         self.login()
 
         res = self.app.get('/api/orders')
-        assert res.status_code == 200
+        self.assertEqual(res.status_code, 200)
         posted_order = [order for order in self.fromJsonResponse(res) if order['name'] == new_order_name]
-        assert len(posted_order) == 1
-        assert posted_order[0]['documents'][0]['id'] == 1
+        self.assertEqual(len(posted_order), 1)
+        self.assertEqual(posted_order[0]['documents'][0]['id'], 1)
         instance_id = posted_order[0]['id']
         res = self.app.delete('/api/orders/' + str(instance_id))
-        assert res.status_code == 200
+        self.assertEqual(res.status_code, 200)
         res = self.app.get('/api/orders')
         for order in self.fromJsonResponse(res):
-            assert order['name'] != new_order_name
+            self.assertNotEqual(order['name'], new_order_name)
 
     def test_deposits_no_get_unauthenticated(self):
         res = self.app.get('/api/deposits')
-        assert res.status_code == 401
+        self.assertEqual(res.status_code, 401)
 
     def test_deposits_no_return_unauthenticated(self):
         res = self.app.post('/api/log_deposit_return', data=json.dumps(self.VALID_DEPOSIT_RETURN))
-        assert res.status_code == 401
+        self.assertEqual(res.status_code, 401)
 
     def test_deposits_state(self):
         self.login()
         res = self.app.get('/api/deposits')
-        assert res.status_code == 200
+        self.assertEqual(res.status_code, 200)
         deposits = self.fromJsonResponse(res)
-        assert isinstance(deposits, list)
+        self.assertIsInstance(deposits, list)
         id_to_delete = random.choice(deposits)['id']
         data = self.VALID_DEPOSIT_RETURN
         data['id'] = id_to_delete
         res = self.app.post('/api/log_deposit_return', data=json.dumps(data))
-        assert res.status_code == 200
+        self.assertEqual(res.status_code, 200)
         for deposit in self.fromJsonResponse(self.app.get('/api/deposits')):
-            assert deposit['id'] != id_to_delete
+            self.assertNotEqual(deposit['id'], id_to_delete)
 
     def test_no_donation_unauthenticated(self):
         res = self.app.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))
-        assert res.status_code == 401
+        self.assertEqual(res.status_code, 401)
 
     def test_donation(self):
         self.login()
         res = self.app.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))
-        assert res.status_code == 200
+        self.assertEqual(res.status_code, 200)
 
     def test_no_log_erroneous_sale_unauthenticated(self):
         res = self.app.post('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
-        assert res.status_code == 401
+        self.assertEqual(res.status_code, 401)
 
     def test_log_erroneous_sale(self):
         self.login()
         res = self.app.post('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
-        assert res.status_code == 200
+        self.assertEqual(res.status_code, 200)
 
 
 
