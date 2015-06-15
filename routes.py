@@ -103,13 +103,14 @@ def log_deposit_return(data):
     return {}
 
 
-app.route('/api/donation', methods=['POST'])(
-login_required(
-apigen.endpoint(
-        model=None,
-        schemas={'POST': schemas.DonationLoadSchema},
-        callback=lambda obj: accounting.log_donation(obj['amount'], obj['cash_box']))
-))
+@app.route('/api/donation', methods=['POST'])
+@login_required
+@apigen.deserialize(schemas.DonationLoadSchema)
+def log_donation(data):
+    accounting.log_donation(data['amount'], data['cash_box'])
+    db.session.commit()
+    return {}
+
 
 app.route('/api/orders', methods=['GET'])(
 login_required(
@@ -134,7 +135,7 @@ login_required(
 apigen.endpoint(
         schemas={'GET': schemas.OrderDumpSchema},
         model=Order,
-        methods=['DELETE'])
+        allow_delete=True)
 ))
 
 

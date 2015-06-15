@@ -28,7 +28,7 @@ def deserialize(schema):
 ROUTE_ID = 0
 
 
-def endpoint(model, schemas={}, methods=[], callback=lambda *_1, **_2: None):
+def endpoint(model, schemas={}, allow_delete=False):
     """Creates and returns an API endpoint handler
 
     Can create both SINGLE-style and MANY-style endpoints. The generated route simply
@@ -40,12 +40,11 @@ def endpoint(model, schemas={}, methods=[], callback=lambda *_1, **_2: None):
     model: The db.Model to query. Mustn't be None for GET-enabled endpoints
     additional_methods: additional methods to register. Useful in the case of DELETE,
             which obviously doesn't need a serializer.
-    callback: callback to call before committing. The object relevant to the request
-            is given as parameter (e.g. the deserialized object POSTed)
-            Note: the session is not committed after GET requests, so the callback
-            will have to handle that as needed.
     """
-    methods = list(schemas.keys()) + methods
+    methods = list(schemas.keys())
+    if allow_delete:
+        methods.append('DELETE')
+
     def handle_get(instance_id=None):
         if instance_id is None:  # GET MANY
             assert 'GET' in schemas, "GET schema missing"
@@ -54,18 +53,15 @@ def endpoint(model, schemas={}, methods=[], callback=lambda *_1, **_2: None):
             query = jsonquery(db.session, model, q) if q else model.query
             result = query.all()
             obj = serialize(result, schema, many=True)
-            callback(obj)
             return obj
         else:  # GET SINGLE
             result = model.query.get(instance_id)
             obj = serialize(result, schema)
-            callback(obj)
             return obj
 
     def handle_delete(instance_id):
         obj = model.query.get(instance_id)
         db.session.delete(obj)
-        callback(obj)
         db.session.commit()
         return {}
 
@@ -73,7 +69,6 @@ def endpoint(model, schemas={}, methods=[], callback=lambda *_1, **_2: None):
     def handle_post(data=None):
         if model:
             db.session.add(data)
-        callback(data)
         db.session.commit()
         return {}
 
