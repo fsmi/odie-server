@@ -28,8 +28,24 @@ def login_required_for_methods(methods):
     return _decorator
 
 
-def endpoint(url, model, schemas={}, auth_methods=[], additional_methods=[], callback=lambda *_1, **_2: None):
-    """Creates an API endpoint
+def accepts_json(schema):
+    def _decorator(f):
+        @wraps(f)
+        def wrapped_f(*args, **kwargs):
+            (obj, errors) = schema().load(request.get_json(force=True))
+            if errors:
+                raise ClientError(*errors)
+            return f(*args, data=obj, **kwargs)
+        return wrapped_f
+    return _decorator
+
+
+
+ROUTE_ID = 0
+
+
+def endpoint(model, schemas={}, methods=[], callback=lambda *_1, **_2: None):
+    """Creates and returns an API endpoint handler
 
     Can create both SINGLE-style and MANY-style endpoints. The generated route simply
     differentiates between the two cases through the presence/absence of an instance_id
@@ -45,47 +61,51 @@ def endpoint(url, model, schemas={}, auth_methods=[], additional_methods=[], cal
             Note: the session is not committed after GET requests, so the callback
             will have to handle that as needed.
     """
-
-    @login_required_for_methods(auth_methods)
-    def route(instance_id=None):
-        if request.method == 'DELETE':
-            obj = model.query.get(instance_id)
-            db.session.delete(obj)
-            callback(obj)
-            db.session.commit()
-            return {}
-        if request.method == 'POST':
-            assert 'POST' in schemas, "POST schema missing"
-            try:
-                (obj, errors) = schemas['POST']().load(request.get_json(force=True))
-                if errors:
-                    raise ClientError(*errors)
-                if model:
-                    db.session.add(obj)
-                callback(obj)
-                db.session.commit()
-                return {}
-            except (ValueError, ValidationError):
-                raise ClientError("failed to parse json")
-        if request.method == 'GET' and instance_id is None:  # GET MANY
+    methods = list(schemas.keys()) + methods
+    def handle_get(instance_id=None):
+        if instance_id is None:  # GET MANY
             assert 'GET' in schemas, "GET schema missing"
             schema = schemas['GET']
             q = json.loads(request.args.get('q', '{}'))
             query = jsonquery(db.session, model, q) if q else model.query
             result = query.all()
-            obj =  serialize(result, schema, many=True)
+            obj = serialize(result, schema, many=True)
             callback(obj)
             return obj
-        if request.method == 'GET'and instance_id is not None:  # GET SINGLE
+        else:  # GET SINGLE
             result = model.query.get(instance_id)
             obj = serialize(result, schema)
             callback(obj)
             return obj
+
+    def handle_delete(instance_id):
+        obj = model.query.get(instance_id)
+        db.session.delete(obj)
+        callback(obj)
+        db.session.commit()
+        return {}
+
+    @accepts_json(schemas['POST'] if 'POST' in schemas else None)
+    def handle_post(data=None):
+        if model:
+            db.session.add(data)
+        callback(data)
+        db.session.commit()
+        return {}
+
+    def handle_generic(instance_id=None):
+        if request.method == 'POST' and 'POST' in methods:
+            return handle_post()
+        elif request.method == 'GET' and 'GET' in methods:
+            return handle_get(instance_id)
+        elif request.method == 'DELETE' and 'DELETE' in methods:
+            return handle_delete(instance_id)
         raise NotImplementedError
 
-    # flask requires route names and routed urls to be unique. We can use that here.
-    methods = list(schemas.keys()) + additional_methods
-    route.__name__ = ':'.join(methods) + url
-    app.route(url, methods=methods)(route)
+    # we need to make sure that *whatever happens*, Flask still has unique route identifiers
+    global ROUTE_ID
+    handle_generic.__name__ = '__generated_' + str(ROUTE_ID)
+    ROUTE_ID += 1
+    return handle_generic
 
 

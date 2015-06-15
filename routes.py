@@ -3,7 +3,7 @@
 import accounting
 import apigen
 import config
-import serialization_schemas as serdes
+import serialization_schemas as schemas
 
 from flask import request
 from flask.ext.login import login_user, logout_user, current_user, login_required
@@ -43,19 +43,15 @@ def logout():
     logout_user()
     return {}
 
-def _lectures(documents):
-    # gets unique list of lectures associated with list of documents
-    # rather inefficient, does O(len(documents)) queries
-    lects = []
-    for doc in documents:
-        lects.extend(Lecture.query.filter(Lecture.documents.contains(doc)).all())
-    return list({lect.id: lect for lect in lects}.values())
+def _lectures(document_ids):
+    return Lecture.query.filter(Lecture.documents.any(
+        Document.id.in_(document_ids))).all()
 
 
 @app.route('/api/print', methods=['POST'])
 @login_required
 def print_documents():
-    printjob, errors = serdes.PrintJobLoadSchema().load(data=request.get_json(force=True))
+    printjob, errors = schemas.PrintJobLoadSchema().load(data=request.get_json(force=True))
     if errors:
         raise ClientError(*errors)
     try:
@@ -79,8 +75,8 @@ def print_documents():
                 dep = Deposit(
                         price=config.FS_CONFIG['DEPOSIT_PRICE'],
                         name=printjob['student_name'],
-                        by_user=current_user.first_name + ' ' + current_user.last_name,
-                        lectures=_lectures(documents))
+                        by_user=current_user.full_name,
+                        lectures=_lectures(printjob['document_ids']))
                 db.session.add(dep)
                 accounting.log_deposit(dep, current_user, printjob['cash_box'])
             if documents:
@@ -95,7 +91,7 @@ def print_documents():
 @app.route('/api/log_erroneous_sale', methods=['POST'])
 @login_required
 def accept_erroneous_sale():
-    data, errors = serdes.ErroneousSaleLoadSchema().load(data=request.get_json(force=True))
+    data, errors = schemas.ErroneousSaleLoadSchema().load(data=request.get_json(force=True))
     if errors:
         raise ClientError(*errors)
     accounting.log_erroneous_sale(data['amount'], current_user, data['cash_box'])
@@ -105,72 +101,83 @@ def accept_erroneous_sale():
 
 @app.route('/api/log_deposit_return', methods=['POST'])
 @login_required
-def log_deposit_return():
-    (obj, errors) = serdes.DepositLoadSchema().load(request.get_json(force=True))
-    if errors:
-        raise ClientError(*errors)
-    dep = Deposit.query.get(obj['id'])
+@apigen.accepts_json(schemas.DepositLoadSchema)
+def log_deposit_return(data):
+    dep = Deposit.query.get(data['id'])
     db.session.delete(dep)
-    accounting.log_deposit_return(dep, current_user, obj['cash_box'])
+    accounting.log_deposit_return(dep, current_user, data['cash_box'])
     db.session.commit()
     return {}
 
 
+app.route('/api/donation', methods=['POST'])(
+login_required(
 apigen.endpoint(
-        url='/api/donation',
         model=None,
-        schemas={'POST': serdes.DonationLoadSchema},
-        auth_methods=['POST'],
+        schemas={'POST': schemas.DonationLoadSchema},
         callback=lambda obj: accounting.log_donation(obj['amount'], obj['cash_box']))
+))
 
-
+app.route('/api/orders', methods=['GET'])(
+login_required(
 apigen.endpoint(
-        url='/api/orders',
         schemas={
-            'GET': serdes.OrderDumpSchema,
-            'POST': serdes.OrderLoadSchema
+            'GET': schemas.OrderDumpSchema,
+            'POST': schemas.OrderLoadSchema
         },
-        model=Order,
-        auth_methods=['GET'])
+        model=Order)
+))
 
+app.route('/api/orders', methods=['POST'])(
 apigen.endpoint(
-        url='/api/orders/<int:instance_id>',
-        schemas={'GET': serdes.OrderDumpSchema},
-        model=Order,
-        additional_methods=['DELETE'],
-        auth_methods=['GET', 'DELETE'])
+        schemas={
+            'POST': schemas.OrderLoadSchema
+        },
+        model=Order)
+)
 
-
+app.route('/api/orders/<int:instance_id>', methods=['GET', 'DELETE'])(
+login_required(
 apigen.endpoint(
-        url='/api/lectures',
-        schemas={'GET': serdes.LectureSchema},
+        schemas={'GET': schemas.OrderDumpSchema},
+        model=Order,
+        methods=['DELETE'])
+))
+
+
+app.route('/api/lectures')(
+apigen.endpoint(
+        schemas={'GET': schemas.LectureSchema},
         model=Lecture)
+)
 
+# TODO shoehorn this into apigen.endpoint to benefit from automatic jsonquery and pagination
 @app.route('/api/lectures/<int:id>/documents')
 def lecture_documents(id):
     lecture = Lecture.query.get(id)
-    return serdes.serialize(lecture.documents, serdes.DocumentSchema, many=True)
+    return schemas.serialize(lecture.documents, schemas.DocumentSchema, many=True)
 
 
+app.route('/api/examinants')(
 apigen.endpoint(
-        url='/api/examinants',
-        schemas={'GET': serdes.ExaminantSchema},
+        schemas={'GET': schemas.ExaminantSchema},
         model=Examinant)
+)
 
 @app.route('/api/examinants/<int:id>/documents')
 def examinant_documents(id):
     examinant = Examinant.query.get(id)
-    return serdes.serialize(examinant.documents, serdes.DocumentSchema, many=True)
+    return schemas.serialize(examinant.documents, schemas.DocumentSchema, many=True)
 
-
+app.route('/api/documents')(
 apigen.endpoint(
-        url='/api/documents',
-        schemas={'GET': serdes.DocumentSchema},
+        schemas={'GET': schemas.DocumentSchema},
         model=Document)
+)
 
-
+app.route('/api/deposits')(
+login_required(
 apigen.endpoint(
-        url='/api/deposits',
-        schemas={'GET': serdes.DepositDumpSchema},
-        model=Deposit,
-        auth_methods=['GET'])
+        schemas={'GET': schemas.DepositDumpSchema},
+        model=Deposit)
+))

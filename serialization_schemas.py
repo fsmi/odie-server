@@ -52,7 +52,7 @@ class OrderLoadSchema(Schema):
 
 
 class OrderDumpSchema(IdSchema):
-    name = fields.Str(required=True)
+    name = fields.Str()
     documents = fields.List(fields.Nested(DocumentSchema))
 
 
