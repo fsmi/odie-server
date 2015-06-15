@@ -47,4 +47,4 @@ FS_CONFIG = {
         'Sprechstundenkasse Mathematik',
     ],
 }
-GARFIELD_ACCOUNTING = True
+GARFIELD_ACCOUNTING = False

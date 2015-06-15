@@ -10,12 +10,24 @@ from test.harness import OdieTestCase
 class APITest(OdieTestCase):
     VALID_USER = 'guybrush'
     VALID_PASS = 'arrrrr'
+    CASH_BOX = 'Sprechstundenkasse Informatik'
 
     VALID_PRINTJOB = {
             'coverText': 'Klausuren',
             'document_ids': [1,2,2],
-            'depositCount': 1,
-            'printer': 'external'
+            'deposit_count': 1,
+            'printer': 'external',
+            'cash_box': CASH_BOX,
+        }
+
+    VALID_DEPOSIT_RETURN = {
+            'cash_box': CASH_BOX,
+            'id': 1,
+        }
+
+    VALID_ACCOUNTING_CORR = {
+            'cash_box': CASH_BOX,
+            'amount': 42,
         }
 
     def login(self, user=VALID_USER, password=VALID_PASS):
@@ -73,7 +85,7 @@ class APITest(OdieTestCase):
     ## login tests ##
 
     def test_malformed_login(self):
-        res = self.app.post('/api/login', data=json.dumps({'user':self.VALID_USER}))
+        res = self.app.post('/api/login', data=json.dumps({'username':self.VALID_USER}))
         assert res.status_code == 400
 
     def test_invalid_login(self):
@@ -84,9 +96,9 @@ class APITest(OdieTestCase):
         res = self.login(self.VALID_USER, self.VALID_PASS)
         assert res.status_code == 200
 
-    def test_login_no_get(self):
+    def test_login_no_get_unauthenticated(self):
         res = self.app.get('/api/login')
-        assert res.status_code == 405
+        assert res.status_code == 401
 
     def test_login_logout(self):
         def is_logged_in():
@@ -96,6 +108,15 @@ class APITest(OdieTestCase):
         assert is_logged_in()
         self.logout()
         assert not is_logged_in()
+
+    def test_login_get_authenticated(self):
+        self.login()
+        res = self.app.get('/api/login')
+        assert res.status_code == 200
+        data = self.fromJsonResponse(res)
+        assert 'username' in data
+        assert 'first_name' in data
+        assert 'last_name' in data
 
     ## tests for authenticated api ##
 
@@ -155,8 +176,8 @@ class APITest(OdieTestCase):
         res = self.app.get('/api/deposits')
         assert res.status_code == 401
 
-    def test_deposits_no_delete_unauthenticated(self):
-        res = self.app.delete('/api/deposits/1')
+    def test_deposits_no_return_unauthenticated(self):
+        res = self.app.post('/api/log_deposit_return', data=json.dumps(self.VALID_DEPOSIT_RETURN))
         assert res.status_code == 401
 
     def test_deposits_state(self):
@@ -166,10 +187,31 @@ class APITest(OdieTestCase):
         deposits = self.fromJsonResponse(res)
         assert isinstance(deposits, list)
         id_to_delete = random.choice(deposits)['id']
-        res = self.app.delete('/api/deposits/' + str(id_to_delete))
+        data = self.VALID_DEPOSIT_RETURN
+        data['id'] = id_to_delete
+        res = self.app.post('/api/log_deposit_return', data=json.dumps(data))
         assert res.status_code == 200
         for deposit in self.fromJsonResponse(self.app.get('/api/deposits')):
             assert deposit['id'] != id_to_delete
+
+    def test_no_donation_unauthenticated(self):
+        res = self.app.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        assert res.status_code == 401
+
+    def test_donation(self):
+        self.login()
+        res = self.app.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        assert res.status_code == 200
+
+    def test_no_log_erroneous_sale_unauthenticated(self):
+        res = self.app.post('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        assert res.status_code == 401
+
+    def test_log_erroneous_sale(self):
+        self.login()
+        res = self.app.post('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        assert res.status_code == 200
+
 
 
 if __name__ == '__main__':

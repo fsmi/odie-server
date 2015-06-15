@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 from datetime import datetime as time
+from functools import partial
 from marshmallow import Schema, fields
 
 import config
@@ -8,6 +9,8 @@ from models.documents import Document
 from models.odie import Order
 from odie import ClientError
 
+CashBoxField = partial(fields.Str, required=True, validate=lambda s: s in config.FS_CONFIG['CASH_BOXES'])
+PrinterField = partial(fields.Str, required=True, validate=lambda s: s in config.FS_CONFIG['PRINTERS'])
 
 def serialize(data, schema, many=False):
     res = schema().dump(data, many)
@@ -18,7 +21,18 @@ def serialize(data, schema, many=False):
 
 
 class IdSchema(Schema):
-    id = fields.Int()
+    id = fields.Int(required=True)
+
+
+class UserLoadSchema(Schema):
+    username = fields.Str(required=True)
+    password = fields.Str(required=True)
+
+
+class UserDumpSchema(Schema):
+    username = fields.Str()
+    first_name = fields.Str()
+    last_name = fields.Str()
 
 
 class DocumentSchema(IdSchema):
@@ -39,16 +53,20 @@ class ExaminantSchema(IdSchema):
     name = fields.Str()
 
 
-class OrderLoadSchema(IdSchema):
+class OrderLoadSchema(Schema):
     name = fields.Str(required=True)
     document_ids = fields.List(fields.Int(), required=True)
 
     def make_object(self, data):
-        return Order(name=data['name'],
-                     document_ids=data['document_ids'])
+        try:
+            return Order(name=data['name'],
+                         document_ids=data['document_ids'])
+        except KeyError:
+            return None
 
 
-class OrderDumpSchema(OrderLoadSchema):
+class OrderDumpSchema(IdSchema):
+    name = fields.Str()
     documents = fields.List(fields.Nested(DocumentSchema))
 
 
@@ -59,15 +77,29 @@ class LectureSchema(IdSchema):
     comment = fields.Str()
 
 
-class DepositSchema(IdSchema):
+class DepositDumpSchema(IdSchema):
     price = fields.Int()
     name = fields.Str()
     lectures = fields.List(fields.Str())
 
 
+class DepositLoadSchema(IdSchema):
+    cash_box = CashBoxField()
+
+
 class PrintJobLoadSchema(Schema):
     coverText = fields.Str(required=True)
     document_ids = fields.List(fields.Int(), required=True)
-    depositCount = fields.Int(required=True)
-    printer = fields.Str(required=True, validate=lambda s: s in config.FS_CONFIG['PRINTERS'])
+    deposit_count = fields.Int(required=True)
+    printer = PrinterField()
+
+
+class DonationLoadSchema(Schema):
+    amount = fields.Int(required=True, validate=lambda i: i > 0)
+    cash_box = CashBoxField()
+
+
+class ErroneousSaleLoadSchema(Schema):
+    amount = fields.Int(required=True, validate=lambda i: i > 0)
+    cash_box = CashBoxField()
 
