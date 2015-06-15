@@ -25,6 +25,11 @@ class APITest(OdieTestCase):
             'id': 1,
         }
 
+    VALID_ACCOUNTING_CORR = {
+            'cash_box': CASH_BOX,
+            'amount': 42,
+        }
+
     def login(self, user=VALID_USER, password=VALID_PASS):
         return self.app.post('/api/login', data=json.dumps({
                 'username': user,
@@ -179,6 +184,25 @@ class APITest(OdieTestCase):
         assert res.status_code == 200
         for deposit in self.fromJsonResponse(self.app.get('/api/deposits')):
             assert deposit['id'] != id_to_delete
+
+    def test_no_donation_unauthenticated(self):
+        res = self.app.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        assert res.status_code == 401
+
+    def test_donation(self):
+        self.login()
+        res = self.app.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        assert res.status_code == 200
+
+    def test_no_log_erroneous_sale_unauthenticated(self):
+        res = self.app.post('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        assert res.status_code == 401
+
+    def test_log_erroneous_sale(self):
+        self.login()
+        res = self.app.post('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        assert res.status_code == 200
+
 
 
 if __name__ == '__main__':
