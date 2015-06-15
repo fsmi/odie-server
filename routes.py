@@ -49,51 +49,44 @@ def _lectures(document_ids):
 
 
 @app.route('/api/print', methods=['POST'])
+@apigen.deserialize(schemas.PrintJobLoadSchema)
 @login_required
-def print_documents():
-    printjob, errors = schemas.PrintJobLoadSchema().load(data=request.get_json(force=True))
-    if errors:
-        raise ClientError(*errors)
-    try:
-        documents = [Document.query.get(id) for id in printjob['document_ids']]
-        assert printjob['deposit_count'] >= 0
-        price = sum(doc.price for doc in documents)
-        # round up to next 10 cents
-        price = 10 * (price/10 + (1 if price % 10 else 0))
+def print_documents(data):
+    documents = [Document.query.get(id) for id in data['document_ids']]  # TODO sort documents in python
+    assert data['deposit_count'] >= 0
+    price = sum(doc.price for doc in documents)
+    # round up to next 10 cents
+    price = 10 * (price/10 + (1 if price % 10 else 0))
 
-        if config.FlaskConfig.DEBUG:
-            print("PRINTING DOCS {docs} FOR {coverText}: PRICE {price} + {depcount} * DEPOSIT".format(
-                docs=printjob['document_ids'],
-                coverText=printjob['coverText'],
-                price=price,
-                depcount=printjob['deposit_count']))
-        else:
-            #  TODO actual implementation of printing and accounting
-            print("PC LOAD LETTER")
+    if config.FlaskConfig.DEBUG:
+        print("PRINTING DOCS {docs} FOR {coverText}: PRICE {price} + {depcount} * DEPOSIT".format(
+            docs=data['document_ids'],
+            coverText=data['coverText'],
+            price=price,
+            depcount=data['deposit_count']))
+    else:
+        #  TODO actual implementation of printing
+        print("PC LOAD LETTER")
 
-            for _ in range(printjob['deposit_count']):
-                dep = Deposit(
-                        price=config.FS_CONFIG['DEPOSIT_PRICE'],
-                        name=printjob['student_name'],
-                        by_user=current_user.full_name,
-                        lectures=_lectures(printjob['document_ids']))
-                db.session.add(dep)
-                accounting.log_deposit(dep, current_user, printjob['cash_box'])
-            if documents:
-                num_pages = sum(doc.number_of_pages for doc in documents)
-                accounting.log_exam_sale(num_pages, price, current_user, printjob['cash_box'])
-            db.session.commit()
-        return {}
-    except (ValueError, KeyError):
-        raise ClientError("malformed request")
+        for _ in range(data['deposit_count']):
+            dep = Deposit(
+                    price=config.FS_CONFIG['DEPOSIT_PRICE'],
+                    name=data['student_name'],
+                    by_user=current_user.full_name,
+                    lectures=_lectures(data['document_ids']))
+            db.session.add(dep)
+            accounting.log_deposit(dep, current_user, data['cash_box'])
+        if documents:
+            num_pages = sum(doc.number_of_pages for doc in documents)
+            accounting.log_exam_sale(num_pages, price, current_user, data['cash_box'])
+        db.session.commit()
+    return {}
 
 
 @app.route('/api/log_erroneous_sale', methods=['POST'])
 @login_required
+@apigen.deserialize(schemas.ErroneousSaleLoadSchema)
 def accept_erroneous_sale():
-    data, errors = schemas.ErroneousSaleLoadSchema().load(data=request.get_json(force=True))
-    if errors:
-        raise ClientError(*errors)
     accounting.log_erroneous_sale(data['amount'], current_user, data['cash_box'])
     db.session.commit()
     return {}
@@ -101,7 +94,7 @@ def accept_erroneous_sale():
 
 @app.route('/api/log_deposit_return', methods=['POST'])
 @login_required
-@apigen.accepts_json(schemas.DepositLoadSchema)
+@apigen.deserialize(schemas.DepositLoadSchema)
 def log_deposit_return(data):
     dep = Deposit.query.get(data['id'])
     db.session.delete(dep)

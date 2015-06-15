@@ -12,23 +12,7 @@ from jsonquery import jsonquery
 from marshmallow import ValidationError
 
 
-# Flask-login's @login_required decorator only supports all-or-nothing authentication,
-# however the orders API is only restricted for GET requests, hence this
-
-def login_required_for_methods(methods):
-    def _decorator(f):
-        login_f = login_required(f)
-        @wraps(f)
-        def wrapped_f(*args, **kw):
-            if request.method in methods:
-                return login_f(*args, **kw)
-            return f(*args, **kw)
-        return wrapped_f
-
-    return _decorator
-
-
-def accepts_json(schema):
+def deserialize(schema):
     def _decorator(f):
         @wraps(f)
         def wrapped_f(*args, **kwargs):
@@ -85,7 +69,7 @@ def endpoint(model, schemas={}, methods=[], callback=lambda *_1, **_2: None):
         db.session.commit()
         return {}
 
-    @accepts_json(schemas['POST'] if 'POST' in schemas else None)
+    @deserialize(schemas['POST'] if 'POST' in schemas else None)
     def handle_post(data=None):
         if model:
             db.session.add(data)
