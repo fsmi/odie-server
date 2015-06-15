@@ -57,9 +57,9 @@ def print_documents(data):
     price = 10 * (price/10 + (1 if price % 10 else 0))
 
     if config.FlaskConfig.DEBUG:
-        print("PRINTING DOCS {docs} FOR {coverText}: PRICE {price} + {depcount} * DEPOSIT".format(
+        print("PRINTING DOCS {docs} FOR {cover_text}: PRICE {price} + {depcount} * DEPOSIT".format(
             docs=data['document_ids'],
-            coverText=data['coverText'],
+            cover_text=data['cover_text'],
             price=price,
             depcount=data['deposit_count']))
     else:

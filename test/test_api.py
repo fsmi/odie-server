@@ -13,7 +13,7 @@ class APITest(OdieTestCase):
     CASH_BOX = 'Sprechstundenkasse Informatik'
 
     VALID_PRINTJOB = {
-            'coverText': 'Klausuren',
+            'cover_text': 'Klausuren',
             'document_ids': [1,2,2],
             'deposit_count': 1,
             'printer': 'external',

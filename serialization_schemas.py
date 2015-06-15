@@ -88,7 +88,7 @@ class DepositLoadSchema(IdSchema):
 
 
 class PrintJobLoadSchema(Schema):
-    coverText = fields.Str(required=True)
+    cover_text = fields.Str(required=True)
     document_ids = fields.List(fields.Int(), required=True)
     deposit_count = fields.Int(required=True)
     printer = PrinterField()
