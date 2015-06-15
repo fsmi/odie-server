@@ -86,7 +86,7 @@ def print_documents(data):
 @app.route('/api/log_erroneous_sale', methods=['POST'])
 @login_required
 @apigen.deserialize(schemas.ErroneousSaleLoadSchema)
-def accept_erroneous_sale():
+def accept_erroneous_sale(data):
     accounting.log_erroneous_sale(data['amount'], current_user, data['cash_box'])
     db.session.commit()
     return {}
