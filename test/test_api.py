@@ -85,7 +85,7 @@ class APITest(OdieTestCase):
     ## login tests ##
 
     def test_malformed_login(self):
-        res = self.app.post('/api/login', data=json.dumps({'user':self.VALID_USER}))
+        res = self.app.post('/api/login', data=json.dumps({'username':self.VALID_USER}))
         assert res.status_code == 400
 
     def test_invalid_login(self):
