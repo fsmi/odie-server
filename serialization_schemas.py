@@ -24,6 +24,17 @@ class IdSchema(Schema):
     id = fields.Int(required=True)
 
 
+class UserLoadSchema(Schema):
+    username = fields.Str(required=True)
+    password = fields.Str(required=True)
+
+
+class UserDumpSchema(Schema):
+    username = fields.Str()
+    first_name = fields.Str()
+    last_name = fields.Str()
+
+
 class DocumentSchema(IdSchema):
     lectures = fields.List(fields.Nested(IdSchema))
     examinants = fields.List(fields.Nested(IdSchema))

@@ -22,19 +22,14 @@ def get_config():
 @app.route('/api/login', methods=['POST'])
 def login():
     if not current_user.is_authenticated():
-        try:
-            json = request.get_json(force=True)  # ignore Content-Type
-            user = User.authenticate(json['username'], json['password'])
-            if not user:
-                raise ClientError("invalid login", status=401)
-            login_user(user)
-        except KeyError:
-            raise ClientError("malformed request")
-    return {
-            'user': current_user.username,
-            'firstName': current_user.first_name,
-            'lastName': current_user.last_name
-        }
+        (obj, errors) = schemas.UserLoadSchema().load(request.get_json(force=True))
+        if errors:
+            raise ClientError(*errors)
+        user = User.authenticate(obj['username'], obj['password'])
+        if not user:
+            raise ClientError("invalid login", status=401)
+        login_user(user)
+    return apigen.serialize(current_user, schemas.UserDumpSchema)
 
 
 @app.route('/api/logout', methods=['POST'])
