@@ -35,11 +35,11 @@ def endpoint(model, schemas={}, allow_delete=False):
     differentiates between the two cases through the presence/absence of an instance_id
     parameter in the url.
 
+    Returns the handler, you have to register it with Flask yourself.
+
     schemas: dictionary of serializers/deserializers.
             These keys also define permissible methods.
     model: The db.Model to query. Mustn't be None for GET-enabled endpoints
-    additional_methods: additional methods to register. Useful in the case of DELETE,
-            which obviously doesn't need a serializer.
     """
     methods = list(schemas.keys())
     if allow_delete:
