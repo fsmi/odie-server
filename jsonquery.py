@@ -32,7 +32,7 @@ def register_operator(opstring, func):
         Function that takes a column object
             (sqlalchemy.orm.attributes.InstrumentedAttribute)
         and a value and returns a criterion to be passed to
-            session.query(model).filter()
+            query.filter()
 
         Example: Adding the >= operator
             def gt(column, value):
@@ -78,18 +78,18 @@ for opstring in attr_funcs:
     register_operator(opstring, attr_op(opstring))
 
 
-def jsonquery(session, model, json, **kwargs):
+def jsonquery(query, json, **kwargs):
     '''
     Returns a query object built from the given json.
     Usage:
-        query = jsonquery(session, model, json, query_constraints)
+        query = jsonquery(query, json, query_constraints)
         rows = query.all()
 
     session:
         SQLAlchemy session to build query on
 
-    model:
-        SQLAlchemy model to perform queries on
+    query:
+        SQLAlchemy query to perform operate on
 
     json:
         Logical Operators
@@ -144,11 +144,11 @@ def jsonquery(session, model, json, **kwargs):
     constraints = dict(DEFAULT_QUERY_CONSTRAINTS)
     constraints.update(kwargs)
     count = depth = 0
-    criterion, total_elements = _build(json, count, depth, model, constraints)
-    return session.query(model).filter(criterion)
+    criterion, total_elements = _build(json, count, depth, query, constraints)
+    return query.filter(criterion)
 
 
-def _build(node, count, depth, model, constraints):
+def _build(node, count, depth, query, constraints):
     count += 1
     depth += 1
     value = node['value']
@@ -161,9 +161,9 @@ def _build(node, count, depth, model, constraints):
     op = node['operator']
     if op in logical_operators:
         builder, func = logical_operators[op]
-        return builder(node, count, depth, model, constraints, func)
+        return builder(node, count, depth, query, constraints, func)
     else:
-        return _build_column(node, model), count
+        return _build_column(node, query), count
 
 
 def _validate_query_constraints(value, count, depth, constraints):
@@ -189,31 +189,31 @@ def _validate_query_constraints(value, count, depth, constraints):
                 'Filter elements limit ({}) exceeded'.format(max_elements))
 
 
-def _build_sql_sequence(node, count, depth, model, constraints, func):
+def _build_sql_sequence(node, count, depth, query, constraints, func):
     '''
     func is either sqlalchemy.and_ or sqlalchemy.or_
     Build each subquery in node['value'], then combine with func(*subqueries)
     '''
     subqueries = []
     for value in node['value']:
-        subquery, count = _build(value, count, depth, model, constraints)
+        subquery, count = _build(value, count, depth, query, constraints)
         subqueries.append(subquery)
     return func(*subqueries), count
 
 
-def _build_sql_unary(node, count, depth, model, constraints, func):
+def _build_sql_unary(node, count, depth, query, constraints, func):
     '''
     func is sqlalchemy.not_ (may support others)
     '''
     value = node['value']
-    subquery, count = _build(value, count, depth, model, constraints)
+    subquery, count = _build(value, count, depth, query, constraints)
     return func(subquery), count
 
 
-def _build_column(node, model):
+def _build_column(node, query):
     # string => sqlalchemy.orm.attributes.InstrumentedAttribute
     column = node['column']
-    column = getattr(model, column)
+    column = (desc['expr'] for desc in query.column_descriptions if desc['name'] == column).next()
 
     op = node['operator']
     value = node['value']
