@@ -53,7 +53,12 @@ def _lectures(document_ids):
 @deserialize(schemas.PrintJobLoadSchema)
 @login_required
 def print_documents(data):
-    documents = [Document.query.get(id) for id in data['document_ids']]  # TODO sort documents in python
+    ids = data['document_ids']
+    document_objs = Document.query.filter(Document.id.in_(ids)).all()
+    # sort the docs into the same order they came in the request
+    docs_by_id = {doc.id: doc for doc in document_objs}
+    documents = [docs_by_id[id] for id in ids]
+
     assert data['deposit_count'] >= 0
     price = sum(doc.price for doc in documents)
     # round up to next 10 cents
