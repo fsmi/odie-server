@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import odie
+import config
 import routes
 import json
 import random
@@ -18,6 +19,11 @@ class APITest(OdieTestCase):
             'deposit_count': 1,
             'printer': 'external',
             'cash_box': CASH_BOX,
+        }
+
+    VALID_ORDER = {
+            'name': "a747b53e0d942681791b",
+            'document_ids': [1],
         }
 
     VALID_DEPOSIT_RETURN = {
@@ -147,17 +153,13 @@ class APITest(OdieTestCase):
         orders = self.fromJsonResponse(res)
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(orders, list)
-        new_order_name = "a747b53e0d942681791b"
+        new_order_name = self.VALID_ORDER['name']
         for order in orders:
             self.assertNotEqual(new_order_name, order['name'])
-        new_order = {
-                'name': new_order_name,
-                'document_ids': [1],
-            }
 
         # ensure POSTing orders is available when not logged in
         self.logout()
-        res = self.app.post('/api/orders', data=json.dumps(new_order))
+        res = self.app.post('/api/orders', data=json.dumps(self.VALID_ORDER))
         self.fromJsonResponse(res)
         self.assertEqual(res.status_code, 200)
         self.login()
@@ -213,6 +215,47 @@ class APITest(OdieTestCase):
         self.login()
         res = self.app.post('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
         self.assertEqual(res.status_code, 200)
+
+    ## pagination tests ##
+
+    # these all depend on the orders endpoint working correctly
+
+    def _add_a_page_of_orders(self):
+        for _ in range(config.ITEMS_PER_PAGE):
+            res = self.app.post('/api/orders', data=json.dumps(self.VALID_ORDER))
+            self.assertEqual(res.status_code, 200)
+
+    def test_pagination_items_per_page(self):
+        self.enable_pagination(3)
+        self._add_a_page_of_orders()
+        self.login()
+        res = self.app.get('/api/orders')
+        data = self.fromJsonResponse(res)
+        self.assertEqual(len(data), config.ITEMS_PER_PAGE)
+
+    def test_pagination_out_of_range(self):
+        self.enable_pagination(3)
+        self.login()
+        res = self.app.get('/api/orders?page=99999')
+        self.assertEqual(res.status_code, 404)
+
+    def test_pagination_number_of_pages(self):
+        self.enable_pagination(2)
+        self._add_a_page_of_orders()
+        self._add_a_page_of_orders()
+        self.login()
+        ids_seen = []
+        for page in range(1, 4):
+            res = self.app.get('/api/orders?page=%d' % page)
+            self.assertEqual(res.status_code, 200)
+            data = json.loads(res.data.decode('utf-8'))
+            self.assertIn('number_of_pages', data)
+            self.assertTrue(data['number_of_pages'] >= 2)
+            # assert no ids in this page have been seen before
+            self.assertEqual([], [True for item in data['data'] if item['id'] in ids_seen])
+            ids_seen += [item['id'] for item in data['data']]
+
+
 
 
 
