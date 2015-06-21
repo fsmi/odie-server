@@ -45,7 +45,7 @@ def filtered_results(query, schema, paginate=True):
     if not paginate:
         return serialize(query.all(), schema, many=True)
     page = int(request.args.get('page', '1'))
-    items_per_page = config.FS_CONFIG['ITEMS_PER_PAGE']
+    items_per_page = config.ITEMS_PER_PAGE
     pag = query.paginate(page, items_per_page)
     return PaginatedResult(pag, schema)
 
@@ -53,7 +53,7 @@ def filtered_results(query, schema, paginate=True):
 # uniform response formatting:
 # {"data": <jsonified route result>}
 # or {"errors": <errors>} on ClientError
-def api_route(url, paginated=True, *args, **kwargs):
+def api_route(url, *args, **kwargs):
     def decorator(f):
         @wraps(f)
         def wrapped_f(*f_args, **f_kwargs):
@@ -84,7 +84,7 @@ def endpoint(query, schemas={}, allow_delete=False, paginate_many=True):
 
     Returns the handler, you have to register it with Flask yourself.
 
-    schemas: dictionary of {<method>: serializers/deserializers}.
+    schemas: dictionary of {<method>: serializer/deserializer}.
             These keys also define permissible methods.
     query: The query to operate on. Mustn't be None for GET-enabled endpoints
     paginate_many: whether to return paginated results (default:True)

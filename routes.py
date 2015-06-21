@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import accounting
-import api_utils
 import config
 import serialization_schemas as schemas
 
@@ -9,7 +8,7 @@ from flask import request
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
 from odie import app, db, ClientError
-from api_utils import endpoint, filtered_results, api_route
+from api_utils import deserialize, endpoint, filtered_results, api_route
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
 from models.public import User
@@ -51,7 +50,7 @@ def _lectures(document_ids):
 
 
 @api_route('/api/print', methods=['POST'])
-@api_utils.deserialize(schemas.PrintJobLoadSchema)
+@deserialize(schemas.PrintJobLoadSchema)
 @login_required
 def print_documents(data):
     documents = [Document.query.get(id) for id in data['document_ids']]  # TODO sort documents in python
@@ -87,7 +86,7 @@ def print_documents(data):
 
 @api_route('/api/log_erroneous_sale', methods=['POST'])
 @login_required
-@api_utils.deserialize(schemas.ErroneousSaleLoadSchema)
+@deserialize(schemas.ErroneousSaleLoadSchema)
 def accept_erroneous_sale(data):
     accounting.log_erroneous_sale(data['amount'], current_user, data['cash_box'])
     db.session.commit()
@@ -96,7 +95,7 @@ def accept_erroneous_sale(data):
 
 @api_route('/api/log_deposit_return', methods=['POST'])
 @login_required
-@api_utils.deserialize(schemas.DepositLoadSchema)
+@deserialize(schemas.DepositLoadSchema)
 def log_deposit_return(data):
     dep = Deposit.query.get(data['id'])
     db.session.delete(dep)
@@ -107,7 +106,7 @@ def log_deposit_return(data):
 
 @api_route('/api/donation', methods=['POST'])
 @login_required
-@api_utils.deserialize(schemas.DonationLoadSchema)
+@deserialize(schemas.DonationLoadSchema)
 def log_donation(data):
     accounting.log_donation(data['amount'], data['cash_box'])
     db.session.commit()
@@ -116,7 +115,7 @@ def log_donation(data):
 
 api_route('/api/orders', methods=['GET'])(
 login_required(
-api_utils.endpoint(
+endpoint(
         schemas={
             'GET': schemas.OrderDumpSchema,
             'POST': schemas.OrderLoadSchema
@@ -125,7 +124,7 @@ api_utils.endpoint(
 ))
 
 api_route('/api/orders', methods=['POST'])(
-api_utils.endpoint(
+endpoint(
         schemas={
             'POST': schemas.OrderLoadSchema
         },
@@ -134,7 +133,7 @@ api_utils.endpoint(
 
 api_route('/api/orders/<int:instance_id>', methods=['GET', 'DELETE'])(
 login_required(
-api_utils.endpoint(
+endpoint(
         schemas={'GET': schemas.OrderDumpSchema},
         query=Order.query,
         allow_delete=True)
@@ -142,7 +141,7 @@ api_utils.endpoint(
 
 
 api_route('/api/lectures')(
-api_utils.endpoint(
+endpoint(
         schemas={'GET': schemas.LectureSchema},
         query=Lecture.query)
 )
@@ -150,11 +149,11 @@ api_utils.endpoint(
 @api_route('/api/lectures/<int:id>/documents')
 def lecture_documents(id):
     lecture = Lecture.query.get(id)
-    return api_utils.filtered_results(lecture.documents, schemas.DocumentSchema)
+    return filtered_results(lecture.documents, schemas.DocumentSchema)
 
 
 api_route('/api/examinants')(
-api_utils.endpoint(
+endpoint(
         schemas={'GET': schemas.ExaminantSchema},
         query=Examinant.query)
 )
@@ -162,17 +161,17 @@ api_utils.endpoint(
 @api_route('/api/examinants/<int:id>/documents')
 def examinant_documents(id):
     examinant = Examinant.query.get(id)
-    return api_utils.filtered_results(examinant.documents, schemas.DocumentSchema)
+    return filtered_results(examinant.documents, schemas.DocumentSchema)
 
 api_route('/api/documents')(
-api_utils.endpoint(
+endpoint(
         schemas={'GET': schemas.DocumentSchema},
         query=Document.query)
 )
 
 api_route('/api/deposits')(
 login_required(
-api_utils.endpoint(
+endpoint(
         schemas={'GET': schemas.DepositDumpSchema},
         query=Deposit.query)
 ))
