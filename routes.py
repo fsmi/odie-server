@@ -9,17 +9,18 @@ from flask import request
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
 from odie import app, db, ClientError
+from apigen import endpoint, filtered_results, api_route
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
 from models.public import User
 
 
-@app.route('/api/config')
+@api_route('/api/config')
 def get_config():
     return config.FS_CONFIG
 
 
-@app.route('/api/login', methods=['GET', 'POST'])
+@api_route('/api/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         if not current_user.is_authenticated():
@@ -32,10 +33,10 @@ def login():
     if not current_user.is_authenticated():
         raise ClientError('permission denied', status=401)
 
-    return apigen.serialize(current_user, schemas.UserDumpSchema)
+    return schemas.serialize(current_user, schemas.UserDumpSchema)
 
 
-@app.route('/api/logout', methods=['POST'])
+@api_route('/api/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
@@ -46,7 +47,7 @@ def _lectures(document_ids):
         Document.id.in_(document_ids))).all()
 
 
-@app.route('/api/print', methods=['POST'])
+@api_route('/api/print', methods=['POST'])
 @apigen.deserialize(schemas.PrintJobLoadSchema)
 @login_required
 def print_documents(data):
@@ -81,7 +82,7 @@ def print_documents(data):
     return {}
 
 
-@app.route('/api/log_erroneous_sale', methods=['POST'])
+@api_route('/api/log_erroneous_sale', methods=['POST'])
 @login_required
 @apigen.deserialize(schemas.ErroneousSaleLoadSchema)
 def accept_erroneous_sale(data):
@@ -90,7 +91,7 @@ def accept_erroneous_sale(data):
     return {}
 
 
-@app.route('/api/log_deposit_return', methods=['POST'])
+@api_route('/api/log_deposit_return', methods=['POST'])
 @login_required
 @apigen.deserialize(schemas.DepositLoadSchema)
 def log_deposit_return(data):
@@ -101,7 +102,7 @@ def log_deposit_return(data):
     return {}
 
 
-@app.route('/api/donation', methods=['POST'])
+@api_route('/api/donation', methods=['POST'])
 @login_required
 @apigen.deserialize(schemas.DonationLoadSchema)
 def log_donation(data):
@@ -110,7 +111,7 @@ def log_donation(data):
     return {}
 
 
-app.route('/api/orders', methods=['GET'])(
+api_route('/api/orders', methods=['GET'])(
 login_required(
 apigen.endpoint(
         schemas={
@@ -120,7 +121,7 @@ apigen.endpoint(
         query=Order.query)
 ))
 
-app.route('/api/orders', methods=['POST'])(
+api_route('/api/orders', methods=['POST'])(
 apigen.endpoint(
         schemas={
             'POST': schemas.OrderLoadSchema
@@ -128,7 +129,7 @@ apigen.endpoint(
         query=Order.query)
 )
 
-app.route('/api/orders/<int:instance_id>', methods=['GET', 'DELETE'])(
+api_route('/api/orders/<int:instance_id>', methods=['GET', 'DELETE'])(
 login_required(
 apigen.endpoint(
         schemas={'GET': schemas.OrderDumpSchema},
@@ -137,36 +138,36 @@ apigen.endpoint(
 ))
 
 
-app.route('/api/lectures')(
+api_route('/api/lectures')(
 apigen.endpoint(
         schemas={'GET': schemas.LectureSchema},
         query=Lecture.query)
 )
 
-@app.route('/api/lectures/<int:id>/documents')
+@api_route('/api/lectures/<int:id>/documents')
 def lecture_documents(id):
     lecture = Lecture.query.get(id)
-    return schemas.serialize(lecture.documents, schemas.DocumentSchema, many=True)
+    return apigen.filtered_results(lecture.documents, schemas.DocumentSchema)
 
 
-app.route('/api/examinants')(
+api_route('/api/examinants')(
 apigen.endpoint(
         schemas={'GET': schemas.ExaminantSchema},
         query=Examinant.query)
 )
 
-@app.route('/api/examinants/<int:id>/documents')
+@api_route('/api/examinants/<int:id>/documents')
 def examinant_documents(id):
     examinant = Examinant.query.get(id)
-    return schemas.serialize(examinant.documents, schemas.DocumentSchema, many=True)
+    return apigen.filtered_results(examinant.documents, schemas.DocumentSchema)
 
-app.route('/api/documents')(
+api_route('/api/documents')(
 apigen.endpoint(
         schemas={'GET': schemas.DocumentSchema},
         query=Document.query)
 )
 
-app.route('/api/deposits')(
+api_route('/api/deposits')(
 login_required(
 apigen.endpoint(
         schemas={'GET': schemas.DepositDumpSchema},

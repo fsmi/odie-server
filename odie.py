@@ -2,9 +2,9 @@
 
 import config
 
-from functools import partial, wraps
+from functools import partial
 
-from flask import Flask, jsonify
+from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 
@@ -35,18 +35,3 @@ class ClientError(Exception):
         super()
         self.errors = errors
         self.status = status
-
-# uniform response formatting:
-# {"data": <jsonified route result>}
-# or {"errors": <errors>} on ClientError
-def __route(*args, **kwargs):
-    def decorator(f):
-        @wraps(f)
-        def wrapped_f(*f_args, **f_kwargs):
-            try:
-                return jsonify(data=f(*f_args, **f_kwargs))
-            except ClientError as e:
-                return (jsonify(errors=e.errors), e.status, [])
-        return Flask.route(app, *args, **kwargs)(wrapped_f)
-    return decorator
-app.route = __route

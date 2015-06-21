@@ -1,16 +1,34 @@
 #! /usr/bin/env python3
 
+import config
 import json
+import math
 
 from odie import app, db, ClientError
 from serialization_schemas import serialize
 
 from functools import wraps
-from flask import request
+from flask import Flask, jsonify, request
 from flask.ext.login import login_required
 from jsonquery import jsonquery
 from marshmallow import ValidationError
 from sqlalchemy import inspect
+
+
+class PaginatedResult(object):
+    """Wraps results with pagination metadata"""
+
+    def __init__(self, pagination, schema):
+        self.pagination = pagination
+        self.schema = schema
+
+    @property
+    def data(self):
+        return serialize(self.pagination.items, self.schema, many=True)
+
+    @property
+    def number_of_pages(self):
+        return math.ceil(self.pagination.query.count() / self.pagination.per_page)
 
 
 def deserialize(schema):
@@ -25,11 +43,43 @@ def deserialize(schema):
     return _decorator
 
 
+def filtered_results(query, schema, paginate=True):
+    q = json.loads(request.args.get('q', '{}'))
+    query = jsonquery(query, q) if q else query
+    if not paginate:
+        return serialize(query.all(), schema, many=True)
+    page = int(request.args.get('page', '1'))
+    items_per_page = config.FS_CONFIG['ITEMS_PER_PAGE']
+    pag = query.paginate(page, items_per_page)
+    return PaginatedResult(pag, schema)
+
+
+# uniform response formatting:
+# {"data": <jsonified route result>}
+# or {"errors": <errors>} on ClientError
+def api_route(url, paginated=True, *args, **kwargs):
+    def decorator(f):
+        @wraps(f)
+        def wrapped_f(*f_args, **f_kwargs):
+            try:
+                data = f(*f_args, **f_kwargs)
+                # automatically add 'page' attribute to returned object
+                if isinstance(data, PaginatedResult):
+                    result = data
+                    data = result.data
+                    return jsonify(data=result.data,
+                            page=result.pagination.page,
+                            number_of_pages=result.number_of_pages)
+                return jsonify(data=data)
+            except ClientError as e:
+                return (jsonify(errors=e.errors), e.status, [])
+        return Flask.route(app, url, *args, **kwargs)(wrapped_f)
+    return decorator
 
 ROUTE_ID = 0
 
 
-def endpoint(query, schemas={}, allow_delete=False):
+def endpoint(query, schemas={}, allow_delete=False, paginate_many=True):
     """Creates and returns an API endpoint handler
 
     Can create both SINGLE-style and MANY-style endpoints. The generated route simply
@@ -38,9 +88,11 @@ def endpoint(query, schemas={}, allow_delete=False):
 
     Returns the handler, you have to register it with Flask yourself.
 
-    schemas: dictionary of serializers/deserializers.
+    schemas: dictionary of {<method>: serializers/deserializers}.
             These keys also define permissible methods.
-    model: The db.Model to query. Mustn't be None for GET-enabled endpoints
+    query: The query to operate on. Mustn't be None for GET-enabled endpoints
+    paginate_many: whether to return paginated results (default:True)
+            The 'page' GET-parameter selects the page
     """
     methods = list(schemas.keys())
     if allow_delete:
@@ -50,11 +102,7 @@ def endpoint(query, schemas={}, allow_delete=False):
         if instance_id is None:  # GET MANY
             assert 'GET' in schemas, "GET schema missing"
             schema = schemas['GET']
-            q = json.loads(request.args.get('q', '{}'))
-            query = jsonquery(db.session, model, q) if q else model.query
-            result = query.all()
-            obj = serialize(result, schema, many=True)
-            return obj
+            return filtered_results(query, schema, paginate_many)
         else:  # GET SINGLE
             result = query.get(instance_id)
             obj = serialize(result, schema)

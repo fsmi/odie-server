@@ -38,6 +38,7 @@ public_table_args = {
 FS_CONFIG = {
     'DEPOSIT_PRICE': 500,  # in cents
     'PRICE_PER_PAGE': 3,   # in cents
+    'ITEMS_PER_PAGE': 20,
     'PRINTERS': [
         'emergency',  # ATIS
         'external',   # print for external customer
