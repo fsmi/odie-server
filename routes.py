@@ -14,6 +14,9 @@ from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
 from models.public import User
 
+## Routes may either return something which can be turned into json using
+## flask.jsonify or a api_utils.PaginatedResult. The actual response is assembled
+## in api_utils.api_route.
 
 @api_route('/api/config')
 def get_config():
