@@ -26,10 +26,6 @@ class PaginatedResult(object):
     def data(self):
         return serialize(self.pagination.items, self.schema, many=True)
 
-    @property
-    def number_of_pages(self):
-        return math.ceil(self.pagination.query.count() / self.pagination.per_page)
-
 
 def deserialize(schema):
     def _decorator(f):
@@ -69,7 +65,7 @@ def api_route(url, paginated=True, *args, **kwargs):
                     data = result.data
                     return jsonify(data=result.data,
                             page=result.pagination.page,
-                            number_of_pages=result.number_of_pages)
+                            number_of_pages=result.pagination.pages)
                 return jsonify(data=data)
             except ClientError as e:
                 return (jsonify(errors=e.errors), e.status, [])
@@ -119,8 +115,7 @@ def endpoint(query, schemas={}, allow_delete=False, paginate_many=True):
 
     @deserialize(schemas['POST'] if 'POST' in schemas else None)
     def handle_post(data=None):
-        if query:
-            db.session.add(data)
+        db.session.add(data)
         db.session.commit()
         return {}
 
