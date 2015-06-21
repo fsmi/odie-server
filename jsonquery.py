@@ -144,8 +144,27 @@ def jsonquery(query, json, **kwargs):
     constraints = dict(DEFAULT_QUERY_CONSTRAINTS)
     constraints.update(kwargs)
     count = depth = 0
-    criterion, total_elements = _build(json, count, depth, query, constraints)
-    return query.filter(criterion)
+    # we have to special-case order_by, because it can't be expressed as a
+    # criterion for filter()
+    op = json.get('operator', '')
+    if op.startswith('order_by'):
+        original_json = json
+        # the rest of jsonquery musn't know about the ordering
+        if 'value' in json:
+            json = json['value']
+    if 'value' in json:
+        criterion, total_elements = _build(json, count, depth, query, constraints)
+        query = query.filter(criterion)
+
+    if op.startswith('order_by'):
+        column = _get_instrumented_attribute(original_json, query)
+        if op == 'order_by_asc':
+            query = query.order_by(column.asc())
+        elif op == 'order_by_desc':
+            query = query.order_by(column.desc())
+        else:
+            raise ValueError('invalid ordering : %s' % op)
+    return query
 
 
 def _build(node, count, depth, query, constraints):
@@ -209,11 +228,21 @@ def _build_sql_unary(node, count, depth, query, constraints, func):
     subquery, count = _build(value, count, depth, query, constraints)
     return func(subquery), count
 
-
-def _build_column(node, query):
+def _get_instrumented_attribute(node, query):
     # string => sqlalchemy.orm.attributes.InstrumentedAttribute
     column = node['column']
-    column = (desc['expr'] for desc in query.column_descriptions if desc['name'] == column).next()
+    descrs = query.column_descriptions
+    try:
+        column = next(desc['expr'] for desc in descrs if desc['name'] == column)
+    except StopIteration:
+        # The underlying query was ~propably a mapped class, let's try that instead
+        column = getattr(descrs[0]['type'], column)
+
+    return column
+
+
+def _build_column(node, query):
+    column = _get_instrumented_attribute(node, query)
 
     op = node['operator']
     value = node['value']
