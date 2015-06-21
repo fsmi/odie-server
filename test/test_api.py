@@ -255,8 +255,29 @@ class APITest(OdieTestCase):
             self.assertEqual([], [True for item in data['data'] if item['id'] in ids_seen])
             ids_seen += [item['id'] for item in data['data']]
 
+    ## jsonquery tests ##
 
+    def test_jsonquery_in_op(self):
+        res = self.app.post('/api/orders', data=json.dumps(self.VALID_ORDER))
+        self.assertEqual(res.status_code, 200)
+        self.login()
+        req = '/api/orders?q={"operator":"in_","column":"name","value":["%s"]}' % self.VALID_ORDER['name']
+        res = self.app.get(req)
+        self.assertEqual(res.status_code, 200)
+        data = self.fromJsonResponse(res)
+        self.assertTrue(len(data) == 1)
+        self.assertEqual([d['id'] for d in data[0]['documents']], self.VALID_ORDER['document_ids'])
 
+    def test_jsonquery_order(self):
+        self.login()
+        res = self.app.get('/api/orders?q={"operator":"order_by_asc","column":"name"}')
+        self.assertEqual(res.status_code, 200)
+        data = self.fromJsonResponse(res)
+        self.assertTrue(len(data) > 2)  # otherwise the ordering is moot anyways...
+        last_name = ''
+        for item in data:
+            self.assertTrue(last_name <= item['name'])
+            last_name = item['name']
 
 
 if __name__ == '__main__':
