@@ -68,6 +68,7 @@ class OrderLoadSchema(Schema):
 class OrderDumpSchema(IdSchema):
     name = fields.Str()
     documents = fields.List(fields.Nested(DocumentSchema))
+    creation_time = fields.Date()
 
 
 class LectureSchema(IdSchema):

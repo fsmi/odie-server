@@ -47,10 +47,20 @@ class OdieTestCase(unittest.TestCase):
             db.session.execute("ALTER SEQUENCE {}.{} RESTART WITH 1".format(*sequence))
         db.session.commit()
 
+    def disable_pagination(self):
+        self.original_items_per_page = config.ITEMS_PER_PAGE
+        # eh, close enough
+        config.ITEMS_PER_PAGE = 9999
+
+    def enable_pagination(self, items_per_page=None):
+        config.ITEMS_PER_PAGE = items_per_page or self.original_items_per_page
+
     def setUp(self):
         # reset DB
         self.clear_all()
         fill_data.fill()
+        self.disable_pagination()
+
 
     def tearDown(self):
         # just in case a test failed after logging in
