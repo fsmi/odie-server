@@ -117,7 +117,7 @@ apigen.endpoint(
             'GET': schemas.OrderDumpSchema,
             'POST': schemas.OrderLoadSchema
         },
-        model=Order)
+        query=Order.query)
 ))
 
 app.route('/api/orders', methods=['POST'])(
@@ -125,14 +125,14 @@ apigen.endpoint(
         schemas={
             'POST': schemas.OrderLoadSchema
         },
-        model=Order)
+        query=Order.query)
 )
 
 app.route('/api/orders/<int:instance_id>', methods=['GET', 'DELETE'])(
 login_required(
 apigen.endpoint(
         schemas={'GET': schemas.OrderDumpSchema},
-        model=Order,
+        query=Order.query,
         allow_delete=True)
 ))
 
@@ -140,10 +140,9 @@ apigen.endpoint(
 app.route('/api/lectures')(
 apigen.endpoint(
         schemas={'GET': schemas.LectureSchema},
-        model=Lecture)
+        query=Lecture.query)
 )
 
-# TODO shoehorn this into apigen.endpoint to benefit from automatic jsonquery and pagination
 @app.route('/api/lectures/<int:id>/documents')
 def lecture_documents(id):
     lecture = Lecture.query.get(id)
@@ -153,7 +152,7 @@ def lecture_documents(id):
 app.route('/api/examinants')(
 apigen.endpoint(
         schemas={'GET': schemas.ExaminantSchema},
-        model=Examinant)
+        query=Examinant.query)
 )
 
 @app.route('/api/examinants/<int:id>/documents')
@@ -164,12 +163,12 @@ def examinant_documents(id):
 app.route('/api/documents')(
 apigen.endpoint(
         schemas={'GET': schemas.DocumentSchema},
-        model=Document)
+        query=Document.query)
 )
 
 app.route('/api/deposits')(
 login_required(
 apigen.endpoint(
         schemas={'GET': schemas.DepositDumpSchema},
-        model=Deposit)
+        query=Deposit.query)
 ))

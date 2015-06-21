@@ -10,6 +10,7 @@ from flask import request
 from flask.ext.login import login_required
 from jsonquery import jsonquery
 from marshmallow import ValidationError
+from sqlalchemy import inspect
 
 
 def deserialize(schema):
@@ -28,7 +29,7 @@ def deserialize(schema):
 ROUTE_ID = 0
 
 
-def endpoint(model, schemas={}, allow_delete=False):
+def endpoint(query, schemas={}, allow_delete=False):
     """Creates and returns an API endpoint handler
 
     Can create both SINGLE-style and MANY-style endpoints. The generated route simply
@@ -55,19 +56,22 @@ def endpoint(model, schemas={}, allow_delete=False):
             obj = serialize(result, schema, many=True)
             return obj
         else:  # GET SINGLE
-            result = model.query.get(instance_id)
+            result = query.get(instance_id)
             obj = serialize(result, schema)
             return obj
 
     def handle_delete(instance_id):
-        obj = model.query.get(instance_id)
+        obj = query.get(instance_id)
+        # since we don't know where this query came from, we need to detach obj
+        # from its session before we can delete it. expunge does exactly this.
+        inspect(obj).session.expunge(obj)
         db.session.delete(obj)
         db.session.commit()
         return {}
 
     @deserialize(schemas['POST'] if 'POST' in schemas else None)
     def handle_post(data=None):
-        if model:
+        if query:
             db.session.add(data)
         db.session.commit()
         return {}

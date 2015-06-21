@@ -38,9 +38,9 @@ class Document(db.Model):
 
     id = Column(db.Integer, primary_key=True)
     lectures = db.relationship('Lecture', secondary=lectureDocs,
-            backref=db.backref('documents'))
+            backref=db.backref('documents', lazy='dynamic'))
     examinants = db.relationship('Examinant', secondary=documentExaminants,
-            backref=db.backref('documents'))
+            backref=db.backref('documents', lazy='dynamic'))
     date = Column(db.DateTime)
     number_of_pages = Column(db.Integer)
     solution = Column(db.Enum('official', 'inofficial', 'none', name='solution', inherit_schema=True), nullable=True)
