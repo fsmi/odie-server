@@ -9,7 +9,7 @@ import json
 import os
 import serialization_schemas as schemas
 
-from flask import request
+from flask import request, send_file
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from sqlalchemy import and_
 
@@ -195,18 +195,15 @@ def _allowed_file(filename):
            filename.rsplit('.', 1)[1] in config.SUBMISSION_ALLOWED_FILE_EXTENSIONS
 
 
-def _document_path(doc):
-    assert doc.file_id
-    digest = doc.file_id
+def _document_path(digest):
     return os.path.join(config.DOCUMENT_DIRECTORY, digest[:2], digest + '.pdf')
 
 @api_route('/api/documents', methods=['POST'])
 def submit_document():
     """Student document submission endpoint
 
-    POST data must conform to DocumentLoadSchema. For all lectures without
-    given id, we first try to find a matching lecture based on its name before
-    registering a new lecture.
+    POST data must be multipart, with the `json` part conformimg to
+    DocumentLoadSchema and the `file` part being a pdf file.
 
     Uploaded files are stored in config.DOCUMENT_DIRECTORY. File contents are
     hashed with sha256 and stored in a git-like schema (the first byte of the
@@ -260,10 +257,16 @@ def submit_document():
     sha256 = hashlib.sha256()
     for bytes in file.stream:
         sha256.update(bytes)
-    # reset file stream for saving
-    file.stream.seek(0)
     digest = sha256.hexdigest()
     new_doc.file_id = digest
-    file.save(_document_path(new_doc))
+    # reset file stream for saving
+    file.stream.seek(0)
+    file.save(_document_path(digest))
     db.session.commit()
     return {}
+
+@app.route('/api/view/<int:instance_id>')
+@login_required
+def view_document(instance_id):
+    doc = Document.query.get(instance_id)
+    return send_file(_document_path(doc.file_id))
