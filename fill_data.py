@@ -21,24 +21,24 @@ import create_schemas_and_tables
 
 def fill():
     lectures = [
-            Lecture(name='Fortgeschrittenes Nichtstun', aliases=['Ugh'], subject='both'),
-            Lecture(name='Moderne Programmierumgebungen am Beispiel von .SEXY', aliases=['.SEXY'], subject='computer science'),
-            Lecture(name='"Advanced" Operating Systems', aliases=['Stupid Operating Systems'], subject='computer science'),
-            Lecture(name='Einführung in die Kozuch-Theorie', aliases=[], subject='mathematics'),
-            Lecture(name='Einführung in Redundanz', aliases=['Redundanz'], subject='computer science'),
-            Lecture(name='Nanokernel Construction', aliases=[], subject='computer science'),
-            Lecture(name='Mensch-Toastbrot-Toaster-Kommunikation', aliases=['MTTK'], subject='computer science'),
-            Lecture(name='Einf�hrung in Encoding', aliases=['=?ISO-8859-1?Q?Einf?hrung in Encoding'], subject='computer science')
+            Lecture(name='Fortgeschrittenes Nichtstun', aliases=['Ugh'], subject='both', validated=True),
+            Lecture(name='Moderne Programmierumgebungen am Beispiel von .SEXY', aliases=['.SEXY'], subject='computer science', validated=True),
+            Lecture(name='"Advanced" Operating Systems', aliases=['Stupid Operating Systems'], subject='computer science', validated=True),
+            Lecture(name='Einführung in die Kozuch-Theorie', aliases=[], subject='mathematics', validated=True),
+            Lecture(name='Einführung in Redundanz', aliases=['Redundanz'], subject='computer science', validated=True),
+            Lecture(name='Nanokernel Construction', aliases=[], subject='computer science', validated=True),
+            Lecture(name='Mensch-Toastbrot-Toaster-Kommunikation', aliases=['MTTK'], subject='computer science', validated=True),
+            Lecture(name='Einf�hrung in Encoding', aliases=['=?ISO-8859-1?Q?Einf?hrung in Encoding'], subject='computer science', validated=True),
         ]
 
     for l in lectures:
         db.session.add(l)
 
     profs = [
-                Examinant(name='Bemens Clöhm'),
-                Examinant(name='Prof. Doktór Üñícøðé'),
-                Examinant(name='Martina Zartbitter'),
-                Examinant(name='Anon Ymous')
+                Examinant(name='Bemens Clöhm', validated=True),
+                Examinant(name='Prof. Doktór Üñícøðé', validated=True),
+                Examinant(name='Martina Zartbitter', validated=True),
+                Examinant(name='Anon Ymous', validated=True),
             ]
 
     for p in profs:
@@ -49,11 +49,11 @@ def fill():
     db.session.add(Deposit(by_user="guybrush", price=5, name='Random J. Hacker', lectures=[lectures[1], lectures[2], lectures[7]]))
 
     docs = [
-                Document(lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=time(2010, 4, 1), number_of_pages=4, document_type='oral', file_id='577c8472f37734e6960c2062a43435ff4823e69a1dbacfe6675e00333ed077f3'),
-                Document(lectures=[lectures[6], lectures[7]], examinants=[profs[1]], date=time(2004, 10, 4), number_of_pages=1, document_type='oral', file_id='577c8472f37734e6960c2062a43435ff4823e69a1dbacfe6675e00333ed077f3'),
-                Document(lectures=[lectures[4], lectures[3], lectures[2]], examinants=[profs[1], profs[0]], date=time(2004, 8, 2), number_of_pages=2, document_type='oral'),
-                Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 1, 1), number_of_pages=7, document_type='oral'),
-                Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 2, 3), number_of_pages=7, document_type='oral')
+                Document(lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=time(2010, 4, 1), number_of_pages=4, document_type='oral', file_id='577c8472f37734e6960c2062a43435ff4823e69a1dbacfe6675e00333ed077f3', validated=True),
+                Document(lectures=[lectures[6], lectures[7]], examinants=[profs[1]], date=time(2004, 10, 4), number_of_pages=1, document_type='oral', file_id='577c8472f37734e6960c2062a43435ff4823e69a1dbacfe6675e00333ed077f3', validated=True),
+                Document(lectures=[lectures[4], lectures[3], lectures[2]], examinants=[profs[1], profs[0]], date=time(2004, 8, 2), number_of_pages=2, document_type='oral', validated=True),
+                Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 1, 1), number_of_pages=7, document_type='oral', validated=True),
+                Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 2, 3), number_of_pages=7, document_type='oral', validated=True),
         ]
 
     for d in docs:
