@@ -49,6 +49,7 @@ class Document(db.Model):
     document_type = Column(db.Enum('oral', 'written', 'oral reexam', name='type', inherit_schema=True))
     file_id = Column(db.String, nullable=True)  # usually sha256sum of file
     validated = Column(db.Boolean)
+    validation_time = Column(db.DateTime, nullable=True)
 
     @property
     def examinants_names(self):
