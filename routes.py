@@ -2,10 +2,16 @@
 
 import accounting
 import config
+import dateutil.parser
+import datetime
+import hashlib
+import json
+import os
 import serialization_schemas as schemas
 
 from flask import request
 from flask.ext.login import login_user, logout_user, current_user, login_required
+from sqlalchemy import and_
 
 from odie import app, db, ClientError
 from api_utils import deserialize, endpoint, filtered_results, api_route
@@ -147,14 +153,14 @@ endpoint(
 
 api_route('/api/lectures')(
 endpoint(
-        schemas={'GET': schemas.LectureSchema},
+        schemas={'GET': schemas.LectureDumpSchema},
         query=Lecture.query)
 )
 
 @api_route('/api/lectures/<int:id>/documents')
 def lecture_documents(id):
     lecture = Lecture.query.get(id)
-    return filtered_results(lecture.documents, schemas.DocumentSchema)
+    return filtered_results(lecture.documents, schemas.DocumentDumpSchema)
 
 
 api_route('/api/examinants')(
@@ -166,13 +172,8 @@ endpoint(
 @api_route('/api/examinants/<int:id>/documents')
 def examinant_documents(id):
     examinant = Examinant.query.get(id)
-    return filtered_results(examinant.documents, schemas.DocumentSchema)
+    return filtered_results(examinant.documents, schemas.DocumentDumpSchema)
 
-api_route('/api/documents')(
-endpoint(
-        schemas={'GET': schemas.DocumentSchema},
-        query=Document.query)
-)
 
 api_route('/api/deposits')(
 login_required(
@@ -180,3 +181,89 @@ endpoint(
         schemas={'GET': schemas.DepositDumpSchema},
         query=Deposit.query)
 ))
+
+
+api_route('/api/documents')(
+endpoint(
+        schemas={'GET': schemas.DocumentDumpSchema},
+        query=Document.query)
+)
+
+
+def _allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in config.SUBMISSION_ALLOWED_FILE_EXTENSIONS
+
+
+def _document_path(doc):
+    assert doc.file_id
+    digest = doc.file_id
+    return os.path.join(config.DOCUMENT_DIRECTORY, digest[:2], digest + '.pdf')
+
+@api_route('/api/documents', methods=['POST'])
+def submit_document():
+    """Student document submission endpoint
+
+    POST data must conform to DocumentLoadSchema. For all lectures without
+    given id, we first try to find a matching lecture based on its name before
+    registering a new lecture.
+
+    Uploaded files are stored in config.DOCUMENT_DIRECTORY. File contents are
+    hashed with sha256 and stored in a git-like schema (the first byte of the
+    sha256 hex digest are taken as subdirectory name, files are named after this
+    digest)."""
+    # we can't use @deserialize because this endpoint uses multipart form data
+    data = json.loads(request.form['json'])
+    (data, errors) = schemas.DocumentLoadSchema().load(data)
+    if errors:
+        raise ClientError(*errors)
+    assert 'file' in request.files
+    file = request.files['file']
+    if not _allowed_file(file.filename):
+        raise ClientError('file extension not allowed', status=406)
+    lectures = []
+    for lect in data['lectures']:
+        l = Lecture.query.filter(and_(Lecture.name == lect['name'], Lecture.subject == lect['subject']))
+        if l.count() == 1:
+            lectures.append(l.first())
+        else:
+            # no dice, add a new unverified lecture
+            l = Lecture(name=lect['name'],
+                    subject=lect['subject'],
+                    validated=False)
+            lectures.append(l)
+            db.session.add(l)
+    examinants = []
+    for examinant in data['examinants']:
+        ex = Examinant.query.filter(Examinant.name == examinant).first()
+        if ex:
+            examinants.append(ex)
+        else:
+            ex = Examinant(examinant, validated=False)
+            examinants.append(ex)
+            db.session.add(ex)
+    date = data['date']
+    assert date <= datetime.date.today()
+    new_doc = Document(
+            lectures=lectures,
+            examinants=examinants,
+            date=date,
+            number_of_pages=data['number_of_pages'],
+            document_type=data['document_type'],
+            validated=False,
+            submitted_by=data['student_name'])
+    db.session.add(new_doc)
+
+    # we have the db side of things taken care of, now save the file
+    # and tell the db where to find the file
+
+    sha256 = hashlib.sha256()
+    for bytes in file.stream:
+        sha256.update(bytes)
+    # reset file stream for saving
+    file.stream.seek(0)
+    digest = sha256.hexdigest()
+    new_doc.file_id = digest
+    file.save(_document_path(new_doc))
+    db.session.commit()
+    return {}

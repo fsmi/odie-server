@@ -4,6 +4,9 @@
 # to override the default flask config supplied here, define a class called FlaskConfig
 # in local_config.py which inherits from this class.
 
+import os
+import tempfile
+
 class FlaskConfig(object):
     SQLALCHEMY_DATABASE_URI = 'postgres:///garfield'  # use garfield for everything by default
     # we also need to access the fsmi db for auth
@@ -14,6 +17,7 @@ class FlaskConfig(object):
 
     SECRET_KEY = 'supersikkrit'
     DEBUG = True
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 
 # things specific to odie: saved orders
 odie_table_args = {
@@ -47,5 +51,7 @@ FS_CONFIG = {
         'Sprechstundenkasse Mathematik',
     ],
 }
+SUBMISSION_ALLOWED_FILE_EXTENSIONS = ['pdf']
 GARFIELD_ACCOUNTING = False
 ITEMS_PER_PAGE = 20
+DOCUMENT_DIRECTORY = os.path.join(tempfile.gettempdir(), 'odie')

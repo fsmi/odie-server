@@ -35,7 +35,7 @@ class UserDumpSchema(Schema):
     last_name = fields.Str()
 
 
-class DocumentSchema(IdSchema):
+class DocumentDumpSchema(IdSchema):
     lectures = fields.List(fields.Nested(IdSchema))
     examinants = fields.List(fields.Nested(IdSchema))
     date = fields.Date()
@@ -70,16 +70,30 @@ class OrderLoadSchema(Schema):
 
 class OrderDumpSchema(IdSchema):
     name = fields.Str()
-    documents = fields.List(fields.Nested(DocumentSchema))
+    documents = fields.List(fields.Nested(DocumentDumpSchema))
     creation_time = fields.Date()
 
 
-class LectureSchema(IdSchema):
+class LectureDumpSchema(IdSchema):
     name = fields.Str()
     aliases = fields.List(fields.Str())
     subject = fields.Str()
     comment = fields.Str()
     validated = fields.Boolean()
+
+
+class LectureLoadSchema(Schema):  # used by student document submission
+    name = fields.Str(required=True)
+    subject = fields.Str(required=True)
+
+
+class DocumentLoadSchema(Schema):  # used by student document submission
+    lectures = fields.List(fields.Nested(LectureLoadSchema), required=True)
+    examinants = fields.List(fields.Str, required=True)
+    date = fields.Date(required=True)
+    number_of_pages = fields.Int(required=True, validate=lambda n: n > 1)
+    document_type = fields.Str(required=True, validate=lambda t: t in ['oral','oral reexam'])
+    student_name = fields.Str(required=True)
 
 
 class DepositDumpSchema(IdSchema):
