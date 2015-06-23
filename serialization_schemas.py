@@ -44,6 +44,8 @@ class DocumentSchema(IdSchema):
     comment = fields.Str()
     document_type = fields.Str()
     available = fields.Method('is_available_for_printing')
+    validated = fields.Boolean()
+    validation_time = fields.Date()
 
     def is_available_for_printing(self, obj):
         return obj.file_id is not None
@@ -51,6 +53,7 @@ class DocumentSchema(IdSchema):
 
 class ExaminantSchema(IdSchema):
     name = fields.Str()
+    validated = fields.Boolean()
 
 
 class OrderLoadSchema(Schema):
@@ -76,6 +79,7 @@ class LectureSchema(IdSchema):
     aliases = fields.List(fields.Str())
     subject = fields.Str()
     comment = fields.Str()
+    validated = fields.Boolean()
 
 
 class DepositDumpSchema(IdSchema):

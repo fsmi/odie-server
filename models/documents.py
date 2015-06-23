@@ -16,6 +16,7 @@ class Lecture(db.Model):
     aliases = Column(postgres.ARRAY(db.String), server_default='{}')
     subject = Column(db.Enum('mathematics', 'computer science', 'both', name='subject', inherit_schema=True))
     comment = Column(db.String, server_default='')
+    validated = Column(db.Boolean)
 
     def __str__(self):
         return self.name
@@ -47,6 +48,8 @@ class Document(db.Model):
     comment = Column(db.String, server_default='')
     document_type = Column(db.Enum('oral', 'written', 'oral reexam', name='type', inherit_schema=True))
     file_id = Column(db.String, nullable=True)  # usually sha256sum of file
+    validated = Column(db.Boolean)
+    validation_time = Column(db.DateTime, nullable=True)
 
     @property
     def examinants_names(self):
@@ -64,6 +67,7 @@ class Examinant(db.Model):
 
     id = Column(db.Integer, primary_key=True)
     name = Column(db.String)
+    validated = Column(db.Boolean)
 
     def __str__(self):
         return self.name
