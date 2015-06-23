@@ -50,25 +50,33 @@ def filtered_results(query, schema, paginate=True):
     return PaginatedResult(pag, schema)
 
 
+def handle_client_errors(f):
+    @wraps(f)
+    def wrapped_f(*f_args, **f_kwargs):
+        try:
+            return f(*f_args, **f_kwargs)
+        except ClientError as e:
+            return (jsonify(errors=e.errors), e.status, [])
+    return wrapped_f
+
+
 # uniform response formatting:
 # {"data": <jsonified route result>}
 # or {"errors": <errors>} on ClientError
 def api_route(url, *args, **kwargs):
     def decorator(f):
         @wraps(f)
+        @handle_client_errors
         def wrapped_f(*f_args, **f_kwargs):
-            try:
-                data = f(*f_args, **f_kwargs)
-                # automatically add 'page' attribute to returned object
-                if isinstance(data, PaginatedResult):
-                    result = data
-                    data = result.data
-                    return jsonify(data=result.data,
-                            page=result.pagination.page,
-                            number_of_pages=result.pagination.pages)
-                return jsonify(data=data)
-            except ClientError as e:
-                return (jsonify(errors=e.errors), e.status, [])
+            data = f(*f_args, **f_kwargs)
+            # automatically add 'page' attribute to returned object
+            if isinstance(data, PaginatedResult):
+                result = data
+                data = result.data
+                return jsonify(data=result.data,
+                        page=result.pagination.page,
+                        number_of_pages=result.pagination.pages)
+            return jsonify(data=data)
         return Flask.route(app, url, *args, **kwargs)(wrapped_f)
     return decorator
 

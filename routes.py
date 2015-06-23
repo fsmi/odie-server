@@ -2,7 +2,6 @@
 
 import accounting
 import config
-import dateutil.parser
 import datetime
 import hashlib
 import json
@@ -15,7 +14,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
 
 from odie import app, db, ClientError
-from api_utils import deserialize, endpoint, filtered_results, api_route
+from api_utils import deserialize, endpoint, filtered_results, api_route, handle_client_errors
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
 from models.public import User
@@ -265,10 +264,12 @@ def submit_document():
     # reset file stream for saving
     file.stream.seek(0)
     file.save(_document_path(digest))
+    file.close()
     db.session.commit()
     return {}
 
 @app.route('/api/view/<int:instance_id>')
+@handle_client_errors
 @login_required
 def view_document(instance_id):
     doc = Document.query.get(instance_id)

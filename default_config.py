@@ -51,7 +51,7 @@ FS_CONFIG = {
         'Sprechstundenkasse Mathematik',
     ],
 }
-SUBMISSION_ALLOWED_FILE_EXTENSIONS = ['pdf']
+SUBMISSION_ALLOWED_FILE_EXTENSIONS = ['.pdf']
 GARFIELD_ACCOUNTING = False
 ITEMS_PER_PAGE = 20
 DOCUMENT_DIRECTORY = os.path.join(tempfile.gettempdir(), 'odie')

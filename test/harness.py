@@ -7,6 +7,7 @@ import os
 import subprocess
 import unittest
 
+from run_odie import init_upload_dir
 from odie import app, db
 
 ODIE_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
@@ -27,6 +28,7 @@ class OdieTestCase(unittest.TestCase):
         assert config.FlaskConfig.DEBUG, "These tests are destructive, I refuse to run them in production"
         subprocess.call([os.path.join(ODIE_DIR, 'delete_everything_in_all_databases.sh')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.call([os.path.join(ODIE_DIR, 'create_schemas_and_tables.py')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        init_upload_dir()
 
         cls.app = app.test_client()
 
