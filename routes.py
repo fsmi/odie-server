@@ -12,6 +12,7 @@ import serialization_schemas as schemas
 from flask import request, send_file
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from sqlalchemy import and_
+from sqlalchemy.orm.exc import NoResultFound
 
 from odie import app, db, ClientError
 from api_utils import deserialize, endpoint, filtered_results, api_route
@@ -191,8 +192,7 @@ endpoint(
 
 
 def _allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in config.SUBMISSION_ALLOWED_FILE_EXTENSIONS
+    return os.path.splitext(filename)[1] in config.SUBMISSION_ALLOWED_FILE_EXTENSIONS
 
 
 def _document_path(digest):
@@ -208,7 +208,10 @@ def submit_document():
     Uploaded files are stored in config.DOCUMENT_DIRECTORY. File contents are
     hashed with sha256 and stored in a git-like schema (the first byte of the
     sha256 hex digest are taken as subdirectory name, files are named after this
-    digest)."""
+    digest).
+
+    This method may raise AssertionErrors when the user sends invalid data.
+    """
     # we can't use @deserialize because this endpoint uses multipart form data
     data = json.loads(request.form['json'])
     (data, errors) = schemas.DocumentLoadSchema().load(data)
@@ -220,10 +223,10 @@ def submit_document():
         raise ClientError('file extension not allowed', status=406)
     lectures = []
     for lect in data['lectures']:
-        l = Lecture.query.filter(and_(Lecture.name == lect['name'], Lecture.subject == lect['subject']))
-        if l.count() == 1:
+        try:
+            l = Lecture.query.filter_by(name = lect['name'], subject = lect['subject']).one()
             lectures.append(l.first())
-        else:
+        except NoResultFound:
             # no dice, add a new unverified lecture
             l = Lecture(name=lect['name'],
                     subject=lect['subject'],
@@ -232,10 +235,10 @@ def submit_document():
             db.session.add(l)
     examinants = []
     for examinant in data['examinants']:
-        ex = Examinant.query.filter(Examinant.name == examinant).first()
-        if ex:
+        try:
+            ex = Examinant.query.filter_by(name = examinant).one()
             examinants.append(ex)
-        else:
+        except NoResultFound:
             ex = Examinant(examinant, validated=False)
             examinants.append(ex)
             db.session.add(ex)
