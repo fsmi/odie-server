@@ -4,6 +4,7 @@ import os
 
 import odie
 import config
+import admin
 import routes
 
 from odie import app

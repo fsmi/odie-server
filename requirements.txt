@@ -2,4 +2,5 @@ psycopg2
 Flask-SQLAlchemy
 Flask-Login
 Flask-CORS
+Flask-Admin
 marshmallow
