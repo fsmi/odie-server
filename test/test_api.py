@@ -2,16 +2,21 @@
 
 import odie
 import config
+import io
+import os
 import routes
 import json
 import random
 
-from test.harness import OdieTestCase
+from test.harness import OdieTestCase, ODIE_DIR
 
 class APITest(OdieTestCase):
     VALID_USER = 'guybrush'
     VALID_PASS = 'arrrrr'
     CASH_BOX = 'Sprechstundenkasse Informatik'
+    UNUSED = 'c9fa0f374b0817113c811bd12d4f1755a572eb37cafdbde05c76803eebec49f1'
+
+    PDF_PATH = os.path.join(ODIE_DIR, 'test/upload.pdf')
 
     VALID_PRINTJOB = {
             'cover_text': 'Klausuren',
@@ -22,7 +27,7 @@ class APITest(OdieTestCase):
         }
 
     VALID_ORDER = {
-            'name': "a747b53e0d942681791b",
+            'name': UNUSED,
             'document_ids': [1],
         }
 
@@ -254,6 +259,76 @@ class APITest(OdieTestCase):
             # assert no ids in this page have been seen before
             self.assertEqual([], [True for item in data['data'] if item['id'] in ids_seen])
             ids_seen += [item['id'] for item in data['data']]
+
+    DOCUMENT_SUBMISSION_JSON = {
+                'lectures': [],
+                'examinants': [],
+                'date': '2010-01-01T00:00:00',
+                'number_of_pages': 2,
+                'document_type': 'oral',
+                'student_name': UNUSED,
+        }
+    VALID_DOCUMENT_SUBMISSION = {
+                'json': json.dumps(DOCUMENT_SUBMISSION_JSON, separators=(',', ':')),
+                'file': None,  # needs to be reopened for every request
+            }
+
+    SUBMITTED_DOC_QUERY = {
+                'operator': 'and',
+                'value': [{
+                    'operator': '==',
+                    'column': 'validated',
+                    'value': False,
+                },{
+                    'operator': '==',
+                    'column': 'submitted_by',
+                    'value': UNUSED,
+                }]
+            }
+
+    def _upload_document(self):
+        with open(self.PDF_PATH, 'rb') as pdf:
+            self.VALID_DOCUMENT_SUBMISSION['file'] = pdf
+            res = self.app.post('/api/documents', data=self.VALID_DOCUMENT_SUBMISSION)
+            self.assertEqual(res.status_code, 200)
+
+
+    def test_document_submission(self):
+        query = json.dumps(self.SUBMITTED_DOC_QUERY, separators=(',', ':'))
+        res = self.app.get('/api/documents?q=%s' % query)
+        self.assertEqual(res.status_code, 200)
+        data = self.fromJsonResponse(res)
+        self.assertEqual(data, [])
+        self._upload_document()
+
+        res = self.app.get('/api/documents?q=%s' % query)
+        self.assertEqual(res.status_code, 200)
+        data = self.fromJsonResponse(res)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['date'], self.DOCUMENT_SUBMISSION_JSON['date'])
+        self.assertEqual(data[0]['lectures'], self.DOCUMENT_SUBMISSION_JSON['lectures'])
+
+    def test_no_document_preview_unauthenticated(self):
+        self._upload_document()
+        res = self.app.get('/api/view/1')
+        self.assertEqual(res.status_code, 401)
+
+    def test_document_preview(self):
+        self._upload_document()
+        self.login()
+        query = json.dumps(self.SUBMITTED_DOC_QUERY, separators=(',', ':'))
+        res = self.app.get('/api/documents?q=%s' % query)
+        data = self.fromJsonResponse(res)
+        self.assertEqual(len(data), 1)
+        id = data[0]['id']
+
+        # get document
+        res = self.app.get('/api/view/%d' % id)
+        self.assertEqual(res.status_code, 200)
+        with open(self.PDF_PATH, 'rb') as doc:
+            doc_data = doc.read()  # only 2 bytes...
+            self.assertEqual(res.data, doc_data)
+
 
     ## jsonquery tests ##
 

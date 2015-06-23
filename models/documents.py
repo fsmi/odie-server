@@ -50,6 +50,7 @@ class Document(db.Model):
     file_id = Column(db.String, nullable=True)  # usually sha256sum of file
     validated = Column(db.Boolean)
     validation_time = Column(db.DateTime, nullable=True)
+    submitted_by = Column(db.String, nullable=True)
 
     @property
     def examinants_names(self):
