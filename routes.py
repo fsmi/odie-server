@@ -154,7 +154,8 @@ endpoint(
 api_route('/api/lectures')(
 endpoint(
         schemas={'GET': schemas.LectureDumpSchema},
-        query=Lecture.query)
+        query=Lecture.query,
+        paginate_many=False)
 )
 
 @api_route('/api/lectures/<int:id>/documents')
@@ -166,7 +167,8 @@ def lecture_documents(id):
 api_route('/api/examinants')(
 endpoint(
         schemas={'GET': schemas.ExaminantSchema},
-        query=Examinant.query)
+        query=Examinant.query,
+        paginate_many=False)
 )
 
 @api_route('/api/examinants/<int:id>/documents')
