@@ -1,10 +1,10 @@
 #! /usr/bin/env python3
 
-from odie import admin, db
+from odie import app, db
 from models.documents import Document, Lecture, Examinant, Deposit
 
 from flask import redirect
-from flask_admin import BaseView
+from flask_admin import Admin, BaseView, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
 
@@ -16,9 +16,12 @@ def _dateFormatter(attr_name):
         return d.date() if d else ''
     return f
 
+_exam_allowed_roles = ['adm', 'info_protokolle', 'info_klausuren', 'mathe_protokolle', 'mathe_klausuren']
+
 class AuthView(BaseView):
     def is_accessible(self):
-        return current_user.is_authenticated()
+        return current_user.is_authenticated() \
+                and any(True for perm in self.allowed_roles if current_user.has_permission(perm))
 
     def _handle_view(self, name, **kwargs):
         if not self.is_accessible():
@@ -29,6 +32,7 @@ class AuthModelView(ModelView, AuthView):
 
 
 class DocumentView(AuthModelView):
+    allowed_roles = _exam_allowed_roles
     list_template = 'document_list.html'
     form_excluded_columns = ('validation_time', 'file_id')
     column_list = (
@@ -63,9 +67,6 @@ class DocumentView(AuthModelView):
             'date': _dateFormatter('date'),
             'validation_time': _dateFormatter('validation_time'),
         }
-    def scaffold_list_form(self, validators=[], **kwargs):
-        validators = {'name': {'validators': []}}
-        return super(DocumentView, self).scaffold_list_form(validators=validators, **kwargs)
 
     def on_model_change(self, form, model, is_created):
         if model.validation_time is None and model.validated:
@@ -73,12 +74,47 @@ class DocumentView(AuthModelView):
             model.validation_time = datetime.datetime.now()
 
 class LectureView(AuthModelView):
+    allowed_roles = _exam_allowed_roles
     form_excluded_columns = ('documents',)
+    subject_labels = {
+            'computer science': 'Informatik',
+            'mathematics': 'Mathematik',
+            'both': 'Beides',
+        }
+    column_formatters = {
+            'subject': lambda v,c,m,n: LectureView.subject_labels[m.subject],
+        }
+    column_labels = {
+            'subject': 'Fach',
+            'comment': 'Kommentar',
+            'validated': 'Überprüft',
+            'aliases': 'Aliase',
+        }
 
 class ExaminantView(AuthModelView):
+    allowed_roles = _exam_allowed_roles
     form_excluded_columns = ('documents',)
+    column_labels = {
+            'validated': 'Überprüft',
+        }
 
-admin.add_view(DocumentView(Document, db.session, name='Dokumente'))
+class DepositView(AuthModelView):
+    allowed_roles = ['adm']
+    column_labels = {
+            'price': 'Geldwert',
+            'by_user': 'Eingetragen von',
+            'date': 'Datum',
+            'lectures': 'Vorlesungen',
+        }
+    column_formatters = {
+            'date': _dateFormatter('date'),
+            'price': lambda v,c,m,n: str(m.price) + ' €',
+        }
+
+docView = DocumentView(Document, db.session, name='Dokumente')
+admin = Admin(app, name='Odie (admin)', base_template='main.html')
+
+admin.add_view(docView)
 admin.add_view(LectureView(Lecture, db.session, name='Vorlesungen'))
 admin.add_view(ExaminantView(Examinant, db.session, name='Prüfer'))
-admin.add_view(AuthModelView(Deposit, db.session, name='Pfand'))
+admin.add_view(DepositView(Deposit, db.session, name='Pfand'))

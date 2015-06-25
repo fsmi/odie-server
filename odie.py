@@ -5,7 +5,6 @@ import config
 from functools import partial
 
 from flask import Flask
-from flask_admin import Admin
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 
@@ -24,8 +23,6 @@ login_manager.setup_app(app)
 def __unauthorized():
     raise ClientError("unauthorized", status=401)
 login_manager.unauthorized_handler(__unauthorized)
-
-admin = Admin(app, name='Odie (admin)')
 
 # sqlalchemy treats columns as nullable by default, which we don't want.
 Column = partial(db.Column, nullable=False)
