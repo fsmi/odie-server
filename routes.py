@@ -226,7 +226,7 @@ def submit_document():
     for lect in data['lectures']:
         try:
             l = Lecture.query.filter_by(name = lect['name'], subject = lect['subject']).one()
-            lectures.append(l.first())
+            lectures.append(l)
         except NoResultFound:
             # no dice, add a new unverified lecture
             l = Lecture(name=lect['name'],

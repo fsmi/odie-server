@@ -261,8 +261,10 @@ class APITest(OdieTestCase):
             ids_seen += [item['id'] for item in data['data']]
 
     DOCUMENT_SUBMISSION_JSON = {
-                'lectures': [],
-                'examinants': [],
+                'lectures': [
+                    {"name":"Fortgeschrittenes Nichtstun","subject":"both"},
+                ],
+                'examinants': ["Anon Ymous"],
                 'date': '2010-01-01T00:00:00',
                 'number_of_pages': 2,
                 'document_type': 'oral',
@@ -306,7 +308,7 @@ class APITest(OdieTestCase):
         data = self.fromJsonResponse(res)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['date'], self.DOCUMENT_SUBMISSION_JSON['date'])
-        self.assertEqual(data[0]['lectures'], self.DOCUMENT_SUBMISSION_JSON['lectures'])
+        self.assertEqual(len(data[0]['lectures']), len(self.DOCUMENT_SUBMISSION_JSON['lectures']))
 
     def test_no_document_preview_unauthenticated(self):
         self._upload_document()
