@@ -241,7 +241,7 @@ class APITest(OdieTestCase):
     def test_pagination_out_of_range(self):
         self.enable_pagination(3)
         self.login()
-        res = self.app.get('/api/orders?page=99999')
+        res = self.app.get('/api/orders?q={"page":99999}')
         self.assertEqual(res.status_code, 404)
 
     def test_pagination_number_of_pages(self):
@@ -251,7 +251,7 @@ class APITest(OdieTestCase):
         self.login()
         ids_seen = []
         for page in range(1, 4):
-            res = self.app.get('/api/orders?page=%d' % page)
+            res = self.app.get('/api/orders?q={"page":%d}' % page)
             self.assertEqual(res.status_code, 200)
             data = json.loads(res.data.decode('utf-8'))
             self.assertIn('number_of_pages', data)
