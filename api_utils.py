@@ -44,7 +44,7 @@ def filtered_results(query, schema, paginate=True):
     query = jsonquery(query, q) if q else query
     if not paginate:
         return serialize(query.all(), schema, many=True)
-    page = int(request.args.get('page', '1'))
+    page = q.get('page', 1)
     items_per_page = config.ITEMS_PER_PAGE
     pag = query.paginate(page, items_per_page)
     return PaginatedResult(pag, schema)
