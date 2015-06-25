@@ -7,6 +7,7 @@ from flask import redirect
 from flask_admin import Admin, BaseView, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
+from wtforms.validators import Optional
 
 import datetime
 
@@ -35,6 +36,9 @@ class DocumentView(AuthModelView):
     allowed_roles = _exam_allowed_roles
     list_template = 'document_list.html'
     form_excluded_columns = ('validation_time', 'file_id')
+    form_args = {
+            'comment': {'validators': [Optional()]},
+        }
     column_list = (
             'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
             'document_type', 'validated', 'validation_time', 'submitted_by')
@@ -76,6 +80,9 @@ class DocumentView(AuthModelView):
 class LectureView(AuthModelView):
     allowed_roles = _exam_allowed_roles
     form_excluded_columns = ('documents',)
+    form_args = {
+            'comment': {'validators': [Optional()]},
+        }
     subject_labels = {
             'computer science': 'Informatik',
             'mathematics': 'Mathematik',
