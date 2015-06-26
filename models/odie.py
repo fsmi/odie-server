@@ -35,5 +35,7 @@ class Order(db.Model):
 
     @property
     def documents(self):
-        return [item.document for item in self.items]
+        docs = Document.query.filter(Document.id.in_([it.document_id for it in self.items])).all()
+        docs_by_id = {doc.id: doc for doc in docs}
+        return [docs_by_id[it.document_id] for it in self.items]
 

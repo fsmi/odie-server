@@ -10,6 +10,7 @@ import serialization_schemas as schemas
 from flask import request, send_file
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from sqlalchemy import and_
+from sqlalchemy.orm import subqueryload
 from sqlalchemy.orm.exc import NoResultFound
 
 from odie import app, db, ClientError
@@ -160,7 +161,8 @@ endpoint(
 @api_route('/api/lectures/<int:id>/documents')
 def lecture_documents(id):
     lecture = Lecture.query.get(id)
-    return filtered_results(lecture.documents, schemas.DocumentDumpSchema)
+    return filtered_results(lecture.documents.options(subqueryload('lectures'), subqueryload('examinants')) \
+            .order_by('id'), schemas.DocumentDumpSchema)
 
 
 api_route('/api/examinants')(
@@ -173,21 +175,22 @@ endpoint(
 @api_route('/api/examinants/<int:id>/documents')
 def examinant_documents(id):
     examinant = Examinant.query.get(id)
-    return filtered_results(examinant.documents, schemas.DocumentDumpSchema)
+    return filtered_results(examinant.documents.options(subqueryload('lectures'), subqueryload('examinants')) \
+            .order_by('id'), schemas.DocumentDumpSchema)
 
 
 api_route('/api/deposits')(
 login_required(
 endpoint(
         schemas={'GET': schemas.DepositDumpSchema},
-        query=Deposit.query)
+        query=Deposit.query.options(subqueryload('lectures')).order_by('id'))
 ))
 
 
 api_route('/api/documents')(
 endpoint(
         schemas={'GET': schemas.DocumentDumpSchema},
-        query=Document.query)
+        query=Document.query.options(subqueryload('lectures'), subqueryload('examinants')).order_by('id'))
 )
 
 
@@ -264,4 +267,6 @@ def submit_document():
 @login_required
 def view_document(instance_id):
     doc = Document.query.get(instance_id)
+    if doc is None or doc.file_id is None:
+        raise ClientError('document not found', status=404)
     return send_file(document_path(doc.file_id))
