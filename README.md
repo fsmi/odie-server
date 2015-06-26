@@ -15,7 +15,9 @@ To run the server, execute `./odie.py`.
 
 ## Development ##
 
-Here's a small map of the project:
+Odie is made of three logical units: the database models (found in `models/`), the api (for regular users) and the admin interface (for direct db access).
+
+Here's a small map of the api side of the project:
 * `serialization_schemas.py`:  
   If you want to see what the JSON odie expects looks like, look here. We're using [marshmallow](marshmallow.readthedocs.org) for all our (de)serialization needs.
 * `models/*.py`  
@@ -24,5 +26,7 @@ Here's a small map of the project:
   The accounting backend. We insert all accounting information into the `garfield` database through this. Should garfield itself ever die and get replaced with something else, this is where you'll need to add new accounting hooks.
 * `api_utils.py`  
   We're using Flask, Flask-login, SQLAlchemy, jsonquery and marshmallow. That means a lot of work is done for us and what's left of most API endpoints is mostly boilerplate for stringing all of this together. `api_utils.py` is where we abstract all of that away, too, so most API endpoints can be generated with a simple call to `api_utils.endpoint`. Also found there: grab bag of small utility functions that would only clutter routes.py.
+
+The admin panel is built using Flask-Admin. Since this already does all of the heavy lifting for us, we only massage / tweak it to fit our needs.
 
 The rest of the files should be fairly straight-forward. Godspeed.

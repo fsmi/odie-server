@@ -24,7 +24,6 @@ def __unauthorized():
     raise ClientError("unauthorized", status=401)
 login_manager.unauthorized_handler(__unauthorized)
 
-
 # sqlalchemy treats columns as nullable by default, which we don't want.
 Column = partial(db.Column, nullable=False)
 

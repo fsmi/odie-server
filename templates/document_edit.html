@@ -1,0 +1,11 @@
+{% extends 'admin/model/edit.html' %}
+
+{% block body %}
+    {% call lib.form_tag(form) %}
+        {{ lib.render_form_fields(form, form_opts=form_opts) }}
+          <a class="icon btn btn-large"  target="_blank" href="/api/view/{{ form._obj.id  }}" title="View PDF">
+            <i class="fa icon-eye-open"></i>
+          </a>
+        {{ lib.render_form_buttons(return_url, extra()) }}
+    {% endcall %}
+{% endblock %}

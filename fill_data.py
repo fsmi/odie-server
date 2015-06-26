@@ -81,7 +81,10 @@ def fill():
     perms = [
                 Permission(name='homepage_login'),
                 Permission(name='homepage_logout'),
-                Permission(name='partying')
+                Permission(name='partying'),
+                Permission(name='info_klausuren'),
+                Permission(name='info_protokolle'),
+                Permission(name='adm'),
             ]
 
     for p in perms:
@@ -89,7 +92,9 @@ def fill():
 
     users = [
                 User(username='guybrush', first_name='Guybrush', last_name='Threepwood', pw_hash=hash('arrrrr'), effective_permissions=[perms[2], perms[0]]),
-                User(username='lechuck', first_name='Ghost Pirate', last_name='leChuck', pw_hash=hash('grrrrr'), effective_permissions=[])
+                User(username='elaine', first_name='Elaine', last_name='Marley', pw_hash=hash('arrrrr'), effective_permissions=[perms[0], perms[4]]),
+                User(username='lechuck', first_name='Ghost Pirate', last_name='leChuck', pw_hash=hash('grrrrr'), effective_permissions=[]),
+                User(username='admin', first_name='Ad', last_name='Min', pw_hash=hash('admin'), effective_permissions=perms)
             ]
 
     for u in users:

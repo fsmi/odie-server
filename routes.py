@@ -3,7 +3,6 @@
 import accounting
 import config
 import datetime
-import hashlib
 import json
 import os
 import serialization_schemas as schemas
@@ -14,7 +13,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
 
 from odie import app, db, ClientError
-from api_utils import deserialize, endpoint, filtered_results, api_route, handle_client_errors
+from api_utils import deserialize, endpoint, filtered_results, api_route, handle_client_errors, document_path, save_file
 from models.documents import Lecture, Deposit, Document, Examinant
 from models.odie import Order
 from models.public import User
@@ -196,9 +195,6 @@ def _allowed_file(filename):
     return os.path.splitext(filename)[1] in config.SUBMISSION_ALLOWED_FILE_EXTENSIONS
 
 
-def _document_path(digest):
-    return os.path.join(config.DOCUMENT_DIRECTORY, digest[:2], digest + '.pdf')
-
 @api_route('/api/documents', methods=['POST'])
 def submit_document():
     """Student document submission endpoint
@@ -258,15 +254,8 @@ def submit_document():
     # we have the db side of things taken care of, now save the file
     # and tell the db where to find the file
 
-    sha256 = hashlib.sha256()
-    for bytes in file.stream:
-        sha256.update(bytes)
-    digest = sha256.hexdigest()
+    digest = save_file(file)
     new_doc.file_id = digest
-    # reset file stream for saving
-    file.stream.seek(0)
-    file.save(_document_path(digest))
-    file.close()
     db.session.commit()
     return {}
 
@@ -275,4 +264,4 @@ def submit_document():
 @login_required
 def view_document(instance_id):
     doc = Document.query.get(instance_id)
-    return send_file(_document_path(doc.file_id))
+    return send_file(document_path(doc.file_id))
