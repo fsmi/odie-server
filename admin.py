@@ -68,6 +68,7 @@ class DocumentView(AuthModelView):
 
 
     list_template = 'document_list.html'
+    edit_template = 'document_edit.html'
     form_excluded_columns = ('validation_time', 'file_id')
     form_extra_fields = {'file': form.FileUploadField()}
     form_args = {
