@@ -118,7 +118,7 @@ def log_deposit_return(data):
 @login_required
 @deserialize(schemas.DonationLoadSchema)
 def log_donation(data):
-    accounting.log_donation(data['amount'], data['cash_box'])
+    accounting.log_donation(current_user, data['amount'], data['cash_box'])
     db.session.commit()
     return {}
 

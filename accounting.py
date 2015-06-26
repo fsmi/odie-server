@@ -24,7 +24,7 @@ import config
 import datetime
 
 
-def log_donation(amount: int, cashbox: str):
+def log_donation(user, amount: int, cashbox: str):
     pass
 def log_exam_sale(pages: int, price: int, user, cashbox: str):
     pass
@@ -37,8 +37,6 @@ def log_deposit_return(deposit, user, cashbox: str):
 
 if config.GARFIELD_ACCOUNTING:
 
-    # access to stored procedures
-    procs = sqlalchemy.sql.func.garfield
     _qry = text("""SELECT cash_box_name, cash_boxes.cash_box_id
             FROM garfield.cash_boxes;""")
     cash_box_ids = dict(db.session.execute(_qry).fetchall())
@@ -46,11 +44,7 @@ if config.GARFIELD_ACCOUNTING:
     _tax_group = 2
 
 
-    def log_donation(amount: int, cashbox: str):
-        proc = procs.donation_accept(cash_box_ids[cashbox], 'MONEY', amount / 100)
-        db.session.execute(proc)
-
-    def _cash_box_log_entry(user, cashbox: str, amount: int, action: str):
+    def _cash_box_log_entry(user, cashbox: str, amount: float, action: str):
         qry = text("""INSERT INTO garfield.cash_box_log
                 (cash_box_log_performed_by_user_id, cash_box_id, cash_box_log_quantity, type_id, receipt_number)
                 SELECT user_id, :cash_box_id, :amount, :type, garfield.cash_box_log_get_receipt_number(:cash_box_id, current_date)
@@ -64,6 +58,15 @@ if config.GARFIELD_ACCOUNTING:
                 type=action,
             ))
         return r.scalar()
+
+    def log_donation(user, amount: int, cashbox: str):
+        # I'd love to use donation_accept, but that thing wants to be smart and
+        # guesses the user id from the session user, which doesn't exist.
+        # So... more raw SQL it is.
+        log_id = _cash_box_log_entry(user, cashbox, amount / 100, 'DONATION')
+        qry = text("""INSERT INTO garfield.donation_sales_log
+                VALUES (:log_id, 'MONEY');""")
+        db.session.execute(qry.bindparam(log_id=log_id))
 
     def _log_exam_action(pages: int, final_price: float, user, cashbox: str, action: str):
         cshbx_log_id = _cash_box_log_entry(user, cashbox, price, action)
