@@ -35,5 +35,7 @@ class Order(db.Model):
 
     @property
     def documents(self):
+        # TODO avoid doing O(n) queries
+        # also, actually use item.index
         return [item.document for item in self.items]
 
