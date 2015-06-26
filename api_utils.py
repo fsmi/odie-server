@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 
 import config
+import hashlib
+import os
 import json
 import math
 
@@ -13,6 +15,22 @@ from flask.ext.login import login_required
 from jsonquery import jsonquery
 from marshmallow import ValidationError
 from sqlalchemy import inspect
+
+
+def document_path(digest):
+    return os.path.join(config.DOCUMENT_DIRECTORY, digest[:2], digest + '.pdf')
+
+
+def save_file(file_storage):
+    sha256 = hashlib.sha256()
+    for bytes in file_storage.stream:
+        sha256.update(bytes)
+    digest = sha256.hexdigest()
+    # reset file_storage stream for saving
+    file_storage.stream.seek(0)
+    file_storage.save(document_path(digest))
+    file_storage.close()
+    return digest
 
 
 class PaginatedResult(object):
