@@ -31,6 +31,7 @@ class AuthView(BaseView):
             return redirect('/')
 
 class AuthModelView(ModelView, AuthView):
+    page_size = 50  # the default of 20 is a bit on the low side...
     pass
 
 
