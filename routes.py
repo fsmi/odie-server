@@ -161,8 +161,9 @@ endpoint(
 @api_route('/api/lectures/<int:id>/documents')
 def lecture_documents(id):
     lecture = Lecture.query.get(id)
-    return filtered_results(lecture.documents.options(subqueryload('lectures'), subqueryload('examinants')) \
-            .order_by('id'), schemas.DocumentDumpSchema)
+    return filtered_results(
+            lecture.documents.options(subqueryload('lectures'), subqueryload('examinants')),
+            schemas.DocumentDumpSchema)
 
 
 api_route('/api/examinants')(
@@ -175,22 +176,23 @@ endpoint(
 @api_route('/api/examinants/<int:id>/documents')
 def examinant_documents(id):
     examinant = Examinant.query.get(id)
-    return filtered_results(examinant.documents.options(subqueryload('lectures'), subqueryload('examinants')) \
-            .order_by('id'), schemas.DocumentDumpSchema)
+    return filtered_results(
+            examinant.documents.options(subqueryload('lectures'), subqueryload('examinants')),
+            schemas.DocumentDumpSchema)
 
 
 api_route('/api/deposits')(
 login_required(
 endpoint(
         schemas={'GET': schemas.DepositDumpSchema},
-        query=Deposit.query.options(subqueryload('lectures')).order_by('id'))
+        query=Deposit.query.options(subqueryload('lectures')))
 ))
 
 
 api_route('/api/documents')(
 endpoint(
         schemas={'GET': schemas.DocumentDumpSchema},
-        query=Document.query.options(subqueryload('lectures'), subqueryload('examinants')).order_by('id'))
+        query=Document.query.options(subqueryload('lectures'), subqueryload('examinants')))
 )
 
 

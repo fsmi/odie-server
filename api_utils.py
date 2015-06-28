@@ -63,6 +63,10 @@ def deserialize(schema):
 def filtered_results(query, schema, paginate=True):
     q = json.loads(request.args.get('q', '{}'))
     query = jsonquery(query, q) if q else query
+    # ensure deterministic ordering
+    # (we need this for paginated results with queries involving subqueries)
+    # We assume that all queriable tables have an 'id' column
+    query = query.order_by('id')
     if not paginate:
         return serialize(query.all(), schema, many=True)
     page = q.get('page', 1)
