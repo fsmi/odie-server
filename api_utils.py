@@ -18,7 +18,10 @@ from sqlalchemy import inspect
 
 
 def document_path(digest):
-    return os.path.join(config.DOCUMENT_DIRECTORY, digest[:2], digest + '.pdf')
+    dir = os.path.join(config.DOCUMENT_DIRECTORY, digest[:2])
+    if not os.path.isdir(dir):
+        os.makedirs(dir)
+    return os.path.join(dir, digest + '.pdf')
 
 
 def save_file(file_storage):
