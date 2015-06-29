@@ -66,7 +66,7 @@ if config.GARFIELD_ACCOUNTING:
         log_id = _cash_box_log_entry(user, cashbox, amount / 100, 'DONATION')
         qry = text("""INSERT INTO garfield.donation_sales_log
                 VALUES (:log_id, 'MONEY');""")
-        db.session.execute(qry.bindparam(log_id=log_id))
+        db.session.execute(qry.bindparams(log_id=log_id))
 
     def _log_exam_action(pages: int, final_price: float, user, cashbox: str, action: str):
         cshbx_log_id = _cash_box_log_entry(user, cashbox, price, action)
