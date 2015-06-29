@@ -85,7 +85,7 @@ if config.GARFIELD_ACCOUNTING:
 
     def log_erroneous_sale(price: int, user, cashbox: str):
         """price is assumed to be positive"""
-        _log_exam_action(pages, price / -100, user, cashbox, 'EXAM_SALE_CANCEL')
+        _log_exam_action(0, price / -100, user, cashbox, 'EXAM_SALE_CANCEL')
 
 
     def _log_deposit_action(deposit, user, cashbox: str, amount: int, action :str):
