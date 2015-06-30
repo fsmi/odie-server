@@ -42,14 +42,14 @@ class Document(db.Model):
             backref=db.backref('documents', lazy='dynamic'))
     examinants = db.relationship('Examinant', secondary=documentExaminants,
             backref=db.backref('documents', lazy='dynamic'))
-    date = Column(db.DateTime)
+    date = Column(db.DateTime(timezone=True))
     number_of_pages = Column(db.Integer)
     solution = Column(db.Enum('official', 'inofficial', 'none', name='solution', inherit_schema=True), nullable=True)
     comment = Column(db.String, server_default='')
     document_type = Column(db.Enum('oral', 'written', 'oral reexam', name='type', inherit_schema=True))
     file_id = Column(db.String, nullable=True)  # usually sha256sum of file
     validated = Column(db.Boolean)
-    validation_time = Column(db.DateTime, nullable=True)
+    validation_time = Column(db.DateTime(timezone=True), nullable=True)
     submitted_by = Column(db.String, nullable=True)
 
     @property
@@ -88,5 +88,5 @@ class Deposit(db.Model):
     price = Column(db.Integer)
     name = Column(db.String)
     by_user = Column(db.String)
-    date = Column(db.DateTime, server_default=db.func.now())
+    date = Column(db.DateTime(timezone=True), server_default=db.func.now())
     lectures = db.relationship('Lecture', secondary=depositLectures)
