@@ -23,13 +23,13 @@ class Lecture(db.Model):
 
 
 lectureDocs = db.Table('lecture_docs',
-        Column('lecture_id', db.Integer, db.ForeignKey('documents.lectures.id')),
-        Column('document_id', db.Integer, db.ForeignKey('documents.documents.id')),
+        Column('lecture_id', db.Integer, db.ForeignKey('documents.lectures.id', ondelete='CASCADE')),
+        Column('document_id', db.Integer, db.ForeignKey('documents.documents.id', ondelete='CASCADE')),
         **config.documents_table_args)
 
 documentExaminants = db.Table('document_examinants',
-        Column('document_id', db.Integer, db.ForeignKey('documents.documents.id')),
-        Column('examinant_id', db.Integer, db.ForeignKey('documents.examinants.id')),
+        Column('document_id', db.Integer, db.ForeignKey('documents.documents.id', ondelete='CASCADE')),
+        Column('examinant_id', db.Integer, db.ForeignKey('documents.examinants.id', ondelete='CASCADE')),
         **config.documents_table_args)
 
 
@@ -75,8 +75,8 @@ class Examinant(db.Model):
 
 
 depositLectures = db.Table('deposit_lectures',
-        Column('deposit_id', db.Integer, db.ForeignKey('documents.deposits.id')),
-        Column('lecture_id', db.Integer, db.ForeignKey('documents.lectures.id')),
+        Column('deposit_id', db.Integer, db.ForeignKey('documents.deposits.id', ondelete='CASCADE')),
+        Column('lecture_id', db.Integer, db.ForeignKey('documents.lectures.id', ondelete='CASCADE')),
         **config.documents_table_args)
 
 

@@ -15,7 +15,7 @@ class OrderDocument(db.Model):
     index = Column(db.Integer, primary_key=True)
     order_id = Column(db.Integer, db.ForeignKey('odie.orders.id'), primary_key=True)
     order = db.relationship('Order', backref=db.backref('items', cascade='all', order_by=index))
-    document_id = Column(db.ForeignKey('documents.documents.id'), primary_key=True)
+    document_id = Column(db.ForeignKey('documents.documents.id', ondelete='CASCADE'), primary_key=True)
     document = db.relationship('Document')
 
 
