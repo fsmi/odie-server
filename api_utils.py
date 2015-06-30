@@ -100,7 +100,8 @@ def api_route(url, *args, **kwargs):
                 data = result.data
                 return jsonify(data=result.data,
                         page=result.pagination.page,
-                        number_of_pages=result.pagination.pages)
+                        number_of_pages=result.pagination.pages,
+                        total=result.pagination.total)
             return jsonify(data=data)
         return Flask.route(app, url, *args, **kwargs)(wrapped_f)
     return decorator
