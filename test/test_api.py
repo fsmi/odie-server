@@ -2,7 +2,7 @@
 
 import odie
 import config
-import io
+import datetime
 import os
 import routes
 import json
@@ -307,7 +307,16 @@ class APITest(OdieTestCase):
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
         self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]['date'], self.DOCUMENT_SUBMISSION_JSON['date'])
+
+        # We throw away the timezone on the date, so make sure tests and db are
+        # executed in the same timezone. (this is due to strptime not supporting
+        # the format of timezone info we get)
+        frmt = '%Y-%m-%dT%H:%M:%S'
+        frmtlen = (4 + 2 + 2 + 2 + 2 + 2) + 5  # length of each field + length of padding chars
+        submitted_date = datetime.datetime.strptime(self.DOCUMENT_SUBMISSION_JSON['date'][:frmtlen], frmt)
+        received_date = datetime.datetime.strptime(data[0]['date'][:frmtlen], frmt)
+        self.assertEqual(submitted_date, received_date)
+
         self.assertEqual(len(data[0]['lectures']), len(self.DOCUMENT_SUBMISSION_JSON['lectures']))
 
     def test_no_document_preview_unauthenticated(self):
