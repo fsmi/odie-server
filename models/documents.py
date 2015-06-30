@@ -23,13 +23,13 @@ class Lecture(db.Model):
 
 
 lectureDocs = db.Table('lecture_docs',
-        Column('lecture_id', db.Integer, db.ForeignKey('documents.lectures.id')),
-        Column('document_id', db.Integer, db.ForeignKey('documents.documents.id')),
+        Column('lecture_id', db.Integer, db.ForeignKey('documents.lectures.id', ondelete='CASCADE')),
+        Column('document_id', db.Integer, db.ForeignKey('documents.documents.id', ondelete='CASCADE')),
         **config.documents_table_args)
 
 documentExaminants = db.Table('document_examinants',
-        Column('document_id', db.Integer, db.ForeignKey('documents.documents.id')),
-        Column('examinant_id', db.Integer, db.ForeignKey('documents.examinants.id')),
+        Column('document_id', db.Integer, db.ForeignKey('documents.documents.id', ondelete='CASCADE')),
+        Column('examinant_id', db.Integer, db.ForeignKey('documents.examinants.id', ondelete='CASCADE')),
         **config.documents_table_args)
 
 
@@ -42,14 +42,14 @@ class Document(db.Model):
             backref=db.backref('documents', lazy='dynamic'))
     examinants = db.relationship('Examinant', secondary=documentExaminants,
             backref=db.backref('documents', lazy='dynamic'))
-    date = Column(db.DateTime)
+    date = Column(db.DateTime(timezone=True))
     number_of_pages = Column(db.Integer)
     solution = Column(db.Enum('official', 'inofficial', 'none', name='solution', inherit_schema=True), nullable=True)
     comment = Column(db.String, server_default='')
     document_type = Column(db.Enum('oral', 'written', 'oral reexam', name='type', inherit_schema=True))
     file_id = Column(db.String, nullable=True)  # usually sha256sum of file
     validated = Column(db.Boolean)
-    validation_time = Column(db.DateTime, nullable=True)
+    validation_time = Column(db.DateTime(timezone=True), nullable=True)
     submitted_by = Column(db.String, nullable=True)
 
     @property
@@ -75,8 +75,8 @@ class Examinant(db.Model):
 
 
 depositLectures = db.Table('deposit_lectures',
-        Column('deposit_id', db.Integer, db.ForeignKey('documents.deposits.id')),
-        Column('lecture_id', db.Integer, db.ForeignKey('documents.lectures.id')),
+        Column('deposit_id', db.Integer, db.ForeignKey('documents.deposits.id', ondelete='CASCADE')),
+        Column('lecture_id', db.Integer, db.ForeignKey('documents.lectures.id', ondelete='CASCADE')),
         **config.documents_table_args)
 
 
@@ -88,5 +88,5 @@ class Deposit(db.Model):
     price = Column(db.Integer)
     name = Column(db.String)
     by_user = Column(db.String)
-    date = Column(db.DateTime, server_default=db.func.now())
+    date = Column(db.DateTime(timezone=True), server_default=db.func.now())
     lectures = db.relationship('Lecture', secondary=depositLectures)
