@@ -63,7 +63,8 @@ if config.GARFIELD_ACCOUNTING:
         # I'd love to use donation_accept, but that thing wants to be smart and
         # guesses the user id from the session user, which doesn't exist.
         # So... more raw SQL it is.
-        log_id = _cash_box_log_entry(user, cashbox, amount / 100, 'DONATION')
+        type = 'DONATION' if amount >= 0 else 'DONATION_CANCEL'
+        log_id = _cash_box_log_entry(user, cashbox, amount / 100, type)
         qry = text("""INSERT INTO garfield.donation_sales_log
                 VALUES (:log_id, 'MONEY');""")
         db.session.execute(qry.bindparams(log_id=log_id))

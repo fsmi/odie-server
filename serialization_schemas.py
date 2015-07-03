@@ -114,7 +114,7 @@ class PrintJobLoadSchema(Schema):
 
 
 class DonationLoadSchema(Schema):
-    amount = fields.Int(required=True, validate=lambda i: i > 0)
+    amount = fields.Int(required=True, validate=lambda i: i != 0)
     cash_box = CashBoxField()
 
 
