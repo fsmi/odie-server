@@ -70,7 +70,7 @@ if config.GARFIELD_ACCOUNTING:
         db.session.execute(qry.bindparams(log_id=log_id))
 
     def _log_exam_action(pages: int, final_price: float, user, cashbox: str, action: str):
-        cshbx_log_id = _cash_box_log_entry(user, cashbox, price, action)
+        cshbx_log_id = _cash_box_log_entry(user, cashbox, final_price, action)
         qry = text("""INSERT INTO garfield.exam_sale_log
                 (cash_box_log_id, tax_id, price_per_page, pages)
                 VALUES (:cshbx_log_id, garfield.tax_find(:tax_group, current_date), :ppp, :pages);""")
