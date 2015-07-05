@@ -148,7 +148,7 @@ class DepositView(AuthModelView):
             'price': lambda v,c,m,n: str(m.price) + ' €',
         }
 
-admin = Admin(app, name='Odie (admin)', base_template='main.html')
+admin = Admin(app, name='Odie (admin)', base_template='main.html', template_mode='bootstrap3')
 
 admin.add_view(DocumentView(Document, db.session, name='Dokumente'))
 admin.add_view(LectureView(Lecture, db.session, name='Vorlesungen'))
