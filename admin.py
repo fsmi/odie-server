@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+import config
+
 import datetime
 import os
 
@@ -19,8 +21,6 @@ def _dateFormatter(attr_name):
         return d.date() if d else ''
     return f
 
-_exam_allowed_roles = ['adm', 'info_protokolle', 'info_klausuren', 'mathe_protokolle', 'mathe_klausuren']
-
 class AuthView(BaseView):
     def is_accessible(self):
         return current_user.is_authenticated() \
@@ -36,7 +36,7 @@ class AuthModelView(ModelView, AuthView):
 
 
 class DocumentView(AuthModelView):
-    allowed_roles = _exam_allowed_roles
+    allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
 
     def update_model(self, form, model):
         # We don't want flask-admin to handle the uploaded file, we'll do that ourselves.
@@ -109,7 +109,7 @@ class DocumentView(AuthModelView):
         }
 
 class LectureView(AuthModelView):
-    allowed_roles = _exam_allowed_roles
+    allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
     form_excluded_columns = ('documents',)
     form_args = {
             'comment': {'validators': [Optional()]},
@@ -130,7 +130,7 @@ class LectureView(AuthModelView):
         }
 
 class ExaminantView(AuthModelView):
-    allowed_roles = _exam_allowed_roles
+    allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
     form_excluded_columns = ('documents',)
     column_labels = {
             'validated': 'Überprüft',
@@ -149,10 +149,9 @@ class DepositView(AuthModelView):
             'price': lambda v,c,m,n: str(m.price) + ' €',
         }
 
-docView = DocumentView(Document, db.session, name='Dokumente')
 admin = Admin(app, name='Odie (admin)', base_template='main.html')
 
-admin.add_view(docView)
+admin.add_view(DocumentView(Document, db.session, name='Dokumente'))
 admin.add_view(LectureView(Lecture, db.session, name='Vorlesungen'))
 admin.add_view(ExaminantView(Examinant, db.session, name='Prüfer'))
 admin.add_view(DepositView(Deposit, db.session, name='Pfand'))
