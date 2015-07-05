@@ -10,7 +10,7 @@ from api_utils import document_path, save_file
 from models.documents import Document, Lecture, Examinant, Deposit
 
 from flask import redirect
-from flask_admin import Admin, BaseView, AdminIndexView, form
+from flask_admin import Admin, BaseView, form
 from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
 from wtforms.validators import Optional
@@ -32,7 +32,6 @@ class AuthView(BaseView):
 
 class AuthModelView(ModelView, AuthView):
     page_size = 50  # the default of 20 is a bit on the low side...
-    pass
 
 
 class DocumentView(AuthModelView):
