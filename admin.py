@@ -10,7 +10,7 @@ from api_utils import document_path, save_file
 from models.documents import Document, Lecture, Examinant, Deposit
 
 from flask import redirect
-from flask_admin import Admin, BaseView, form
+from flask_admin import Admin, BaseView, AdminIndexView, form
 from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
 from wtforms.validators import Optional
@@ -21,21 +21,23 @@ def _dateFormatter(attr_name):
         return d.date() if d else ''
     return f
 
-class AuthView(BaseView):
+class AuthViewMixin(BaseView):
+    allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
     def is_accessible(self):
         return current_user.is_authenticated() \
                 and any(True for perm in self.allowed_roles if current_user.has_permission(perm))
 
     def _handle_view(self, name, **kwargs):
         if not self.is_accessible():
-            return redirect('/')
+            return self.render('unauthorized.html')
 
-class AuthModelView(ModelView, AuthView):
+class AuthModelView(ModelView, AuthViewMixin):
     page_size = 50  # the default of 20 is a bit on the low side...
 
+class AuthIndexView(AuthViewMixin, AdminIndexView):
+    pass
 
 class DocumentView(AuthModelView):
-    allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
 
     def update_model(self, form, model):
         # We don't want flask-admin to handle the uploaded file, we'll do that ourselves.
@@ -108,7 +110,6 @@ class DocumentView(AuthModelView):
         }
 
 class LectureView(AuthModelView):
-    allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
     form_excluded_columns = ('documents',)
     form_args = {
             'comment': {'validators': [Optional()]},
@@ -119,7 +120,7 @@ class LectureView(AuthModelView):
             'both': 'Beides',
         }
     column_formatters = {
-            'subject': lambda v,c,m,n: LectureView.subject_labels[m.subject],
+            'subject': lambda v, c, m, n: LectureView.subject_labels[m.subject],
         }
     column_labels = {
             'subject': 'Fach',
@@ -129,7 +130,6 @@ class LectureView(AuthModelView):
         }
 
 class ExaminantView(AuthModelView):
-    allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
     form_excluded_columns = ('documents',)
     column_labels = {
             'validated': 'Überprüft',
@@ -148,7 +148,14 @@ class DepositView(AuthModelView):
             'price': lambda v,c,m,n: str(m.price) + ' €',
         }
 
-admin = Admin(app, name='Odie (admin)', base_template='main.html', template_mode='bootstrap3')
+admin = Admin(
+    app,
+    name='Odie (admin)',
+    base_template='main.html',
+    template_mode='bootstrap3',
+    index_view=AuthIndexView(
+        name='Home',
+        template='main.html'))  # TODO: proper index view template
 
 admin.add_view(DocumentView(Document, db.session, name='Dokumente'))
 admin.add_view(LectureView(Lecture, db.session, name='Vorlesungen'))
