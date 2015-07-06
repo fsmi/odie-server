@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import config
+import config  # pylint: disable=unused-import
 
 from functools import partial
 
@@ -31,6 +31,6 @@ Column = partial(db.Column, nullable=False)
 # errors that will be reported to the client
 class ClientError(Exception):
     def __init__(self, *errors, status=400):
-        super()
+        super().__init__()
         self.errors = errors
         self.status = status

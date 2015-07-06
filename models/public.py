@@ -2,7 +2,6 @@
 
 import crypt
 
-import odie
 import config
 import models.acl as acl
 
@@ -39,5 +38,5 @@ class User(db.Model, UserMixin):
             return None
 
     @login_manager.user_loader
-    def load(user_id):
+    def load(user_id):  # pylint: disable=no-self-argument
         return User.query.get(user_id)

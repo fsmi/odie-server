@@ -4,16 +4,13 @@ import config
 import hashlib
 import os
 import json
-import math
 
 from odie import app, db, ClientError
 from serialization_schemas import serialize
 
 from functools import wraps
 from flask import Flask, jsonify, request
-from flask.ext.login import login_required
 from jsonquery import jsonquery
-from marshmallow import ValidationError
 from sqlalchemy import inspect
 
 
@@ -109,7 +106,7 @@ def api_route(url, *args, **kwargs):
 ROUTE_ID = 0
 
 
-def endpoint(query, schemas={}, allow_delete=False, paginate_many=True):
+def endpoint(query, schemas=None, allow_delete=False, paginate_many=True):
     """Creates and returns an API endpoint handler
 
     Can create both SINGLE-style and MANY-style endpoints. The generated route simply
@@ -124,6 +121,8 @@ def endpoint(query, schemas={}, allow_delete=False, paginate_many=True):
     paginate_many: whether to return paginated results (default:True)
             The 'page' GET-parameter selects the page
     """
+    if schemas is None:
+        schemas = {}
     methods = list(schemas.keys())
     if allow_delete:
         methods.append('DELETE')

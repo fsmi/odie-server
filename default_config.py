@@ -11,8 +11,8 @@ class FlaskConfig(object):
     SQLALCHEMY_DATABASE_URI = 'postgres:///garfield'  # use garfield for everything by default
     # we also need to access the fsmi db for auth
     SQLALCHEMY_BINDS = {
-            'fsmi': 'postgres:///fsmi',
-            'garfield': SQLALCHEMY_DATABASE_URI
+        'fsmi': 'postgres:///fsmi',
+        'garfield': SQLALCHEMY_DATABASE_URI,
     }
 
     SECRET_KEY = 'supersikkrit'
