@@ -6,3 +6,21 @@
     width: 95%;
   }
 }
+
+.background-image {
+  font-size: 3000%;
+  position: absolute;
+  text-align: center;
+  top: 25%;
+  color: #f8f8f8;
+  width: inherit;
+  text-shadow: #f0f0f0 -1px -1px 0px;
+  z-index: -1;
+}
+
+/* this breaks on tiny screens, but it's just an access denied page, so fuck it. */
+.yolo-center {
+  position: absolute;
+  top: 40%;
+  width: inherit;
+}
