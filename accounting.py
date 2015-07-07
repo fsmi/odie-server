@@ -16,14 +16,12 @@ the fields of a deserialized PrintJobSchema). Monetary parameters
 the database internally uses in the logging functions
 """
 
-import sqlalchemy
 from sqlalchemy import text
-from sqlalchemy.orm import Session
 from odie import db
 import config
-import datetime
 
 
+# pylint: disable=function-redefined
 def log_donation(user, amount: int, cashbox: str):
     pass
 def log_exam_sale(pages: int, price: int, user, cashbox: str):
@@ -52,19 +50,19 @@ if config.GARFIELD_ACCOUNTING:
                 WHERE user_name = :user_name
                 RETURNING cash_box_log_id;""")
         r = db.session.execute(qry.bindparams(
-                user_name=user.username,
-                cash_box_id=cash_box_ids[cashbox],
-                amount=amount,
-                type=action,
-            ))
+            user_name=user.username,
+            cash_box_id=cash_box_ids[cashbox],
+            amount=amount,
+            type=action,
+        ))
         return r.scalar()
 
     def log_donation(user, amount: int, cashbox: str):
         # I'd love to use donation_accept, but that thing wants to be smart and
         # guesses the user id from the session user, which doesn't exist.
         # So... more raw SQL it is.
-        type = 'DONATION' if amount >= 0 else 'DONATION_CANCEL'
-        log_id = _cash_box_log_entry(user, cashbox, amount / 100, type)
+        action = 'DONATION' if amount >= 0 else 'DONATION_CANCEL'
+        log_id = _cash_box_log_entry(user, cashbox, amount / 100, action)
         qry = text("""INSERT INTO garfield.donation_sales_log
                 VALUES (:log_id, 'MONEY');""")
         db.session.execute(qry.bindparams(log_id=log_id))
@@ -75,11 +73,11 @@ if config.GARFIELD_ACCOUNTING:
                 (cash_box_log_id, tax_id, price_per_page, pages)
                 VALUES (:cshbx_log_id, garfield.tax_find(:tax_group, current_date), :ppp, :pages);""")
         db.session.execute(qry.bindparams(
-                cshbx_log_id=cshbx_log_id,
-                tax_group=_tax_group,
-                ppp=config.FS_CONFIG['PRICE_PER_PAGE'] / 100,
-                pages=pages
-            ))
+            cshbx_log_id=cshbx_log_id,
+            tax_group=_tax_group,
+            ppp=config.FS_CONFIG['PRICE_PER_PAGE'] / 100,
+            pages=pages
+        ))
 
     def log_exam_sale(pages: int, price: int, user, cashbox: str):
         _log_exam_action(pages, price / 100, user, cashbox, 'EXAM_SALE')
@@ -89,15 +87,15 @@ if config.GARFIELD_ACCOUNTING:
         _log_exam_action(0, price / -100, user, cashbox, 'EXAM_SALE_CANCEL')
 
 
-    def _log_deposit_action(deposit, user, cashbox: str, amount: int, action :str):
+    def _log_deposit_action(deposit, user, cashbox: str, amount: int, action: str):
         cshbx_log_id = _cash_box_log_entry(user, cashbox, amount, action)
         qry = text("""INSERT INTO garfield.exam_deposit_log
                 (student_name, cash_box_log_id)
                 VALUES (:student_name, :log_id);""")
         db.session.execute(qry.bindparams(
-                student_name=deposit.name,
-                log_id=cshbx_log_id
-            ))
+            student_name=deposit.name,
+            log_id=cshbx_log_id
+        ))
 
     def log_deposit(deposit, user, cashbox: str):
         _log_deposit_action(deposit, user, cashbox,

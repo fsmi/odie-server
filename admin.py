@@ -9,8 +9,8 @@ from odie import app, db
 from api_utils import document_path, save_file
 from models.documents import Document, Lecture, Examinant, Deposit
 
-from flask import redirect
-from flask_admin import Admin, BaseView, AdminIndexView, form
+from flask_admin import Admin, BaseView, AdminIndexView
+from flask_admin.form import FileUploadField
 from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
 from wtforms.validators import Optional
@@ -46,6 +46,7 @@ class DocumentView(AuthModelView):
         file = form.file
         # extra form fields are appended to the end of the form list, so we need to remove
         # the last element
+        # pylint: disable=protected-access
         assert form._unbound_fields[-1][0] == 'file'
         form._unbound_fields = form._unbound_fields[:-1]
         delattr(form, 'file')
@@ -72,81 +73,81 @@ class DocumentView(AuthModelView):
     list_template = 'document_list.html'
     edit_template = 'document_edit.html'
     form_excluded_columns = ('validation_time', 'file_id')
-    form_extra_fields = {'file': form.FileUploadField()}
+    form_extra_fields = {'file': FileUploadField()}
     form_args = {
-            'comment': {'validators': [Optional()]},
-        }
+        'comment': {'validators': [Optional()]},
+    }
     column_list = (
-            'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
-            'document_type', 'validated', 'validation_time', 'submitted_by')
+        'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
+        'document_type', 'validated', 'validation_time', 'submitted_by')
     column_labels = {
-            'lectures': 'Vorlesungen',
-            'examinants': 'Prüfer',
-            'date': 'Datum',
-            'number_of_pages': 'Seiten',
-            'solution': 'Lösung',
-            'comment': 'Kommentar',
-            'document_type': 'Typ',
-            'validated': 'Überprüft',
-            'validation_time': 'Überprüft am',
-            'submitted_by': 'Von',
-        }
+        'lectures': 'Vorlesungen',
+        'examinants': 'Prüfer',
+        'date': 'Datum',
+        'number_of_pages': 'Seiten',
+        'solution': 'Lösung',
+        'comment': 'Kommentar',
+        'document_type': 'Typ',
+        'validated': 'Überprüft',
+        'validation_time': 'Überprüft am',
+        'submitted_by': 'Von',
+    }
     doctype_labels = {
-            'oral': 'Mündl.',
-            'written': 'Schriftl.',
-            'oral reexam': 'Nachprüfung',
-        }
+        'oral': 'Mündl.',
+        'written': 'Schriftl.',
+        'oral reexam': 'Nachprüfung',
+    }
     solution_labels = {
-            'official': 'Ja (offiziell)',
-            'inofficial': 'Ja (Studi)',
-            'none': 'Nein',
-            None: '?',
-        }
+        'official': 'Ja (offiziell)',
+        'inofficial': 'Ja (Studi)',
+        'none': 'Nein',
+        None: '?',
+    }
     column_formatters = {
-            'document_type': lambda v,c,m,n: DocumentView.doctype_labels[m.document_type],
-            'solution': lambda v,c,m,n: DocumentView.solution_labels[m.solution],
-            'date': _dateFormatter('date'),
-            'validation_time': _dateFormatter('validation_time'),
-        }
+        'document_type': lambda v, c, m, n: DocumentView.doctype_labels[m.document_type],
+        'solution': lambda v, c, m, n: DocumentView.solution_labels[m.solution],
+        'date': _dateFormatter('date'),
+        'validation_time': _dateFormatter('validation_time'),
+    }
 
 class LectureView(AuthModelView):
     form_excluded_columns = ('documents',)
     form_args = {
-            'comment': {'validators': [Optional()]},
-        }
+        'comment': {'validators': [Optional()]},
+    }
     subject_labels = {
-            'computer science': 'Informatik',
-            'mathematics': 'Mathematik',
-            'both': 'Beides',
-        }
+        'computer science': 'Informatik',
+        'mathematics': 'Mathematik',
+        'both': 'Beides',
+    }
     column_formatters = {
-            'subject': lambda v, c, m, n: LectureView.subject_labels[m.subject],
-        }
+        'subject': lambda v, c, m, n: LectureView.subject_labels[m.subject],
+    }
     column_labels = {
-            'subject': 'Fach',
-            'comment': 'Kommentar',
-            'validated': 'Überprüft',
-            'aliases': 'Aliase',
-        }
+        'subject': 'Fach',
+        'comment': 'Kommentar',
+        'validated': 'Überprüft',
+        'aliases': 'Aliase',
+    }
 
 class ExaminantView(AuthModelView):
     form_excluded_columns = ('documents',)
     column_labels = {
-            'validated': 'Überprüft',
-        }
+        'validated': 'Überprüft',
+    }
 
 class DepositView(AuthModelView):
     allowed_roles = ['adm']
     column_labels = {
-            'price': 'Geldwert',
-            'by_user': 'Eingetragen von',
-            'date': 'Datum',
-            'lectures': 'Vorlesungen',
-        }
+        'price': 'Geldwert',
+        'by_user': 'Eingetragen von',
+        'date': 'Datum',
+        'lectures': 'Vorlesungen',
+    }
     column_formatters = {
-            'date': _dateFormatter('date'),
-            'price': lambda v,c,m,n: str(m.price) + ' €',
-        }
+        'date': _dateFormatter('date'),
+        'price': lambda v, c, m, n: str(m.price) + ' €',
+    }
 
 admin = Admin(
     app,

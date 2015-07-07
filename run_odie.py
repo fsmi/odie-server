@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+#pylint: disable=unused-import
 import odie
 import admin
 import routes

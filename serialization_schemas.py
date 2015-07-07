@@ -1,11 +1,9 @@
 #! /usr/bin/env python3
 
-from datetime import datetime as time
 from functools import partial
 from marshmallow import Schema, fields
 
 import config
-from models.documents import Document
 from models.odie import Order
 from odie import ClientError
 
@@ -47,7 +45,8 @@ class DocumentDumpSchema(IdSchema):
     validated = fields.Boolean()
     validation_time = fields.Date()
 
-    def is_available_for_printing(self, obj):
+    @staticmethod
+    def is_available_for_printing(obj):
         return obj.file_id is not None
 
 
@@ -92,7 +91,7 @@ class DocumentLoadSchema(Schema):  # used by student document submission
     examinants = fields.List(fields.Str, required=True)
     date = fields.Date(required=True)
     number_of_pages = fields.Int(required=True, validate=lambda n: n > 1)
-    document_type = fields.Str(required=True, validate=lambda t: t in ['oral','oral reexam'])
+    document_type = fields.Str(required=True, validate=lambda t: t in ['oral', 'oral reexam'])
     student_name = fields.Str(required=True)
 
 

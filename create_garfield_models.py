@@ -16,8 +16,8 @@ config.FlaskConfig.SQLALCHEMY_BINDS = {'garfield': uri}
 config.FlaskConfig.SQLALCHEMY_DATABASE_URI = uri
 
 import sqlalchemy
-import models.documents
-import models.odie
+import models.documents  # pylint: disable=unused-import
+import models.odie  # pylint: disable=unused-import
 
 from sqlalchemy.schema import CreateSchema
 from odie import db, app

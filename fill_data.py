@@ -3,7 +3,6 @@
 """Fills the sample database with some sample data"""
 
 
-import odie
 import models
 import crypt
 

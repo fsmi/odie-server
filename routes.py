@@ -9,7 +9,6 @@ import serialization_schemas as schemas
 
 from flask import request, send_file
 from flask.ext.login import login_user, logout_user, current_user, login_required
-from sqlalchemy import and_
 from sqlalchemy.orm import subqueryload
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -226,7 +225,7 @@ def submit_document():
     lectures = []
     for lect in data['lectures']:
         try:
-            l = Lecture.query.filter_by(name = lect['name'], subject = lect['subject']).one()
+            l = Lecture.query.filter_by(name=lect['name'], subject=lect['subject']).one()
             lectures.append(l)
         except NoResultFound:
             # no dice, add a new unverified lecture
@@ -238,7 +237,7 @@ def submit_document():
     examinants = []
     for examinant in data['examinants']:
         try:
-            ex = Examinant.query.filter_by(name = examinant).one()
+            ex = Examinant.query.filter_by(name=examinant).one()
             examinants.append(ex)
         except NoResultFound:
             ex = Examinant(examinant, validated=False)

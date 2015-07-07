@@ -16,7 +16,7 @@ config.FlaskConfig.SQLALCHEMY_BINDS = {'fsmi': uri}
 config.FlaskConfig.SQLALCHEMY_DATABASE_URI = uri
 
 import sqlalchemy
-import models.public
+import models.public  # pylint: disable=unused-import
 
 from sqlalchemy.schema import CreateSchema
 from odie import db, app
