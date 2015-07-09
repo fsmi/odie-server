@@ -7,6 +7,9 @@
 import os
 import tempfile
 
+def print_documents(doc_paths: list, cover_text: str, printer: str):
+    print("Docs %s for %s on %s" % (str(doc_paths), cover_text, printer))
+
 class FlaskConfig(object):
     SQLALCHEMY_DATABASE_URI = 'postgres:///garfield'  # use garfield for everything by default
     # we also need to access the fsmi db for auth
