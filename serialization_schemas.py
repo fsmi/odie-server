@@ -44,6 +44,7 @@ class DocumentDumpSchema(IdSchema):
     available = fields.Method('is_available_for_printing')
     validated = fields.Boolean()
     validation_time = fields.Date()
+    submitted_by = fields.Str()
 
     @staticmethod
     def is_available_for_printing(obj):
@@ -98,6 +99,7 @@ class DocumentLoadSchema(Schema):  # used by student document submission
 class DepositDumpSchema(IdSchema):
     price = fields.Int()
     name = fields.Str()
+    date = fields.Date()
     lectures = fields.List(fields.Str())
 
 
@@ -107,6 +109,7 @@ class DepositLoadSchema(IdSchema):
 
 class PrintJobLoadSchema(Schema):
     cover_text = fields.Str(required=True)
+    cash_box = CashBoxField()
     document_ids = fields.List(fields.Int(), required=True)
     deposit_count = fields.Int(required=True)
     printer = PrinterField()

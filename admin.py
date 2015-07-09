@@ -78,9 +78,11 @@ class DocumentView(AuthModelView):
         'comment': {'validators': [Optional()]},
     }
     column_list = (
-        'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
+        'id', 'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
         'document_type', 'validated', 'validation_time', 'submitted_by')
+    column_filters = ('id', 'lectures', 'examinants', 'date', 'comment', 'document_type', 'submitted_by')
     column_labels = {
+        'id': 'ID',
         'lectures': 'Vorlesungen',
         'examinants': 'Prüfer',
         'date': 'Datum',
