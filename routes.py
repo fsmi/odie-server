@@ -69,12 +69,11 @@ def print_documents(data):
     # round up to next 10 cents
     price = 10 * (price/10 + (1 if price % 10 else 0))
 
-    if config.FlaskConfig.DEBUG:
-        print("PRINTING DOCS {} FOR {}".format(data['document_ids'], data['cover_text']))
-    else:
-        #  TODO actual implementation of printing
-        print("PC LOAD LETTER")
-
+    if documents:
+        paths = [document_path(doc.file_id) for doc in documents if doc.file_id]
+        config.print_documents(paths, data['cover_text'], data['printer'])
+        num_pages = sum(doc.number_of_pages for doc in documents)
+        accounting.log_exam_sale(num_pages, price, current_user, data['cash_box'])
     for _ in range(data['deposit_count']):
         dep = Deposit(
                 price=config.FS_CONFIG['DEPOSIT_PRICE'],
@@ -83,11 +82,7 @@ def print_documents(data):
                 lectures=_lectures(data['document_ids']))
         db.session.add(dep)
         accounting.log_deposit(dep, current_user, data['cash_box'])
-    if documents:
-        num_pages = sum(doc.number_of_pages for doc in documents)
-        accounting.log_exam_sale(num_pages, price, current_user, data['cash_box'])
     db.session.commit()
-
     return {}
 
 
