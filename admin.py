@@ -113,7 +113,7 @@ class DocumentView(AuthModelView):
 
     column_formatters = {
         'document_type': lambda v, c, m, n: DocumentView.doctype_labels[m.document_type],
-        'solution': DocumentView.format_solution,
+        'solution': format_solution,
         'date': _dateFormatter('date'),
         'validation_time': _dateFormatter('validation_time'),
     }
