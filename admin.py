@@ -97,15 +97,21 @@ class DocumentView(AuthModelView):
         'written': 'Schriftl.',
         'oral reexam': 'Nachprüfung',
     }
-    solution_labels = {
-        'official': 'Ja (offiziell)',
-        'inofficial': 'Ja (Studi)',
-        'none': 'Nein',
-        None: '?',
-    }
+
+    @staticmethod
+    def format_solution(v, c, model, n):
+        if model.document_type == 'written':
+            return {
+                'official': 'Ja (offiziell)',
+                'inofficial': 'Ja (Studi)',
+                'none': 'Nein',
+                None: '?',
+            }[model.solution]
+        return ''
+
     column_formatters = {
         'document_type': lambda v, c, m, n: DocumentView.doctype_labels[m.document_type],
-        'solution': lambda v, c, m, n: DocumentView.solution_labels[m.solution],
+        'solution': DocumentView.format_solution,
         'date': _dateFormatter('date'),
         'validation_time': _dateFormatter('validation_time'),
     }
