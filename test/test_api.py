@@ -22,7 +22,7 @@ class APITest(OdieTestCase):
             'cover_text': 'Klausuren',
             'document_ids': [1,2,2],
             'deposit_count': 1,
-            'printer': 'external',
+            'printer': 'FSI',
             'cash_box': CASH_BOX,
         }
 

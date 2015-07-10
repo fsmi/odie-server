@@ -46,8 +46,8 @@ FS_CONFIG = {
     'DEPOSIT_PRICE': 500,  # in cents
     'PRICE_PER_PAGE': 3,   # in cents
     'PRINTERS': [
-        'emergency',  # ATIS
-        'external',   # print for external customer
+        'ATIS',
+        'FSI',
     ],
     'CASH_BOXES': [
         'Sprechstundenkasse Informatik',
