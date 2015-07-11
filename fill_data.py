@@ -43,9 +43,9 @@ def fill():
     for p in profs:
         db.session.add(p)
 
-    db.session.add(Deposit(by_user="guybrush", price=5, name='Sloth', lectures=[lectures[0]]))
-    db.session.add(Deposit(by_user="guybrush", price=10, name='Montgomery Montgomery', lectures=[lectures[4],lectures[5],lectures[6],lectures[7]]))
-    db.session.add(Deposit(by_user="guybrush", price=5, name='Random J. Hacker', lectures=[lectures[1], lectures[2], lectures[7]]))
+    db.session.add(Deposit(by_user="guybrush", price=500, name='Sloth', lectures=[lectures[0]]))
+    db.session.add(Deposit(by_user="guybrush", price=1000, name='Montgomery Montgomery', lectures=[lectures[4],lectures[5],lectures[6],lectures[7]]))
+    db.session.add(Deposit(by_user="guybrush", price=500, name='Random J. Hacker', lectures=[lectures[1], lectures[2], lectures[7]]))
 
     docs = [
                 Document(lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=time(2010, 4, 1), number_of_pages=4, document_type='oral', validated=True),
@@ -53,6 +53,7 @@ def fill():
                 Document(lectures=[lectures[4], lectures[3], lectures[2]], examinants=[profs[1], profs[0]], date=time(2004, 8, 2), number_of_pages=2, document_type='oral', validated=True),
                 Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 1, 1), number_of_pages=7, document_type='oral', validated=True),
                 Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 2, 3), number_of_pages=7, document_type='oral', validated=True),
+                Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2001, 2, 3), number_of_pages=2, document_type='oral', validated=False, submitted_by='Monty Montgomery'),
         ]
 
     for d in docs:

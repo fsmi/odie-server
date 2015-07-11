@@ -6,6 +6,7 @@
 
 import os
 import tempfile
+from marshmallow.utils import missing
 
 def print_documents(doc_paths: list, cover_text: str, printer: str):
     print("Docs %s for %s on %s" % (str(doc_paths), cover_text, printer))
@@ -45,17 +46,22 @@ public_table_args = {
 FS_CONFIG = {
     'DEPOSIT_PRICE': 500,  # in cents
     'PRICE_PER_PAGE': 3,   # in cents
-    'PRINTERS': [
-        'ATIS',
-        'FSI',
-    ],
-    'CASH_BOXES': [
-        'Sprechstundenkasse Informatik',
-        'Sprechstundenkasse Mathematik',
-    ],
+    'OFFICES': {
+        'FSI': {
+            'cash_boxes': ['Sprechstundenkasse Informatik'],
+            'printers': ['FSI-Drucker', 'ATIS-Notdrucker'],
+        },
+        'FSM': {
+            'cash_boxes': ['Sprechstundenkasse Mathematik'],
+            'printers': ['FSM-Drucker']
+        }
+    }
 }
 SUBMISSION_ALLOWED_FILE_EXTENSIONS = ['.pdf']
 GARFIELD_ACCOUNTING = False
 ITEMS_PER_PAGE = 20
 DOCUMENT_DIRECTORY = os.path.join(tempfile.gettempdir(), 'odie')
 ADMIN_PANEL_ALLOWED_GROUPS = ['fsusers']
+
+def try_get_office(user):
+    return missing
