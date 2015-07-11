@@ -22,7 +22,7 @@ class APITest(OdieTestCase):
             'cover_text': 'Klausuren',
             'document_ids': [1,2,2],
             'deposit_count': 1,
-            'printer': 'FSI',
+            'printer': 'FSI-Drucker',
             'cash_box': CASH_BOX,
         }
 
@@ -67,8 +67,7 @@ class APITest(OdieTestCase):
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
         self.assertIn('DEPOSIT_PRICE', data)
-        self.assertIn('PRINTERS', data)
-        self.assertIn('CASH_BOXES', data)
+        self.assertIn('OFFICES', data)
         self.assertIn('PRICE_PER_PAGE', data)
 
     def test_get_lectures(self):

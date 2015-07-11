@@ -2,13 +2,14 @@
 
 from functools import partial
 from marshmallow import Schema, fields
+from marshmallow.validate import OneOf
 
 import config
 from models.odie import Order
 from odie import ClientError
 
-CashBoxField = partial(fields.Str, required=True, validate=lambda s: s in config.FS_CONFIG['CASH_BOXES'])
-PrinterField = partial(fields.Str, required=True, validate=lambda s: s in config.FS_CONFIG['PRINTERS'])
+CashBoxField = partial(fields.Str, required=True, validate=OneOf([cash_box for office in config.FS_CONFIG['OFFICES'].values() for cash_box in office['cash_boxes']]))
+PrinterField = partial(fields.Str, required=True, validate=OneOf([printer for office in config.FS_CONFIG['OFFICES'].values() for printer in office['printers']]))
 
 def serialize(data, schema, many=False):
     res = schema().dump(data, many)
@@ -31,6 +32,7 @@ class UserDumpSchema(Schema):
     username = fields.Str()
     first_name = fields.Str()
     last_name = fields.Str()
+    office = fields.Function(config.try_get_office)
 
 
 class DocumentDumpSchema(IdSchema):
