@@ -105,8 +105,9 @@ class DepositDumpSchema(IdSchema):
     lectures = fields.List(fields.Str())
 
 
-class DepositLoadSchema(IdSchema):
+class DepositReturnSchema(IdSchema):
     cash_box = CashBoxField()
+    document_id = fields.Int()
 
 
 class PrintJobLoadSchema(Schema):

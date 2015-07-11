@@ -8,6 +8,7 @@ import routes
 import json
 import random
 
+from models.documents import Document
 from test.harness import OdieTestCase, ODIE_DIR
 
 class APITest(OdieTestCase):
@@ -201,6 +202,17 @@ class APITest(OdieTestCase):
         self.assertEqual(res.status_code, 200)
         for deposit in self.fromJsonResponse(self.app.get('/api/deposits')):
             self.assertNotEqual(deposit['id'], id_to_delete)
+
+    def test_log_deposit_return_with_document(self):
+        self.assertIsNotNone(Document.query.get(6).submitted_by)
+        self.login()
+        res = self.app.post('/api/log_deposit_return', data=json.dumps({
+            'cash_box': self.CASH_BOX,
+            'id': 1,
+            'document_id': 6
+        }))
+        self.assertEqual(res.status_code, 200)
+        self.assertIsNone(Document.query.get(6).submitted_by)
 
     def test_no_donation_unauthenticated(self):
         res = self.app.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))

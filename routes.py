@@ -97,8 +97,13 @@ def accept_erroneous_sale(data):
 
 @api_route('/api/log_deposit_return', methods=['POST'])
 @login_required
-@deserialize(schemas.DepositLoadSchema)
+@deserialize(schemas.DepositReturnSchema)
 def log_deposit_return(data):
+    if 'document_id' in data:
+        doc = Document.query.get(data['document_id'])
+        # data privacy, yo
+        doc.submitted_by = None
+
     dep = Deposit.query.get(data['id'])
     db.session.delete(dep)
     accounting.log_deposit_return(dep, current_user, data['cash_box'])
