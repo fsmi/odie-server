@@ -1,6 +1,9 @@
 #! /usr/bin/env python3
 
-import hack
+try:
+    import hack
+except:
+    from scripts import hack
 
 #pylint: disable=unused-import
 import odie
