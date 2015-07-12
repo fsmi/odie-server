@@ -3,21 +3,21 @@
 import crypt
 
 import config
-import models.acl as acl
+import db.acl as acl
 
 from flask.ext.login import UserMixin
-from odie import db, login_manager, Column
+from odie import sqla, login_manager, Column
 
-class User(db.Model, UserMixin):
+class User(sqla.Model, UserMixin):
     __tablename__ = 'benutzer'
-    __table_args__ = config.public_table_args
+    __table_args__ = config.fsmi_table_args
 
-    id = Column(db.Integer, name='benutzer_id', primary_key=True)
-    username = Column(db.String(255), name='benutzername', unique=True)
-    first_name = Column(db.Text, name='vorname')
-    last_name = Column(db.Text, name='nachname')
-    pw_hash = Column(db.String(255), name='passwort')
-    effective_permissions = db.relationship('Permission', secondary=acl.effective_permissions, lazy='dynamic')
+    id = Column(sqla.Integer, name='benutzer_id', primary_key=True)
+    username = Column(sqla.String(255), name='benutzername', unique=True)
+    first_name = Column(sqla.Text, name='vorname')
+    last_name = Column(sqla.Text, name='nachname')
+    pw_hash = Column(sqla.String(255), name='passwort')
+    effective_permissions = sqla.relationship('Permission', secondary=acl.effective_permissions, lazy='dynamic')
 
     @property
     def full_name(self):

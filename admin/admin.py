@@ -5,11 +5,12 @@ import config
 import datetime
 import os
 
-from odie import app, db
+from odie import app, sqla
 from api_utils import document_path, save_file
-from models.documents import Document, Lecture, Examinant, Deposit
+from db.documents import Document, Lecture, Examinant, Deposit
 
-from flask_admin import Admin, BaseView, AdminIndexView
+from flask import redirect, url_for
+from flask_admin import Admin, BaseView, AdminIndexView, expose
 from flask_admin.form import FileUploadField
 from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
@@ -35,7 +36,18 @@ class AuthModelView(ModelView, AuthViewMixin):
     page_size = 50  # the default of 20 is a bit on the low side...
 
 class AuthIndexView(AuthViewMixin, AdminIndexView):
-    pass
+    # This is the only way I could find to make the Home tab de facto disappear:
+    # name it '' and redirect to somewhere else.
+    # Note that simply giving Admin a different View as index_view doesn't work
+    # without copying some of the internals of AdminIndexView, which I want to avoid
+    def __init__(self):
+        super().__init__()
+        self.name = ''
+
+    @expose('/')
+    def index(self):
+        # automatically redirect to document listing
+        return redirect(url_for('document.index_view'))
 
 class DocumentView(AuthModelView):
 
@@ -66,7 +78,7 @@ class DocumentView(AuthModelView):
             # document has just been validated
             model.validation_time = datetime.datetime.now()
 
-        db.session.commit()
+        sqla.session.commit()
         return True
 
 
@@ -100,7 +112,6 @@ class DocumentView(AuthModelView):
         'oral reexam': 'Nachprüfung',
     }
 
-    @staticmethod
     def format_solution(v, c, model, n):
         if model.document_type == 'written':
             return {
@@ -162,11 +173,9 @@ admin = Admin(
     name='Odie (admin)',
     base_template='main.html',
     template_mode='bootstrap3',
-    index_view=AuthIndexView(
-        name='Home',
-        template='main.html'))  # TODO: proper index view template
+    index_view=AuthIndexView())
 
-admin.add_view(DocumentView(Document, db.session, name='Dokumente'))
-admin.add_view(LectureView(Lecture, db.session, name='Vorlesungen'))
-admin.add_view(ExaminantView(Examinant, db.session, name='Prüfer'))
-admin.add_view(DepositView(Deposit, db.session, name='Pfand'))
+admin.add_view(DocumentView(Document, sqla.session, name='Dokumente'))
+admin.add_view(LectureView(Lecture, sqla.session, name='Vorlesungen'))
+admin.add_view(ExaminantView(Examinant, sqla.session, name='Prüfer'))
+admin.add_view(DepositView(Deposit, sqla.session, name='Pfand'))

@@ -22,6 +22,7 @@ class FlaskConfig(object):
     SECRET_KEY = 'supersikkrit'
     DEBUG = True
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+    STATIC_FOLDER = 'admin/static'
 
 # things specific to odie: saved orders
 odie_table_args = {
@@ -38,7 +39,7 @@ acl_table_args = {
     'schema' : 'acl',
     'info': {'bind_key': 'fsmi'}
 }
-public_table_args = {
+fsmi_table_args = {
     'schema' : 'public',  # if we don't explicitly set this we can't create cross-schema aux tables
     'info': {'bind_key': 'fsmi'}
 }

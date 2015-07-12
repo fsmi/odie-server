@@ -5,7 +5,7 @@ from marshmallow import Schema, fields
 from marshmallow.validate import OneOf
 
 import config
-from models.odie import Order
+from db.odie import Order
 from odie import ClientError
 
 CashBoxField = partial(fields.Str, required=True, validate=OneOf([cash_box for office in config.FS_CONFIG['OFFICES'].values() for cash_box in office['cash_boxes']]))

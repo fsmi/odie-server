@@ -8,7 +8,7 @@ from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 
-app = Flask("odie")
+app = Flask("odie", template_folder='admin/templates', static_folder='admin/static')
 
 app.config.from_object('config.FlaskConfig')
 
@@ -17,7 +17,7 @@ if app.config['DEBUG']:
     from flask.ext.cors import CORS
     CORS(app, origins=['http://localhost:4200'], supports_credentials=True)
 
-db = SQLAlchemy(app)
+sqla = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.setup_app(app)
 def __unauthorized():
@@ -25,7 +25,7 @@ def __unauthorized():
 login_manager.unauthorized_handler(__unauthorized)
 
 # sqlalchemy treats columns as nullable by default, which we don't want.
-Column = partial(db.Column, nullable=False)
+Column = partial(sqla.Column, nullable=False)
 
 
 # errors that will be reported to the client

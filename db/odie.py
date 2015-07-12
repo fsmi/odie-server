@@ -2,28 +2,28 @@
 
 import config
 
-from odie import db, Column
+from odie import sqla, Column
 
-from models.documents import Document
+from db.documents import Document
 
-class OrderDocument(db.Model):
+class OrderDocument(sqla.Model):
     __tablename__ = 'order_documents'
     __table_args__ = config.odie_table_args
 
-    index = Column(db.Integer, primary_key=True)
-    order_id = Column(db.Integer, db.ForeignKey('odie.orders.id'), primary_key=True)
-    order = db.relationship('Order', backref=db.backref('items', cascade='all', order_by=index))
-    document_id = Column(db.ForeignKey('documents.documents.id', ondelete='CASCADE'), primary_key=True)
-    document = db.relationship('Document')
+    index = Column(sqla.Integer, primary_key=True)
+    order_id = Column(sqla.Integer, sqla.ForeignKey('odie.orders.id'), primary_key=True)
+    order = sqla.relationship('Order', backref=sqla.backref('items', cascade='all', order_by=index))
+    document_id = Column(sqla.ForeignKey('documents.documents.id', ondelete='CASCADE'), primary_key=True)
+    document = sqla.relationship('Document')
 
 
-class Order(db.Model):
+class Order(sqla.Model):
     __tablename__ = 'orders'
     __table_args__ = config.odie_table_args
 
-    id = Column(db.Integer, primary_key=True)
-    name = Column(db.String(256))
-    creation_time = Column(db.DateTime(timezone=True), server_default=db.func.now())
+    id = Column(sqla.Integer, primary_key=True)
+    name = Column(sqla.String(256))
+    creation_time = Column(sqla.DateTime(timezone=True), server_default=sqla.func.now())
 
     def __init__(self, name, document_ids, creation_time=None):
         self.name = name

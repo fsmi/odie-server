@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import accounting
+import db.accounting
 import config
 import datetime
 import json
@@ -12,11 +12,11 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 from sqlalchemy.orm import subqueryload
 from sqlalchemy.orm.exc import NoResultFound
 
-from odie import app, db, ClientError
+from odie import app, sqla, ClientError
 from api_utils import deserialize, endpoint, filtered_results, api_route, handle_client_errors, document_path, save_file
-from models.documents import Lecture, Deposit, Document, Examinant
-from models.odie import Order
-from models.public import User
+from db.documents import Lecture, Deposit, Document, Examinant
+from db.odie import Order
+from db.fsmi import User
 
 ## Routes may either return something which can be turned into json using
 ## flask.jsonify or a api_utils.PaginatedResult. The actual response is assembled
@@ -73,16 +73,16 @@ def print_documents(data):
         paths = [document_path(doc.file_id) for doc in documents if doc.file_id]
         config.print_documents(paths, data['cover_text'], data['printer'])
         num_pages = sum(doc.number_of_pages for doc in documents)
-        accounting.log_exam_sale(num_pages, price, current_user, data['cash_box'])
+        db.accounting.log_exam_sale(num_pages, price, current_user, data['cash_box'])
     for _ in range(data['deposit_count']):
         dep = Deposit(
                 price=config.FS_CONFIG['DEPOSIT_PRICE'],
                 name=data['cover_text'],
                 by_user=current_user.full_name,
                 lectures=_lectures(data['document_ids']))
-        db.session.add(dep)
-        accounting.log_deposit(dep, current_user, data['cash_box'])
-    db.session.commit()
+        sqla.session.add(dep)
+        db.accounting.log_deposit(dep, current_user, data['cash_box'])
+    sqla.session.commit()
     return {}
 
 
@@ -90,8 +90,8 @@ def print_documents(data):
 @login_required
 @deserialize(schemas.ErroneousSaleLoadSchema)
 def accept_erroneous_sale(data):
-    accounting.log_erroneous_sale(data['amount'], current_user, data['cash_box'])
-    db.session.commit()
+    db.accounting.log_erroneous_sale(data['amount'], current_user, data['cash_box'])
+    sqla.session.commit()
     return {}
 
 
@@ -105,9 +105,9 @@ def log_deposit_return(data):
         doc.submitted_by = None
 
     dep = Deposit.query.get(data['id'])
-    db.session.delete(dep)
-    accounting.log_deposit_return(dep, current_user, data['cash_box'])
-    db.session.commit()
+    sqla.session.delete(dep)
+    db.accounting.log_deposit_return(dep, current_user, data['cash_box'])
+    sqla.session.commit()
     return {}
 
 
@@ -115,8 +115,8 @@ def log_deposit_return(data):
 @login_required
 @deserialize(schemas.DonationLoadSchema)
 def log_donation(data):
-    accounting.log_donation(current_user, data['amount'], data['cash_box'])
-    db.session.commit()
+    db.accounting.log_donation(current_user, data['amount'], data['cash_box'])
+    sqla.session.commit()
     return {}
 
 
@@ -230,7 +230,7 @@ def submit_document():
                     subject=lect['subject'],
                     validated=False)
             lectures.append(l)
-            db.session.add(l)
+            sqla.session.add(l)
     examinants = []
     for examinant in data['examinants']:
         try:
@@ -239,7 +239,7 @@ def submit_document():
         except NoResultFound:
             ex = Examinant(examinant, validated=False)
             examinants.append(ex)
-            db.session.add(ex)
+            sqla.session.add(ex)
     date = data['date']
     assert date <= datetime.date.today()
     new_doc = Document(
@@ -250,14 +250,14 @@ def submit_document():
             document_type=data['document_type'],
             validated=False,
             submitted_by=data['student_name'])
-    db.session.add(new_doc)
+    sqla.session.add(new_doc)
 
     # we have the db side of things taken care of, now save the file
     # and tell the db where to find the file
 
     digest = save_file(file)
     new_doc.file_id = digest
-    db.session.commit()
+    sqla.session.commit()
     return {}
 
 @app.route('/api/view/<int:instance_id>')

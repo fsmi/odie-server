@@ -8,7 +8,7 @@ import routes
 import json
 import random
 
-from models.documents import Document
+from db.documents import Document
 from test.harness import OdieTestCase, ODIE_DIR
 
 class APITest(OdieTestCase):
