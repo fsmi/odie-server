@@ -2,6 +2,10 @@
 
 """Fills the sample database with some sample data"""
 
+try:
+    import hack
+except:
+    from scripts import hack
 
 import db
 import crypt

@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+import hack
+
 #pylint: disable=unused-import
 import odie
 import admin

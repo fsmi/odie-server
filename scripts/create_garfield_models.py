@@ -7,6 +7,11 @@
 # and keep an eye on https://github.com/mitsuhiko/flask-sqlalchemy/pull/222 to see
 # whether this is still necessary)
 
+try:
+    import hack
+except:
+    from scripts import hack
+
 import config
 
 # dirty monkey-patching to prevent Flask-SQLA in this script from seeing more
