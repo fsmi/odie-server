@@ -16,15 +16,15 @@ config.FlaskConfig.SQLALCHEMY_BINDS = {'garfield': uri}
 config.FlaskConfig.SQLALCHEMY_DATABASE_URI = uri
 
 import sqlalchemy
-import models.documents  # pylint: disable=unused-import
-import models.odie  # pylint: disable=unused-import
+import db.documents  # pylint: disable=unused-import
+import db.odie  # pylint: disable=unused-import
 
 from sqlalchemy.schema import CreateSchema
-from odie import db, app
+from odie import sqla, app
 
 def createSchema(name, bind=None):
     try:
-        engine = db.get_engine(app, bind)
+        engine = sqla.get_engine(app, bind)
         engine.execute(CreateSchema(name))
     except sqlalchemy.exc.ProgrammingError:
         # schema already exists... do nothing
@@ -34,4 +34,4 @@ createSchema('public')
 createSchema('odie')
 createSchema('documents')
 
-db.create_all()
+sqla.create_all()

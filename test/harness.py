@@ -7,7 +7,7 @@ import os
 import subprocess
 import unittest
 
-from odie import app, db
+from odie import app, sqla
 
 ODIE_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
 
@@ -33,19 +33,19 @@ class OdieTestCase(unittest.TestCase):
     @staticmethod
     def clear_all():
         # http://stackoverflow.com/a/5003705/161659
-        for table in reversed(db.metadata.sorted_tables):
-            db.session.execute(table.delete())
+        for table in reversed(sqla.metadata.sorted_tables):
+            sqla.session.execute(table.delete())
 
         # http://www.postgresql.org/message-id/20060509072129.93529.qmail@web30409.mail.mud.yahoo.com
-        for sequence in db.session.execute(
+        for sequence in sqla.session.execute(
                 """
                 SELECT n.nspname, relname
                 FROM pg_class
                 JOIN pg_namespace n ON relnamespace = n.oid
                 WHERE relkind='S'
                 """):
-            db.session.execute("ALTER SEQUENCE {}.{} RESTART WITH 1".format(*sequence))
-        db.session.commit()
+            sqla.session.execute("ALTER SEQUENCE {}.{} RESTART WITH 1".format(*sequence))
+        sqla.session.commit()
 
     def disable_pagination(self):
         self.original_items_per_page = config.ITEMS_PER_PAGE

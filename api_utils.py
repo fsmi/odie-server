@@ -5,7 +5,7 @@ import hashlib
 import os
 import json
 
-from odie import app, db, ClientError
+from odie import app, sqla, ClientError
 from serialization_schemas import serialize
 
 from functools import wraps
@@ -142,14 +142,14 @@ def endpoint(query, schemas=None, allow_delete=False, paginate_many=True):
         # since we don't know where this query came from, we need to detach obj
         # from its session before we can delete it. expunge does exactly this.
         inspect(obj).session.expunge(obj)
-        db.session.delete(obj)
-        db.session.commit()
+        sqla.session.delete(obj)
+        sqla.session.commit()
         return {}
 
     @deserialize(schemas['POST'] if 'POST' in schemas else None)
     def handle_post(data=None):
-        db.session.add(data)
-        db.session.commit()
+        sqla.session.add(data)
+        sqla.session.commit()
         return {}
 
     def handle_generic(instance_id=None):

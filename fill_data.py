@@ -3,15 +3,15 @@
 """Fills the sample database with some sample data"""
 
 
-import models
+import db
 import crypt
 
-from odie import db
+from odie import sqla
 
-from models.documents import Lecture, Document, Examinant, Deposit
-from models.public import User
-from models.acl import Permission
-from models.odie import Order
+from db.documents import Lecture, Document, Examinant, Deposit
+from db.fsmi import User
+from db.acl import Permission
+from db.odie import Order
 
 from datetime import datetime as time
 
@@ -31,7 +31,7 @@ def fill():
         ]
 
     for l in lectures:
-        db.session.add(l)
+        sqla.session.add(l)
 
     profs = [
                 Examinant(name='Bemens Clöhm', validated=True),
@@ -41,11 +41,11 @@ def fill():
             ]
 
     for p in profs:
-        db.session.add(p)
+        sqla.session.add(p)
 
-    db.session.add(Deposit(by_user="guybrush", price=500, name='Sloth', lectures=[lectures[0]]))
-    db.session.add(Deposit(by_user="guybrush", price=1000, name='Montgomery Montgomery', lectures=[lectures[4],lectures[5],lectures[6],lectures[7]]))
-    db.session.add(Deposit(by_user="guybrush", price=500, name='Random J. Hacker', lectures=[lectures[1], lectures[2], lectures[7]]))
+    sqla.session.add(Deposit(by_user="guybrush", price=500, name='Sloth', lectures=[lectures[0]]))
+    sqla.session.add(Deposit(by_user="guybrush", price=1000, name='Montgomery Montgomery', lectures=[lectures[4],lectures[5],lectures[6],lectures[7]]))
+    sqla.session.add(Deposit(by_user="guybrush", price=500, name='Random J. Hacker', lectures=[lectures[1], lectures[2], lectures[7]]))
 
     docs = [
                 Document(lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=time(2010, 4, 1), number_of_pages=4, document_type='oral', validated=True),
@@ -57,7 +57,7 @@ def fill():
         ]
 
     for d in docs:
-        db.session.add(d)
+        sqla.session.add(d)
 
 
 
@@ -65,10 +65,10 @@ def fill():
 
     # Order
 
-    db.session.add(Order(name='Hatsune Miku', document_ids=[1,4], creation_time=time(2009, 4, 2)))
-    db.session.add(Order(name='Megurine Luka', document_ids=[4,3,2], creation_time=time(2012, 10, 10)))
-    db.session.add(Order(name='Kagamine Rin', document_ids=[2], creation_time=time(2011, 1, 3)))
-    db.session.add(Order(name='Kagamine Len', document_ids=[2], creation_time=time(2014, 1, 2)))
+    sqla.session.add(Order(name='Hatsune Miku', document_ids=[1,4], creation_time=time(2009, 4, 2)))
+    sqla.session.add(Order(name='Megurine Luka', document_ids=[4,3,2], creation_time=time(2012, 10, 10)))
+    sqla.session.add(Order(name='Kagamine Rin', document_ids=[2], creation_time=time(2011, 1, 3)))
+    sqla.session.add(Order(name='Kagamine Len', document_ids=[2], creation_time=time(2014, 1, 2)))
 
 
 
@@ -89,7 +89,7 @@ def fill():
             ]
 
     for p in perms:
-        db.session.add(p)
+        sqla.session.add(p)
 
     users = [
                 User(username='guybrush', first_name='Guybrush', last_name='Threepwood', pw_hash=hash('arrrrr'), effective_permissions=[perms[2], perms[0]]),
@@ -99,9 +99,9 @@ def fill():
             ]
 
     for u in users:
-        db.session.add(u)
+        sqla.session.add(u)
 
-    db.session.commit()
+    sqla.session.commit()
 
 if __name__ == '__main__':
     fill()

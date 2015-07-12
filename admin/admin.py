@@ -5,9 +5,9 @@ import config
 import datetime
 import os
 
-from odie import app, db
+from odie import app, sqla
 from api_utils import document_path, save_file
-from models.documents import Document, Lecture, Examinant, Deposit
+from db.documents import Document, Lecture, Examinant, Deposit
 
 from flask_admin import Admin, BaseView, AdminIndexView
 from flask_admin.form import FileUploadField
@@ -66,7 +66,7 @@ class DocumentView(AuthModelView):
             # document has just been validated
             model.validation_time = datetime.datetime.now()
 
-        db.session.commit()
+        sqla.session.commit()
         return True
 
 
@@ -100,7 +100,6 @@ class DocumentView(AuthModelView):
         'oral reexam': 'Nachprüfung',
     }
 
-    @staticmethod
     def format_solution(v, c, model, n):
         if model.document_type == 'written':
             return {
@@ -166,7 +165,7 @@ admin = Admin(
         name='Home',
         template='main.html'))  # TODO: proper index view template
 
-admin.add_view(DocumentView(Document, db.session, name='Dokumente'))
-admin.add_view(LectureView(Lecture, db.session, name='Vorlesungen'))
-admin.add_view(ExaminantView(Examinant, db.session, name='Prüfer'))
-admin.add_view(DepositView(Deposit, db.session, name='Pfand'))
+admin.add_view(DocumentView(Document, sqla.session, name='Dokumente'))
+admin.add_view(LectureView(Lecture, sqla.session, name='Vorlesungen'))
+admin.add_view(ExaminantView(Examinant, sqla.session, name='Prüfer'))
+admin.add_view(DepositView(Deposit, sqla.session, name='Pfand'))

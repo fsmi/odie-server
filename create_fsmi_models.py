@@ -16,14 +16,14 @@ config.FlaskConfig.SQLALCHEMY_BINDS = {'fsmi': uri}
 config.FlaskConfig.SQLALCHEMY_DATABASE_URI = uri
 
 import sqlalchemy
-import models.public  # pylint: disable=unused-import
+import db.fsmi  # pylint: disable=unused-import
 
 from sqlalchemy.schema import CreateSchema
-from odie import db, app
+from odie import sqla, app
 
 def createSchema(name, bind=None):
     try:
-        engine = db.get_engine(app, bind)
+        engine = sqla.get_engine(app, bind)
         engine.execute(CreateSchema(name))
     except sqlalchemy.exc.ProgrammingError:
         # schema already exists... do nothing
@@ -32,4 +32,4 @@ def createSchema(name, bind=None):
 createSchema('public')
 createSchema('acl')
 
-db.create_all()
+sqla.create_all()

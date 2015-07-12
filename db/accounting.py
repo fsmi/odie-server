@@ -17,7 +17,7 @@ the database internally uses in the logging functions
 """
 
 from sqlalchemy import text
-from odie import db
+from odie import sqla
 import config
 
 
@@ -37,7 +37,7 @@ if config.GARFIELD_ACCOUNTING:
 
     _qry = text("""SELECT cash_box_name, cash_boxes.cash_box_id
             FROM garfield.cash_boxes;""")
-    cash_box_ids = dict(db.session.execute(_qry).fetchall())
+    cash_box_ids = dict(sqla.session.execute(_qry).fetchall())
     # tax group for exam sales
     _tax_group = 2
 
@@ -49,7 +49,7 @@ if config.GARFIELD_ACCOUNTING:
                 FROM garfield.users
                 WHERE user_name = :user_name
                 RETURNING cash_box_log_id;""")
-        r = db.session.execute(qry.bindparams(
+        r = sqla.session.execute(qry.bindparams(
             user_name=user.username,
             cash_box_id=cash_box_ids[cashbox],
             amount=amount,
@@ -65,14 +65,14 @@ if config.GARFIELD_ACCOUNTING:
         log_id = _cash_box_log_entry(user, cashbox, amount / 100, action)
         qry = text("""INSERT INTO garfield.donation_sales_log
                 VALUES (:log_id, 'MONEY');""")
-        db.session.execute(qry.bindparams(log_id=log_id))
+        sqla.session.execute(qry.bindparams(log_id=log_id))
 
     def _log_exam_action(pages: int, final_price: float, user, cashbox: str, action: str):
         cshbx_log_id = _cash_box_log_entry(user, cashbox, final_price, action)
         qry = text("""INSERT INTO garfield.exam_sale_log
                 (cash_box_log_id, tax_id, price_per_page, pages)
                 VALUES (:cshbx_log_id, garfield.tax_find(:tax_group, current_date), :ppp, :pages);""")
-        db.session.execute(qry.bindparams(
+        sqla.session.execute(qry.bindparams(
             cshbx_log_id=cshbx_log_id,
             tax_group=_tax_group,
             ppp=config.FS_CONFIG['PRICE_PER_PAGE'] / 100,
@@ -92,7 +92,7 @@ if config.GARFIELD_ACCOUNTING:
         qry = text("""INSERT INTO garfield.exam_deposit_log
                 (student_name, cash_box_log_id)
                 VALUES (:student_name, :log_id);""")
-        db.session.execute(qry.bindparams(
+        sqla.session.execute(qry.bindparams(
             student_name=deposit.name,
             log_id=cshbx_log_id
         ))
