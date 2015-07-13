@@ -1,7 +1,9 @@
 #! /usr/bin/env python3
 
+from flask.ext.login import current_user
 from functools import partial
 from marshmallow import Schema, fields
+from marshmallow.utils import missing
 from marshmallow.validate import OneOf
 
 import config
@@ -46,12 +48,15 @@ class DocumentDumpSchema(IdSchema):
     available = fields.Method('is_available_for_printing')
     validated = fields.Boolean()
     validation_time = fields.Date()
-    submitted_by = fields.Str()
+    submitted_by = fields.Method('scrub_submitted_by')
 
     @staticmethod
     def is_available_for_printing(obj):
         return obj.file_id is not None
 
+    @staticmethod
+    def scrub_submitted_by(obj):
+        return obj.submitted_by if current_user.is_authenticated() else missing
 
 class ExaminantSchema(IdSchema):
     name = fields.Str()

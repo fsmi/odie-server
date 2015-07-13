@@ -3,5 +3,4 @@
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
-sys.path.append(os.path.dirname(__file__))
+sys.path = [os.path.join(os.path.dirname(__file__), os.path.pardir), os.path.dirname(__file__)] + sys.path
