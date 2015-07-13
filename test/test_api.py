@@ -85,6 +85,14 @@ class APITest(OdieTestCase):
         documents = self.fromJsonResponse(res)
         for doc in documents:
             self.validate_document(doc)
+            self.assertNotIn('submitted_by', doc)
+
+    def test_get_lecture_documents_logged_in(self):
+        self.login()
+        res = self.app.get('/api/lectures/1/documents')
+        documents = self.fromJsonResponse(res)
+        for doc in documents:
+            self.assertIn('submitted_by', doc)
 
     def test_get_documents(self):
         res = self.app.get('/api/documents')
