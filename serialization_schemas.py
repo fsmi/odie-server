@@ -25,6 +25,13 @@ class IdSchema(Schema):
     id = fields.Int(required=True)
 
 
+class PaginatedResultSchema(Schema):
+    data = fields.Raw()
+    page = fields.Int(attribute='pagination.page')
+    number_of_pages = fields.Int(attribute='pagination.pages')
+    total = fields.Int(attribute='pagination.total')
+
+
 class UserLoadSchema(Schema):
     username = fields.Str(required=True)
     password = fields.Str(required=True)

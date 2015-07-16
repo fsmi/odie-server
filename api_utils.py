@@ -6,7 +6,7 @@ import os
 import json
 
 from odie import app, sqla, ClientError
-from serialization_schemas import serialize
+from serialization_schemas import serialize, PaginatedResultSchema
 
 from functools import wraps
 from flask import Flask, jsonify, request
@@ -91,14 +91,8 @@ def api_route(url, *args, **kwargs):
         @handle_client_errors
         def wrapped_f(*f_args, **f_kwargs):
             data = f(*f_args, **f_kwargs)
-            # automatically add 'page' attribute to returned object
             if isinstance(data, PaginatedResult):
-                result = data
-                data = result.data
-                return jsonify(data=result.data,
-                        page=result.pagination.page,
-                        number_of_pages=result.pagination.pages,
-                        total=result.pagination.total)
+                return jsonify(serialize(data, PaginatedResultSchema))
             return jsonify(data=data)
         return Flask.route(app, url, *args, **kwargs)(wrapped_f)
     return decorator
