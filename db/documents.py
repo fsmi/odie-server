@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import config
+import sqlalchemy
 
 from odie import sqla, Column
 from sqlalchemy.dialects import postgres
@@ -46,7 +47,7 @@ class Document(sqla.Model):
     solution = Column(sqla.Enum('official', 'inofficial', 'none', name='solution', inherit_schema=True), nullable=True)
     comment = Column(sqla.String, server_default='')
     document_type = Column(sqla.Enum('oral', 'written', 'oral reexam', name='type', inherit_schema=True))
-    file_id = Column(sqla.String, nullable=True)  # usually sha256sum of file
+    has_file = Column(sqla.Boolean, server_default=sqlalchemy.sql.expression.false())
     validated = Column(sqla.Boolean)
     validation_time = Column(sqla.DateTime(timezone=True), nullable=True)
     submitted_by = Column(sqla.String, nullable=True)

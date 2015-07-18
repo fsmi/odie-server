@@ -70,7 +70,7 @@ def print_documents(data):
     price = 10 * (price/10 + (1 if price % 10 else 0))
 
     if documents:
-        paths = [document_path(doc.file_id) for doc in documents if doc.file_id]
+        paths = [document_path(doc.id) for doc in documents if doc.has_file]
         config.print_documents(paths, data['cover_text'], data['printer'])
         num_pages = sum(doc.number_of_pages for doc in documents)
         db.accounting.log_exam_sale(num_pages, price, current_user, data['cash_box'])
@@ -290,9 +290,8 @@ def submit_document():
 
     # we have the db side of things taken care of, now save the file
     # and tell the db where to find the file
-
-    digest = save_file(file)
-    new_doc.file_id = digest
+    sqla.session.flush()  # necessary for id field to be populated
+    save_file(new_doc, file)
     sqla.session.commit()
     return {}
 
@@ -301,6 +300,6 @@ def submit_document():
 @login_required
 def view_document(instance_id):
     doc = Document.query.get(instance_id)
-    if doc is None or doc.file_id is None:
+    if doc is None or doc.has_file is None:
         raise ClientError('document not found', status=404)
-    return send_file(document_path(doc.file_id))
+    return send_file(document_path(doc.id))

@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import config
-import hashlib
 import os
 import json
 
@@ -14,23 +13,17 @@ from jsonquery import jsonquery
 from sqlalchemy import inspect
 
 
-def document_path(digest):
-    dir = os.path.join(config.DOCUMENT_DIRECTORY, digest[:2])
+def document_path(id):
+    dir = os.path.join(config.DOCUMENT_DIRECTORY, str(id % 100))
     if not os.path.isdir(dir):
         os.makedirs(dir)
-    return os.path.join(dir, digest + '.pdf')
+    return os.path.join(dir, str(id) + '.pdf')
 
 
-def save_file(file_storage):
-    sha256 = hashlib.sha256()
-    for bytes in file_storage.stream:
-        sha256.update(bytes)
-    digest = sha256.hexdigest()
-    # reset file_storage stream for saving
-    file_storage.stream.seek(0)
-    file_storage.save(document_path(digest))
+def save_file(document, file_storage):
+    file_storage.save(document_path(document.id))
     file_storage.close()
-    return digest
+    document.has_file = True
 
 
 class PaginatedResult(object):

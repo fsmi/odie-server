@@ -52,14 +52,10 @@ class DocumentDumpSchema(IdSchema):
     solution = fields.Str()
     comment = fields.Str()
     document_type = fields.Str()
-    available = fields.Method('is_available_for_printing')
+    available = fields.Boolean(attribute='has_file')
     validated = fields.Boolean()
     validation_time = fields.Date()
     submitted_by = fields.Method('scrub_submitted_by')
-
-    @staticmethod
-    def is_available_for_printing(obj):
-        return obj.file_id is not None
 
     @staticmethod
     def scrub_submitted_by(obj):
