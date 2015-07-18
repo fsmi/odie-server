@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import barcode
 import config
 
 import datetime
@@ -14,6 +15,7 @@ from flask_admin import Admin, BaseView, AdminIndexView, expose
 from flask_admin.form import FileUploadField
 from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
+from PyPDF2 import PdfFileReader
 from wtforms.validators import Optional
 
 def _dateFormatter(attr_name):
@@ -21,6 +23,16 @@ def _dateFormatter(attr_name):
         d = getattr(m, attr_name)
         return d.date() if d else ''
     return f
+
+def number_of_pages(document):
+    try:
+        with open(document_path(document.file_id), 'rb') as pdf:
+            return PdfFileReader(pdf).getNumPages()
+    except:
+        # this is still user-provided data after all
+        return 0
+
+
 
 class AuthViewMixin(BaseView):
     allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
@@ -51,6 +63,11 @@ class AuthIndexView(AuthViewMixin, AdminIndexView):
 
 class DocumentView(AuthModelView):
 
+    def delete_model(self, model):
+        super().delete_model(model)
+        if model.file_id:
+            os.unlink(document_path(model.file_id))
+
     def update_model(self, form, model):
         # We don't want flask-admin to handle the uploaded file, we'll do that ourselves.
         # however, Flask-Admin is welcome to handle the rest of the model update
@@ -66,6 +83,7 @@ class DocumentView(AuthModelView):
         success = super(DocumentView, self).update_model(form, model)
         if not success:
             return False
+        generate_barcode = False
 
         if file.data:
             if model.file_id:
@@ -73,10 +91,17 @@ class DocumentView(AuthModelView):
                 os.unlink(document_path(model.file_id))
             digest = save_file(file.data)
             model.file_id = digest
+            model.number_of_pages = number_of_pages(model)
+            if form.validated.data:
+                generate_barcode = True
 
-        if model.validation_time is None and form.validated:
-            # document has just been validated
+        if model.validation_time is None and form.validated.data:
+            # document has just been validated for the first time
             model.validation_time = datetime.datetime.now()
+            generate_barcode = True
+
+        if generate_barcode:
+            barcode.bake_barcode(model)
 
         sqla.session.commit()
         return True

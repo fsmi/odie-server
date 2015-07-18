@@ -4,3 +4,4 @@ Flask-Login
 Flask-CORS
 Flask-Admin
 marshmallow>=2.0.0b3
+pypdf2

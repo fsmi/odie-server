@@ -125,7 +125,6 @@ login_required(
 endpoint(
         schemas={
             'GET': schemas.OrderDumpSchema,
-            'POST': schemas.OrderLoadSchema
         },
         query=Order.query)
 ))
@@ -135,7 +134,7 @@ endpoint(
         schemas={
             'POST': schemas.OrderLoadSchema
         },
-        query=Order.query)
+        query=None)
 )
 
 api_route('/api/orders/<int:instance_id>', methods=['GET', 'DELETE'])(
