@@ -35,16 +35,12 @@ def _tmp_path(document, suffix=''):
 
 
 def bake_barcode(document):
-    # if the document has a legacy_id, use the old namespace
-    # The barcodes we use have 13 digits. The last one is a checksum digit. barcode.ps takes care of this.
+    # if the document has a legacy_id, the PDF already has a barcode.
     if document.legacy_id:
-        namespace = LEGACY_GS1_NAMESPACE
-        id = document.legacy_id
-    else:
-        namespace = GS1_NAMESPACE
-        id = document.id
+        return
     doc_path = document_path(document.file_id)
-    barcode = namespace + str(id).zfill(12 - len(namespace))
+    # The barcodes we use have 13 digits. The last one is a checksum digit. barcode.ps takes care of this.
+    barcode = GS1_NAMESPACE + str(document.id).zfill(12 - len(GS1_NAMESPACE))
     with open(BARCODE_PS_FILE, 'rb') as barcode_file:
         ps2pdf = subprocess.Popen(['ps2pdf', '-', '-'], stdin=PIPE, stdout=PIPE)
         (barcode_pdf, _) = ps2pdf.communicate(barcode_file.read() +
