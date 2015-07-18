@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import barcode
 import config
 
 import datetime
@@ -51,6 +52,11 @@ class AuthIndexView(AuthViewMixin, AdminIndexView):
 
 class DocumentView(AuthModelView):
 
+    def delete_model(self, model):
+        super().delete_model(model)
+        if model.file_id:
+            os.unlink(document_path(model.file_id))
+
     def update_model(self, form, model):
         # We don't want flask-admin to handle the uploaded file, we'll do that ourselves.
         # however, Flask-Admin is welcome to handle the rest of the model update
@@ -66,6 +72,7 @@ class DocumentView(AuthModelView):
         success = super(DocumentView, self).update_model(form, model)
         if not success:
             return False
+        generate_barcode = False
 
         if file.data:
             if model.file_id:
@@ -73,10 +80,16 @@ class DocumentView(AuthModelView):
                 os.unlink(document_path(model.file_id))
             digest = save_file(file.data)
             model.file_id = digest
+            if form.validated.data:
+                generate_barcode = True
 
-        if model.validation_time is None and form.validated:
-            # document has just been validated
+        if model.validation_time is None and form.validated.data:
+            # document has just been validated for the first time
             model.validation_time = datetime.datetime.now()
+            generate_barcode = True
+
+        if generate_barcode:
+            barcode.bake_barcode(model)
 
         sqla.session.commit()
         return True
