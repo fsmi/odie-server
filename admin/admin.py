@@ -15,7 +15,6 @@ from flask_admin import Admin, BaseView, AdminIndexView, expose
 from flask_admin.form import FileUploadField
 from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
-from PyPDF2 import PdfFileReader
 from wtforms.validators import Optional
 
 def _dateFormatter(attr_name):
@@ -23,15 +22,6 @@ def _dateFormatter(attr_name):
         d = getattr(m, attr_name)
         return d.date() if d else ''
     return f
-
-def number_of_pages(document):
-    try:
-        with open(document_path(document.file_id), 'rb') as pdf:
-            return PdfFileReader(pdf).getNumPages()
-    except:
-        # this is still user-provided data after all
-        return 0
-
 
 
 class AuthViewMixin(BaseView):
@@ -65,8 +55,8 @@ class DocumentView(AuthModelView):
 
     def delete_model(self, model):
         super().delete_model(model)
-        if model.file_id:
-            os.unlink(document_path(model.file_id))
+        if model.has_file:
+            os.unlink(document_path(model.id))
 
     def update_model(self, form, model):
         # We don't want flask-admin to handle the uploaded file, we'll do that ourselves.
@@ -86,12 +76,10 @@ class DocumentView(AuthModelView):
         generate_barcode = False
 
         if file.data:
-            if model.file_id:
+            if model.has_file:
                 # delete old file
-                os.unlink(document_path(model.file_id))
-            digest = save_file(file.data)
-            model.file_id = digest
-            model.number_of_pages = number_of_pages(model)
+                os.unlink(document_path(model.id))
+            save_file(model, file.data)
             if form.validated.data:
                 generate_barcode = True
 
@@ -109,7 +97,7 @@ class DocumentView(AuthModelView):
 
     list_template = 'document_list.html'
     edit_template = 'document_edit.html'
-    form_excluded_columns = ('validation_time', 'file_id')
+    form_excluded_columns = ('validation_time', 'has_file')
     form_extra_fields = {'file': FileUploadField()}
     form_args = {
         'comment': {'validators': [Optional()]},

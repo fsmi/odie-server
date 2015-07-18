@@ -31,7 +31,7 @@ def _tmp_path(document, suffix=''):
     dir = os.path.join(config.DOCUMENT_DIRECTORY, 'tmp')
     if not os.path.isdir(dir):
         os.makedirs(dir)
-    return os.path.join(dir, document.file_id + suffix)
+    return os.path.join(dir, str(document.id) + suffix)
 
 def bake_barcode(document):
     """Put a generated barcode onto the PDF
@@ -48,9 +48,9 @@ def bake_barcode(document):
     """
 
     # if the document has a legacy_id, the PDF already has a barcode.
-    if document.legacy_id or not document.file_id:
+    if document.legacy_id or not document.has_file:
         return
-    doc_path = document_path(document.file_id)
+    doc_path = document_path(document.id)
     # The barcodes we use have 13 digits. The last one is a checksum digit. barcode.ps takes care of this.
     barcode = GS1_NAMESPACE + str(document.id).zfill(12 - len(GS1_NAMESPACE))
     with open(BARCODE_PS_FILE, 'rb') as barcode_file:
