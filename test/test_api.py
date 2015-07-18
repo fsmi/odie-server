@@ -8,7 +8,7 @@ import routes
 import json
 import random
 
-from db.documents import Document
+from db.documents import Document, Lecture
 from test.harness import OdieTestCase, ODIE_DIR
 
 class APITest(OdieTestCase):
@@ -93,6 +93,16 @@ class APITest(OdieTestCase):
         documents = self.fromJsonResponse(res)
         for doc in documents:
             self.assertIn('submitted_by', doc)
+
+    def test_get_lecture_documents_meta(self):
+        res = self.app.get('/api/lectures/1/documents/meta')
+        data = self.fromJsonResponse(res)
+        all_docs = Lecture.query.get(1).documents.all()
+        self.assertEqual(len(all_docs), data['total_written'] + data['total_oral'])
+        self.assertEqual(
+            sorted(l.id for doc in all_docs for l in doc.lectures),
+            sorted(data['all_lecture_ids'])
+        )
 
     def test_get_documents(self):
         res = self.app.get('/api/documents')
