@@ -25,10 +25,12 @@ def _dateFormatter(attr_name):
     return f
 
 def number_of_pages(document):
-    if not document.file_id:
+    try:
+        with open(document_path(document.file_id), 'rb') as pdf:
+            return PdfFileReader(pdf).getNumPages()
+    except:
+        # this is still user-provided data after all
         return 0
-    with open(document_path(document.file_id), 'rb') as pdf:
-        return PdfFileReader(pdf).getNumPages()
 
 
 
@@ -107,7 +109,7 @@ class DocumentView(AuthModelView):
 
     list_template = 'document_list.html'
     edit_template = 'document_edit.html'
-    form_excluded_columns = ('validation_time', 'file_id', 'number_of_pages')
+    form_excluded_columns = ('validation_time', 'file_id')
     form_extra_fields = {'file': FileUploadField()}
     form_args = {
         'comment': {'validators': [Optional()]},
