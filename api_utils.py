@@ -11,6 +11,7 @@ from functools import wraps
 from flask import Flask, jsonify, request
 from jsonquery import jsonquery
 from sqlalchemy import inspect
+from PyPDF2 import PdfFileReader
 
 
 def document_path(id):
@@ -20,10 +21,20 @@ def document_path(id):
     return os.path.join(dir, str(id) + '.pdf')
 
 
+def number_of_pages(document):
+    try:
+        with open(document_path(document.file_id), 'rb') as pdf:
+            return PdfFileReader(pdf).getNumPages()
+    except:
+        # this is still user-provided data after all
+        return 0
+
+
 def save_file(document, file_storage):
     file_storage.save(document_path(document.id))
     file_storage.close()
     document.has_file = True
+    document.number_of_pages = number_of_pages(document)
 
 
 class PaginatedResult(object):
