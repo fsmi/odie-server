@@ -33,8 +33,20 @@ def _tmp_path(document, suffix=''):
         os.makedirs(dir)
     return os.path.join(dir, document.file_id + suffix)
 
-
 def bake_barcode(document):
+    """Put a generated barcode onto the PDF
+
+    The pipeline works as follows:
+    barcode.ps is piped into ps2pdf, followed by the call to the barcode-generating
+    function. The resulting one-page PDF containing only the barcode is read into
+    memory.
+    This is then piped into pdftk, which grafts the barcode onto the first page
+    of the document (discarding all other pages).
+    We dump all but the first page of the document and concatenate our modified
+    first page to it (via pdfjam).
+    If this sounds somewhat roundabout, that's because it is.
+    """
+
     # if the document has a legacy_id, the PDF already has a barcode.
     if document.legacy_id or not document.file_id:
         return

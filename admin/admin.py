@@ -15,6 +15,7 @@ from flask_admin import Admin, BaseView, AdminIndexView, expose
 from flask_admin.form import FileUploadField
 from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
+from PyPDF2 import PdfFileReader
 from wtforms.validators import Optional
 
 def _dateFormatter(attr_name):
@@ -22,6 +23,14 @@ def _dateFormatter(attr_name):
         d = getattr(m, attr_name)
         return d.date() if d else ''
     return f
+
+def number_of_pages(document):
+    if not document.file_id:
+        return 0
+    with open(document_path(document.file_id), 'rb') as pdf:
+        return PdfFileReader(pdf).getNumPages()
+
+
 
 class AuthViewMixin(BaseView):
     allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
@@ -80,6 +89,7 @@ class DocumentView(AuthModelView):
                 os.unlink(document_path(model.file_id))
             digest = save_file(file.data)
             model.file_id = digest
+            model.number_of_pages = number_of_pages(model)
             if form.validated.data:
                 generate_barcode = True
 
@@ -97,7 +107,7 @@ class DocumentView(AuthModelView):
 
     list_template = 'document_list.html'
     edit_template = 'document_edit.html'
-    form_excluded_columns = ('validation_time', 'file_id')
+    form_excluded_columns = ('validation_time', 'file_id', 'number_of_pages')
     form_extra_fields = {'file': FileUploadField()}
     form_args = {
         'comment': {'validators': [Optional()]},
