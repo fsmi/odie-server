@@ -147,6 +147,41 @@ endpoint(
 ))
 
 
+def paginated_documents(model):
+    def route(id):
+        entity = model.query.get(id)
+        return filtered_results(
+            entity.documents.options(subqueryload('lectures'), subqueryload('examinants')),
+            schemas.DocumentDumpSchema)
+
+    route.__name__ = 'paginated_documents_{}'.format(model)  # because flask that's why
+    return route
+
+# aggregate values of unpaginated source data
+def documents_metadata(model, document_to_model):
+    def route(id):
+        entity = model.query.get(id)
+
+        # get IDs of all model2 entities that have a document that's linked to
+        # 'entity'
+        def all_ids(model2):
+            return [e.id for e in sqla.session.query(model2.id)
+                # needs 'aliased' if model and model2 are the same table
+                .join(model2.documents, document_to_model, aliased=True)
+                .filter(model.id == id)
+                .distinct()
+                .all()]
+
+        return {
+            'total_written': entity.documents.filter_by(document_type='written').count(),
+            'total_oral': entity.documents.filter_by(document_type='oral').count(),
+            'all_lecture_ids': all_ids(Lecture),
+            'all_examinant_ids': all_ids(Examinant),
+        }
+    route.__name__ = 'documents_metadata_{}'.format(model)  # because flask that's why
+    return route
+
+
 api_route('/api/lectures')(
 endpoint(
         schemas={'GET': schemas.LectureDumpSchema},
@@ -154,12 +189,13 @@ endpoint(
         paginate_many=False)
 )
 
-@api_route('/api/lectures/<int:id>/documents')
-def lecture_documents(id):
-    lecture = Lecture.query.get(id)
-    return filtered_results(
-            lecture.documents.options(subqueryload('lectures'), subqueryload('examinants')),
-            schemas.DocumentDumpSchema)
+api_route('/api/lectures/<int:id>/documents')(
+paginated_documents(Lecture)
+)
+
+api_route('/api/lectures/<int:id>/documents/meta')(
+documents_metadata(Lecture, Document.lectures)
+)
 
 
 api_route('/api/examinants')(
@@ -169,12 +205,13 @@ endpoint(
         paginate_many=False)
 )
 
-@api_route('/api/examinants/<int:id>/documents')
-def examinant_documents(id):
-    examinant = Examinant.query.get(id)
-    return filtered_results(
-            examinant.documents.options(subqueryload('lectures'), subqueryload('examinants')),
-            schemas.DocumentDumpSchema)
+api_route('/api/examinants/<int:id>/documents')(
+paginated_documents(Examinant)
+)
+
+api_route('/api/lectures/<int:id>/documents/meta')(
+documents_metadata(Examinant, Document.examinants)
+)
 
 
 api_route('/api/deposits')(
