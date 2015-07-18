@@ -36,7 +36,7 @@ def _tmp_path(document, suffix=''):
 
 def bake_barcode(document):
     # if the document has a legacy_id, the PDF already has a barcode.
-    if document.legacy_id:
+    if document.legacy_id or not document.file_id:
         return
     doc_path = document_path(document.file_id)
     # The barcodes we use have 13 digits. The last one is a checksum digit. barcode.ps takes care of this.
