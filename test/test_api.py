@@ -345,7 +345,8 @@ class APITest(OdieTestCase):
         submitted_date = datetime.datetime.strptime(self.DOCUMENT_SUBMISSION_JSON['date'][:frmtlen], frmt)
         received_date = datetime.datetime.strptime(data[0]['date'][:frmtlen], frmt)
         self.assertEqual(submitted_date, received_date)
-
+        # This field will only be populated if the upload succeeded and the PDF was successfully processed
+        self.assertEqual(data[0]['number_of_pages'], 1)
         self.assertEqual(len(data[0]['lectures']), len(self.DOCUMENT_SUBMISSION_JSON['lectures']))
 
     def test_no_document_preview_unauthenticated(self):
@@ -366,7 +367,7 @@ class APITest(OdieTestCase):
         res = self.app.get('/api/view/%d' % id)
         self.assertEqual(res.status_code, 200)
         with open(self.PDF_PATH, 'rb') as doc:
-            doc_data = doc.read()  # only 2 bytes...
+            doc_data = doc.read()  # only ~750 bytes...
             self.assertEqual(res.data, doc_data)
 
 

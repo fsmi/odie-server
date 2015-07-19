@@ -12,6 +12,7 @@ from flask import Flask, jsonify, request
 from jsonquery import jsonquery
 from sqlalchemy import inspect
 from PyPDF2 import PdfFileReader
+from PyPDF2.utils import PdfReadError
 
 
 def document_path(id):
@@ -23,9 +24,9 @@ def document_path(id):
 
 def number_of_pages(document):
     try:
-        with open(document_path(document.file_id), 'rb') as pdf:
+        with open(document_path(document.id), 'rb') as pdf:
             return PdfFileReader(pdf).getNumPages()
-    except:
+    except (PdfReadError, FileNotFoundError):
         # this is still user-provided data after all
         return 0
 
