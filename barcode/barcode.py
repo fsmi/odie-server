@@ -5,9 +5,9 @@
 # pdftk
 # pdfjam
 
-import config
 import os
 import subprocess
+import tempfile
 
 from api_utils import document_path
 from subprocess import PIPE, DEVNULL
@@ -28,7 +28,7 @@ LEGACY_GS1_NAMESPACE = "22140"
 GS1_NAMESPACE = "22141"
 
 def _tmp_path(document, suffix=''):
-    dir = os.path.join(config.DOCUMENT_DIRECTORY, 'tmp')
+    dir = os.path.join(tempfile.gettempdir(), 'odie')
     if not os.path.isdir(dir):
         os.makedirs(dir)
     return os.path.join(dir, str(document.id) + suffix)
