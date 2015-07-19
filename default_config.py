@@ -11,6 +11,10 @@ from marshmallow.utils import missing
 def print_documents(doc_paths: list, cover_text: str, printer: str):
     print("Docs %s for %s on %s" % (str(doc_paths), cover_text, printer))
 
+def document_validated(document):
+    # on the production server, this triggers prerendering the pdf as pcl5
+    pass
+
 class FlaskConfig(object):
     SQLALCHEMY_DATABASE_URI = 'postgres:///garfield'  # use garfield for everything by default
     # we also need to access the fsmi db for auth
