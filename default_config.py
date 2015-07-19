@@ -11,7 +11,7 @@ from marshmallow.utils import missing
 def print_documents(doc_paths: list, cover_text: str, printer: str):
     print("Docs %s for %s on %s" % (str(doc_paths), cover_text, printer))
 
-def document_validated(document):
+def document_validated(doc_path: str):
     # on the production server, this triggers prerendering the pdf as pcl5
     pass
 

@@ -89,7 +89,7 @@ class DocumentView(AuthModelView):
 
         if generate_barcode:
             barcode.bake_barcode(model)
-            config.document_validated(model)
+            config.document_validated(document_path(model.id))
 
     def update_model(self, form, model):
         file = self._hide_file_upload(form)
