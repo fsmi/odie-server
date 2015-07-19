@@ -43,7 +43,7 @@ class Document(sqla.Model):
     examinants = sqla.relationship('Examinant', secondary=documentExaminants,
             backref=sqla.backref('documents', lazy='dynamic'))
     date = Column(sqla.DateTime(timezone=True))
-    number_of_pages = Column(sqla.Integer)
+    number_of_pages = Column(sqla.Integer, server_default='0')
     solution = Column(sqla.Enum('official', 'inofficial', 'none', name='solution', inherit_schema=True), nullable=True)
     comment = Column(sqla.String, server_default='')
     document_type = Column(sqla.Enum('oral', 'written', 'oral reexam', name='type', inherit_schema=True))

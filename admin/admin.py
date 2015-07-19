@@ -58,7 +58,8 @@ class DocumentView(AuthModelView):
         if model.has_file:
             os.unlink(document_path(model.id))
 
-    def update_model(self, form, model):
+
+    def _hide_file_upload(self, form):
         # We don't want flask-admin to handle the uploaded file, we'll do that ourselves.
         # however, Flask-Admin is welcome to handle the rest of the model update
 
@@ -69,12 +70,10 @@ class DocumentView(AuthModelView):
         assert form._unbound_fields[-1][0] == 'file'
         form._unbound_fields = form._unbound_fields[:-1]
         delattr(form, 'file')
+        return file
 
-        success = super(DocumentView, self).update_model(form, model)
-        if not success:
-            return False
+    def _handle_file_upload(self, file, form, model):
         generate_barcode = False
-
         if file.data:
             if model.has_file:
                 # delete old file
@@ -91,8 +90,23 @@ class DocumentView(AuthModelView):
         if generate_barcode:
             barcode.bake_barcode(model)
 
+    def update_model(self, form, model):
+        file = self._hide_file_upload(form)
+        success = super().update_model(form, model)
+        if not success:
+            return False
+        self._handle_file_upload(file, form, model)
         sqla.session.commit()
         return True
+
+    def create_model(self, form):
+        file = self._hide_file_upload(form)
+        model = super().create_model(form)
+        if not model:
+            return model
+        self._handle_file_upload(file, form, model)
+        sqla.session.commit()
+        return model
 
 
     list_template = 'document_list.html'
