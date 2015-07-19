@@ -101,6 +101,7 @@ class DocumentView(AuthModelView):
     form_extra_fields = {'file': FileUploadField()}
     form_args = {
         'comment': {'validators': [Optional()]},
+        'number_of_pages': {'validators': [Optional()]},
     }
     column_list = (
         'id', 'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
