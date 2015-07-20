@@ -68,6 +68,7 @@ FS_CONFIG = {
 # Why is the port number duplicated? Because it's happened in the past that multiple
 # scanners were connected to one pc, with that pc running multiple instances of
 # barcodescannerd
+# TODO: maybe just let the scanners describe themselves?
 BARCODE_SCANNER_DETAILS = {
     'FSI': {
         'Vorne 1': ('fsi-pc0', 3974),

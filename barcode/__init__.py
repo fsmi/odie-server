@@ -1,2 +1,2 @@
 
-from .barcode import bake_barcode
+from .barcode import *
