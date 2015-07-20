@@ -1,15 +1,17 @@
 #! /usr/bin/env python3
 
-# dependencies for this script:
+# dependencies for generating barcodes:
 # ps2pdf
 # pdftk
 # pdfjam
 
 import os
 import subprocess
+import socket
 import tempfile
 
 from api_utils import document_path
+from db.documents import Document
 from subprocess import PIPE, DEVNULL
 
 BARCODE_PS_FILE = os.path.join(os.path.dirname(__file__), 'barcode.ps')
@@ -24,7 +26,8 @@ showpage
 
 XPOS = 350
 YPOS = 670
-LEGACY_GS1_NAMESPACE = "22140"
+LEGACY_GS1_ORAL_NAMESPACE = "22140"
+LEGACY_GS1_WRITTEN_NAMESPACE = "22150"
 GS1_NAMESPACE = "22141"
 
 def _tmp_path(document, suffix=''):
@@ -82,3 +85,95 @@ def bake_barcode(document):
     else:
         with open(doc_path, 'wb') as document_file:
             document_file.write(pdf_with_barcode)
+
+class ProtocolError(Exception):
+    pass
+
+def document_from_barcode(barcode):
+    # we assume all our namespaces are the same length
+    id = int(barcode[len(GS1_NAMESPACE):-1])
+    namespace = barcode[:len(GS1_NAMESPACE)]
+    if namespace == LEGACY_GS1_ORAL_NAMESPACE:
+        return Document.query.filter_by(document_type='oral', legacy_id=id).first()
+    if namespace == LEGACY_GS1_WRITTEN_NAMESPACE:
+        return Document.query.filter_by(document_type='written', legacy_id=id).first()
+    if namespace == GS1_NAMESPACE:
+        return Document.query.get(id)
+    else:
+        return None
+
+
+class BarcodeScanner(object):
+    """This implementation of the barcodescannerd protocol ignores
+    much of the state machine of the server for ease of implementation.
+    Luckily the server's pretty resilient against hijinks.
+    """
+    def __init__(self, host, port, user):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(5)
+        self.sock.connect((host, port))
+        self._rest = [b'']  # always contains leftover lines from last read
+        buf = self.get_line()
+        if not buf.startswith('CONNECT 1 '):
+            raise ProtocolError("That's... not a barcode scanner you got there")
+        # we're connected... relax
+        self.sock.settimeout(600)
+        self.name = buf[len('CONNECT 1 '):]
+        username = ('Odie>' + user.first_name.replace(' ', '_')).encode('utf-8')
+        self.sock.sendall(b'CONNECT 1 ' + username + b'\n')
+        self.expect('OK')
+        self.is_grabbed = False
+
+    def grab(self):
+        self.sock.sendall(b'GRAB\n')
+        self.expect('OK')
+        self.is_grabbed = True
+
+    def __iter__(self):
+        """yields a stream of documents"""
+        if not self.is_grabbed:
+            self.grab()
+        try:
+            while self.is_grabbed:
+                barcode = self.expect('BARCODE ')
+                doc = document_from_barcode(barcode)
+                if doc:  # ignore unmapped barcodes
+                    yield doc
+        except (ProtocolError, socket.timeout):
+            # Scanner was probably revoked
+            self.release()
+            return
+
+    def release(self):
+        self.sock.sendall(b'RELEASE\n')
+        self.is_grabbed = False
+
+    def expect(self, line_prefix):
+        response = self.get_line()
+        if not response.startswith(line_prefix):
+            raise ProtocolError("ERROR: expected %s, got %s" % (line_prefix, response))
+        return response[len(line_prefix):]
+
+    def __del__(self):
+        try:
+            self.sock.sendall(b'\nRELEASE\nQUIT\n')
+            self.sock.close()
+        except (socket.error, socket.timeout):
+            pass
+
+    def get_line(self):
+        # how often have I implemented this already?
+        if len(self._rest) > 1:
+            # we read more than one line on the last read
+            r = self._rest[0].decode('utf-8')
+            self._rest = self._rest[1:]
+            return r
+        fragments = self._rest[:]
+        while b'\n' not in fragments[-1]:
+            fragments.append(self.sock.recv(1024))
+        split = fragments[-1].split(b'\n')
+        # split is guaranteed to be at least length 2
+        fragments[-1] = split[0]
+        self._rest = split[1:]
+        return b''.join(fragments).decode('utf-8')
+
