@@ -13,4 +13,4 @@ import routes
 from odie import app
 
 if __name__ == '__main__':
-    app.run()
+    app.run(threaded=True)

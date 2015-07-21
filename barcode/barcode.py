@@ -5,6 +5,7 @@
 # pdftk
 # pdfjam
 
+import config
 import os
 import subprocess
 import socket
@@ -108,7 +109,8 @@ class BarcodeScanner(object):
     much of the state machine of the server for ease of implementation.
     Luckily the server's pretty resilient against hijinks.
     """
-    def __init__(self, host, port, user):
+    def __init__(self, host, port, username):
+        username = ('Odie>' + username.replace(' ', '_')).encode('utf-8')
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(5)
         self.sock.connect((host, port))
@@ -119,7 +121,6 @@ class BarcodeScanner(object):
         # we're connected... relax
         self.sock.settimeout(600)
         self.name = buf[len('CONNECT 1 '):]
-        username = ('Odie>' + user.first_name.replace(' ', '_')).encode('utf-8')
         self.sock.sendall(b'CONNECT 1 ' + username + b'\n')
         self.expect('OK')
         self.is_grabbed = False
@@ -177,3 +178,12 @@ class BarcodeScanner(object):
         self._rest = split[1:]
         return b''.join(fragments).decode('utf-8')
 
+# Fetch all scanner names
+def scanner_name(host, port):
+    try:
+        return BarcodeScanner(host, port, 'Odie(tmp)').name
+    except (ProtocolError, socket.timeout, socket.error):
+        return 'Scanner @ {}:{}'.format(host, port)
+
+for office in config.FS_CONFIG['OFFICES']:
+    config.FS_CONFIG['OFFICES'][office]['scanners'] = [scanner_name(h, p) for (h, p) in config.LASER_SCANNERS[office]]

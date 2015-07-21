@@ -6,6 +6,7 @@
 
 import os
 import tempfile
+
 from marshmallow.utils import missing
 
 def print_documents(doc_paths: list, cover_text: str, printer: str):
@@ -48,6 +49,20 @@ fsmi_table_args = {
     'info': {'bind_key': 'fsmi'}
 }
 
+# (host, port)
+# Why is the port number duplicated? Because it's happened in the past that multiple
+# scanners were connected to one pc, with that pc running multiple instances of
+# barcodescannerd
+LASER_SCANNERS = {
+    'FSI': [
+        ('fsi-pc0', 3974),
+        ('fsi-pc5', 3974),
+        ('fsi-pc4', 3974),
+    ],
+    'FSM': [
+        ('fsm-pc5', 3974),
+    ],
+}
 FS_CONFIG = {
     'DEPOSIT_PRICE': 500,  # in cents
     'PRICE_PER_PAGE': 3,   # in cents
@@ -55,28 +70,13 @@ FS_CONFIG = {
         'FSI': {
             'cash_boxes': ['Sprechstundenkasse Informatik'],
             'printers': ['FSI-Drucker', 'ATIS-Notdrucker'],
-            'scanners': ['Vorne 1', 'Vorne 2', 'Tischgruppe'],
+            'scanners': [],  # initialized when barcode module is imported
         },
         'FSM': {
             'cash_boxes': ['Sprechstundenkasse Mathematik'],
             'printers': ['FSM-Drucker'],
-            'scanners': ['Tischgruppe'],
+            'scanners': [],  # initialized when barcode module is imported
         }
-    },
-}
-# (host, port)
-# Why is the port number duplicated? Because it's happened in the past that multiple
-# scanners were connected to one pc, with that pc running multiple instances of
-# barcodescannerd
-# TODO: maybe just let the scanners describe themselves?
-BARCODE_SCANNER_DETAILS = {
-    'FSI': {
-        'Vorne 1': ('fsi-pc0', 3974),
-        'Vorne 2': ('fsi-pc5', 3974),
-        'Tischgruppe': ('fsi-pc4', 3974),
-    },
-    'FSM': {
-        'Tischgruppe': ('fsm-pc5', 3974),
     },
 }
 SUBMISSION_ALLOWED_FILE_EXTENSIONS = ['.pdf']
