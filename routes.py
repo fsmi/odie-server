@@ -1,13 +1,15 @@
 #! /usr/bin/env python3
 
+import barcode
 import db.accounting
 import config
 import datetime
 import json
 import os
 import serialization_schemas as schemas
+import socket
 
-from flask import request, send_file
+from flask import request, send_file, Response
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from sqlalchemy.orm import subqueryload
 from sqlalchemy.orm.exc import NoResultFound
@@ -25,6 +27,25 @@ from db.fsmi import User
 @api_route('/api/config')
 def get_config():
     return config.FS_CONFIG
+
+
+## Barcode scanner support is achieved using long-lived HTTP(S) connections and
+## server-sent events (https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
+
+def scanner_stream(location, id, username):
+    assert location in config.FS_CONFIG['OFFICES']
+    assert 0 <= id <= len(config.LASER_SCANNERS[location])
+    (host, port) = config.LASER_SCANNERS[location][id]
+    bs = barcode.BarcodeScanner(host, port, username)
+    for doc in bs:
+        yield 'data: ' + json.dumps(schemas.serialize(doc, schemas.DocumentDumpSchema)) + '\n\n'
+    return
+
+
+@app.route('/api/scanner/<location>/<int:id>')
+@login_required
+def scanner(location, id):
+    return Response(scanner_stream(location, id, current_user.first_name), mimetype='text/event-stream', headers={'X-Accel-Buffering': 'no'})
 
 
 @api_route('/api/login', methods=['GET', 'POST'])
