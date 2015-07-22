@@ -55,8 +55,8 @@ fsmi_table_args = {
 # barcodescannerd
 LASER_SCANNERS = {
     'FSI': [
-        ('fsi-pc0', 3974),
         ('fsi-pc5', 3974),
+        ('fsi-pc0', 3974),
         ('fsi-pc4', 3974),
     ],
     'FSM': [
