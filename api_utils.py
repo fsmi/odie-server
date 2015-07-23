@@ -116,7 +116,7 @@ def endpoint(query, schemas=None, allow_delete=False, paginate_many=True):
 
     schemas: dictionary of {<method>: serializer/deserializer}.
             These keys also define permissible methods.
-    query: The query to operate on. Mustn't be None for GET-enabled endpoints
+    query: A Query object or callable returning one. Mustn't be None for GET-enabled endpoints
     paginate_many: whether to return paginated results (default:True)
             The 'page' GET-parameter selects the page
     """
@@ -126,18 +126,21 @@ def endpoint(query, schemas=None, allow_delete=False, paginate_many=True):
     if allow_delete:
         methods.append('DELETE')
 
+    def make_query():
+        return query() if callable(query) else query
+
     def handle_get(instance_id=None):
         if instance_id is None:  # GET MANY
             assert 'GET' in schemas, "GET schema missing"
             schema = schemas['GET']
-            return filtered_results(query, schema, paginate_many)
+            return filtered_results(make_query(), schema, paginate_many)
         else:  # GET SINGLE
-            result = query.get(instance_id)
+            result = make_query().get(instance_id)
             obj = serialize(result, schema)
             return obj
 
     def handle_delete(instance_id):
-        obj = query.get(instance_id)
+        obj = make_query().get(instance_id)
         # since we don't know where this query came from, we need to detach obj
         # from its session before we can delete it. expunge does exactly this.
         inspect(obj).session.expunge(obj)

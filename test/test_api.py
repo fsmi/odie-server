@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 
-import odie
 import config
 import datetime
 import os
@@ -80,33 +79,25 @@ class APITest(OdieTestCase):
         lecture = random.choice(data)
         self.validate_lecture(lecture)
 
-    def test_get_lecture_documents(self):
-        res = self.app.get('/api/lectures/1/documents')
+    def test_get_documents(self):
+        res = self.app.get('/api/documents')
         documents = self.fromJsonResponse(res)
         for doc in documents:
             self.validate_document(doc)
             self.assertNotIn('submitted_by', doc)
 
-    def test_get_lecture_documents_logged_in(self):
+    def test_get_documents_logged_in(self):
         self.login()
-        res = self.app.get('/api/lectures/1/documents')
+        res = self.app.get('/api/documents')
         documents = self.fromJsonResponse(res)
         for doc in documents:
             self.assertIn('submitted_by', doc)
 
-    def test_get_lecture_documents_meta(self):
-        res = self.app.get('/api/lectures/1/documents/meta')
+    def test_get_documents_meta(self):
+        res = self.app.get('/api/documents/meta?q={"includes_lectures":[1]}')
         data = self.fromJsonResponse(res)
         all_docs = Lecture.query.get(1).documents.all()
         self.assertEqual(len(all_docs), data['total_written'] + data['total_oral'])
-        self.assertEqual(
-            sorted(l.id for doc in all_docs for l in doc.lectures),
-            sorted(data['all_lecture_ids'])
-        )
-
-    def test_get_documents(self):
-        res = self.app.get('/api/documents')
-        data = self.fromJsonResponse(res)
 
     def test_get_examinants(self):
         res = self.app.get('/api/examinants')
