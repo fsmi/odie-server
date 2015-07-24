@@ -92,18 +92,13 @@ class LectureDumpSchema(IdSchema):
     validated = fields.Boolean()
 
 
-class LectureLoadSchema(Schema):  # used by student document submission
-    name = fields.Str(required=True)
-    subject = fields.Str(required=True)
-
-
 class DocumentLoadSchema(Schema):  # used by student document submission
-    lectures = fields.List(fields.Nested(LectureLoadSchema), required=True)
-    examinants = fields.List(fields.Str, required=True)
+    lectures = fields.List(fields.Str(), required=True)
+    examinants = fields.List(fields.Str(), required=True)
     date = fields.Date(required=True)
-    number_of_pages = fields.Int(required=True, validate=lambda n: n > 1)
-    document_type = fields.Str(required=True, validate=lambda t: t in ['oral', 'oral reexam'])
+    document_type = fields.Str(required=True, validate=OneOf(['oral', 'oral reexam']))
     student_name = fields.Str(required=True)
+    subject = fields.Str(required=True, validate=OneOf(['computer science', 'mathematics', 'both']))
 
 
 class DepositDumpSchema(IdSchema):
