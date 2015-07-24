@@ -223,13 +223,10 @@ def _allowed_file(filename):
 def submit_document():
     """Student document submission endpoint
 
-    POST data must be multipart, with the `json` part conformimg to
+    POST data must be multipart, with the `json` part conforming to
     DocumentLoadSchema and the `file` part being a pdf file.
 
-    Uploaded files are stored in config.DOCUMENT_DIRECTORY. File contents are
-    hashed with sha256 and stored in a git-like schema (the first byte of the
-    sha256 hex digest are taken as subdirectory name, files are named after this
-    digest).
+    Uploaded files are stored in subdirectories below config.DOCUMENT_DIRECTORY.
 
     This method may raise AssertionErrors when the user sends invalid data.
     """
@@ -239,18 +236,19 @@ def submit_document():
     if errors:
         raise ClientError(*errors)
     assert 'file' in request.files
+    subject = data['subject']
     file = request.files['file']
     if not _allowed_file(file.filename):
         raise ClientError('file extension not allowed', status=406)
     lectures = []
     for lect in data['lectures']:
         try:
-            l = Lecture.query.filter_by(name=lect['name'], subject=lect['subject']).one()
+            l = Lecture.query.filter_by(name=lect, subject=subject).one()
             lectures.append(l)
         except NoResultFound:
             # no dice, add a new unverified lecture
-            l = Lecture(name=lect['name'],
-                    subject=lect['subject'],
+            l = Lecture(name=lect,
+                    subject=subject,
                     validated=False)
             lectures.append(l)
             sqla.session.add(l)
@@ -269,7 +267,7 @@ def submit_document():
             lectures=lectures,
             examinants=examinants,
             date=date,
-            number_of_pages=data['number_of_pages'],
+            number_of_pages=0,  # this will be filled in upon validation
             document_type=data['document_type'],
             validated=False,
             submitted_by=data['student_name'])

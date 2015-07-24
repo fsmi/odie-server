@@ -282,11 +282,11 @@ class APITest(OdieTestCase):
 
     DOCUMENT_SUBMISSION_JSON = {
                 'lectures': [
-                    {"name":"Fortgeschrittenes Nichtstun","subject":"both"},
+                    "Fortgeschrittenes Nichtstun",
                 ],
+                'subject': 'both',
                 'examinants': ["Anon Ymous"],
                 'date': '2010-01-01T00:00:00',
-                'number_of_pages': 2,
                 'document_type': 'oral',
                 'student_name': UNUSED,
         }
