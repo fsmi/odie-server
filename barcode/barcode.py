@@ -70,8 +70,6 @@ def bake_barcode(document):
             stdout=PIPE
     )
     (pdf_with_barcode, _) = pdftk.communicate(barcode_pdf)
-    with open('out', 'wb') as outf:
-        outf.write(pdf_with_barcode)
     if document.number_of_pages > 1:
         rest_path = _tmp_path(document, '-rest.pdf')
         subprocess.check_call(
