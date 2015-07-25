@@ -258,7 +258,7 @@ def submit_document():
             ex = Examinant.query.filter_by(name=examinant).one()
             examinants.append(ex)
         except NoResultFound:
-            ex = Examinant(examinant, validated=False)
+            ex = Examinant(name=examinant, validated=False)
             examinants.append(ex)
             sqla.session.add(ex)
     date = data['date']
