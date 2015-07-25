@@ -94,7 +94,7 @@ class APITest(OdieTestCase):
             self.assertIn('submitted_by', doc)
 
     def test_get_documents_meta(self):
-        res = self.app.get('/api/documents/meta?q={"includes_lectures":[1]}')
+        res = self.app.get('/api/documents/meta?filters={"includes_lectures":[1]}')
         data = self.fromJsonResponse(res)
         all_docs = Lecture.query.get(1).documents.all()
         self.assertEqual(len(all_docs), data['total_written'] + data['total_oral'])
