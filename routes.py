@@ -184,10 +184,10 @@ endpoint(
 
 def documents_query():
     q = Document.query.options(subqueryload('lectures'), subqueryload('examinants'))
-    params = json.loads(request.args.get('q', '{}'))
-    for id in params.get('includes_lectures', []):
+    filters = json.loads(request.args.get('filters', '{}'))
+    for id in filters.get('includes_lectures', []):
         q = q.filter(Document.lectures.any(Lecture.id == id))
-    for id in params.get('includes_examinants', []):
+    for id in filters.get('includes_examinants', []):
         q = q.filter(Document.examinants.any(Examinant.id == id))
     return q
 
