@@ -121,7 +121,7 @@ class DocumentView(AuthModelView):
     column_list = (
         'id', 'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
         'document_type', 'validated', 'validation_time', 'submitted_by')
-    column_filters = ('id', 'lectures', 'examinants', 'date', 'comment', 'document_type', 'submitted_by', 'validated')
+    column_filters = ('id', 'lectures', 'examinants', 'date', 'comment', 'document_type', 'validated', 'validation_time', 'submitted_by')
     column_labels = {
         'id': 'ID',
         'lectures': 'Vorlesungen',
@@ -177,12 +177,14 @@ class LectureView(AuthModelView):
         'validated': 'Überprüft',
         'aliases': 'Aliase',
     }
+    column_filters = ('id', 'name', 'subject', 'validated')
 
 class ExaminantView(AuthModelView):
     form_excluded_columns = ('documents',)
     column_labels = {
         'validated': 'Überprüft',
     }
+    column_filters = ('id', 'name', 'validated')
 
 class DepositView(AuthModelView):
     allowed_roles = ['adm']
