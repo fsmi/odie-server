@@ -27,8 +27,9 @@ showpage
 
 XPOS = 350
 YPOS = 680
-LEGACY_GS1_ORAL_NAMESPACE = "22140"
-LEGACY_GS1_WRITTEN_NAMESPACE = "22150"
+LEGACY_GS1_CS_ORAL_NAMESPACE = "22140"
+LEGACY_GS1_CS_WRITTEN_NAMESPACE = "22150"
+LEGACY_GS1_MATH_WRITTEN_NAMESPACE = "22160"
 GS1_NAMESPACE = "22141"
 
 def _tmp_path(document, suffix=''):
@@ -92,10 +93,12 @@ def document_from_barcode(barcode):
     # we assume all our namespaces are the same length
     id = int(barcode[len(GS1_NAMESPACE):-1])
     namespace = barcode[:len(GS1_NAMESPACE)]
-    if namespace == LEGACY_GS1_ORAL_NAMESPACE:
+    if namespace == LEGACY_GS1_CS_ORAL_NAMESPACE:
         return Document.query.filter_by(document_type='oral', legacy_id=id).first()
-    if namespace == LEGACY_GS1_WRITTEN_NAMESPACE:
-        return Document.query.filter_by(document_type='written', legacy_id=id).first()
+    if namespace == LEGACY_GS1_CS_WRITTEN_NAMESPACE:
+        return Document.query.filter_by(document_type='written', legacy_id=id, subject='computer science').first()
+    if namespace == LEGACY_GS1_CS_WRITTEN_NAMESPACE:
+        return Document.query.filter_by(document_type='written', legacy_id=id, subject='mathematics').first()
     if namespace == GS1_NAMESPACE:
         return Document.query.get(id)
     else:
