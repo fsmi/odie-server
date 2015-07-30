@@ -178,6 +178,7 @@ class LectureView(AuthModelView):
         'aliases': 'Aliase',
     }
     column_filters = ('id', 'name', 'subject', 'validated')
+    column_searchable_list = ['name']
 
 class ExaminantView(AuthModelView):
     form_excluded_columns = ('documents',)
@@ -185,6 +186,7 @@ class ExaminantView(AuthModelView):
         'validated': 'Überprüft',
     }
     column_filters = ('id', 'name', 'validated')
+    column_searchable_list = ['name']
 
 class DepositView(AuthModelView):
     allowed_roles = ['adm']
@@ -198,6 +200,7 @@ class DepositView(AuthModelView):
         'date': _dateFormatter('date'),
         'price': lambda v, c, m, n: str(m.price) + ' €',
     }
+    column_searchable_list = ['name']
 
 admin = Admin(
     app,
