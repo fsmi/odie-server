@@ -89,7 +89,13 @@ def bake_barcode(document):
 class ProtocolError(Exception):
     pass
 
+def is_valid(barcode):
+    # see https://en.wikipedia.org/wiki/International_Article_Number_(EAN)#Calculation_of_checksum_digit
+    return not sum(int(barcode[i]) * (3 if i % 2 else 1) for i in range(13)) % 10
+
 def document_from_barcode(barcode):
+    if not is_valid(barcode):
+        return None
     # we assume all our namespaces are the same length
     id = int(barcode[len(GS1_NAMESPACE):-1])
     namespace = barcode[:len(GS1_NAMESPACE)]
@@ -103,7 +109,6 @@ def document_from_barcode(barcode):
         return Document.query.get(id)
     else:
         return None
-
 
 class BarcodeScanner(object):
     """This implementation of the barcodescannerd protocol ignores
