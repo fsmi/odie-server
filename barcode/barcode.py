@@ -26,9 +26,10 @@ showpage
 # the default X and y positions were extracted from fs-deluxe.
 
 XPOS = 350
-YPOS = 670
-LEGACY_GS1_ORAL_NAMESPACE = "22140"
-LEGACY_GS1_WRITTEN_NAMESPACE = "22150"
+YPOS = 680
+LEGACY_GS1_CS_ORAL_NAMESPACE = "22140"
+LEGACY_GS1_CS_WRITTEN_NAMESPACE = "22150"
+LEGACY_GS1_MATH_WRITTEN_NAMESPACE = "22160"
 GS1_NAMESPACE = "22141"
 
 def _tmp_path(document, suffix=''):
@@ -88,19 +89,26 @@ def bake_barcode(document):
 class ProtocolError(Exception):
     pass
 
+def is_valid(barcode):
+    # see https://en.wikipedia.org/wiki/International_Article_Number_(EAN)#Calculation_of_checksum_digit
+    return not sum(int(barcode[i]) * (3 if i % 2 else 1) for i in range(13)) % 10
+
 def document_from_barcode(barcode):
+    if not is_valid(barcode):
+        return None
     # we assume all our namespaces are the same length
     id = int(barcode[len(GS1_NAMESPACE):-1])
     namespace = barcode[:len(GS1_NAMESPACE)]
-    if namespace == LEGACY_GS1_ORAL_NAMESPACE:
+    if namespace == LEGACY_GS1_CS_ORAL_NAMESPACE:
         return Document.query.filter_by(document_type='oral', legacy_id=id).first()
-    if namespace == LEGACY_GS1_WRITTEN_NAMESPACE:
-        return Document.query.filter_by(document_type='written', legacy_id=id).first()
+    if namespace == LEGACY_GS1_CS_WRITTEN_NAMESPACE:
+        return Document.query.filter_by(document_type='written', legacy_id=id, subject='computer science').first()
+    if namespace == LEGACY_GS1_CS_WRITTEN_NAMESPACE:
+        return Document.query.filter_by(document_type='written', legacy_id=id, subject='mathematics').first()
     if namespace == GS1_NAMESPACE:
         return Document.query.get(id)
     else:
         return None
-
 
 class BarcodeScanner(object):
     """This implementation of the barcodescannerd protocol ignores
