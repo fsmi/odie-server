@@ -26,7 +26,7 @@ showpage
 # the default X and y positions were extracted from fs-deluxe.
 
 XPOS = 350
-YPOS = 670
+YPOS = 680
 LEGACY_GS1_ORAL_NAMESPACE = "22140"
 LEGACY_GS1_WRITTEN_NAMESPACE = "22150"
 GS1_NAMESPACE = "22141"
