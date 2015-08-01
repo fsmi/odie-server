@@ -38,8 +38,13 @@ def scanner_stream(location, id, username):
     (host, port) = config.LASER_SCANNERS[location][id]
     bs = barcode.BarcodeScanner(host, port, username)
     for doc in bs:
-        yield 'data: ' + json.dumps(schemas.serialize(doc, schemas.DocumentDumpSchema)) + '\n\n'
-    return
+        if doc is None:
+            # socket read has timeoutet, try to write to output stream
+            # If run locally, yielding the empty string would suffice, but wsgi doesn't
+            # attempt to write to the socket in that case, so we do this instead
+            yield '\n'
+        else:
+            yield 'data: ' + json.dumps(schemas.serialize(doc, schemas.DocumentDumpSchema)) + '\n\n'
 
 
 @app.route('/api/scanner/<location>/<int:id>')

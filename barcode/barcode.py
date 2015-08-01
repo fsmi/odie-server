@@ -124,12 +124,12 @@ class BarcodeScanner(object):
         buf = self.get_line()
         if not buf.startswith('CONNECT 1 '):
             raise ProtocolError("That's... not a barcode scanner you got there")
-        # we're connected... relax
-        self.sock.settimeout(600)
         self.name = buf[len('CONNECT 1 '):]
         self.sock.sendall(b'CONNECT 1 ' + username + b'\n')
         self.expect('OK')
         self.is_grabbed = False
+        # we're connected... starting now we'll have logic for retrying, so let's increase responsiveness
+        self.sock.settimeout(3.0)
 
     def grab(self):
         self.sock.sendall(b'GRAB\n')
@@ -137,16 +137,19 @@ class BarcodeScanner(object):
         self.is_grabbed = True
 
     def __iter__(self):
-        """yields a stream of documents"""
+        """yields a stream of documents or None"""
         if not self.is_grabbed:
             self.grab()
         try:
             while self.is_grabbed:
-                barcode = self.expect('BARCODE ')
-                doc = document_from_barcode(barcode)
-                if doc:  # ignore unmapped barcodes
+                try:
+                    barcode = self.expect('BARCODE ')
+                    doc = document_from_barcode(barcode)
                     yield doc
-        except (ProtocolError, socket.timeout):
+                except socket.timeout:
+                    # give the caller a chance to do its own connection handling
+                    yield None
+        except ProtocolError:
             # Scanner was probably revoked
             self.release()
             return
