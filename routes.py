@@ -203,7 +203,8 @@ def documents_metadata():
     q = documents_query()
     return {
         'total_written': q.filter_by(document_type='written').count(),
-        'total_oral': q.filter(Document.document_type != 'written').count(),
+        'total_oral': q.filter_by(document_type='oral').count(),
+        'total_oral_reexam': q.filter_by(document_type='oral reexam').count(),
     }
 
 
