@@ -4,7 +4,7 @@ from flask.ext.login import current_user
 from functools import partial
 from marshmallow import Schema, fields
 from marshmallow.utils import missing
-from marshmallow.validate import OneOf
+from marshmallow.validate import OneOf, Length
 
 import config
 from db.odie import Order
@@ -67,7 +67,7 @@ class ExaminantSchema(IdSchema):
 
 
 class OrderLoadSchema(Schema):
-    name = fields.Str(required=True)
+    name = fields.Str(required=True, validate=Length(min=1))
     document_ids = fields.List(fields.Int(), required=True)
 
     def make_object(self, data):
