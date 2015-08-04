@@ -1,0 +1,15 @@
+{# template parameters:
+    linked_view: expression url_for can evaluate to the item edit view
+    unvalidated_list: list of models with validated=False
+#}
+<div class="form-group"><div class="col-md-offset-2 col-md-10">
+ <span>Hiervon noch nicht überprüft:</span>
+   <ul>
+     {% for item in unvalidated_list %}
+       <li><a target="_blank" href="{{ url_for(linked_view, id=item.id) }}">{{ item.name | e }}</a></li>
+     {% endfor %}
+   </ul>
+ </div>
+</div>
+
+

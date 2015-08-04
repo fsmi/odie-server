@@ -286,6 +286,7 @@ def submit_document():
     sqla.session.commit()
     return {}
 
+# take heed when renaming this, it's referenced as string in the admin UI
 @app.route('/api/view/<int:instance_id>')
 @handle_client_errors
 @login_required
