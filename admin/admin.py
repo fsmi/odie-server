@@ -9,6 +9,7 @@ import os
 from odie import app, sqla
 from api_utils import document_path, save_file
 from db.documents import Document, Lecture, Examinant, Deposit
+from .fields import ViewButton, UnvalidatedList
 
 from flask import redirect, url_for
 from flask_admin import Admin, BaseView, AdminIndexView, expose
@@ -111,7 +112,21 @@ class DocumentView(AuthModelView):
 
 
     list_template = 'document_list.html'
-    edit_template = 'document_edit.html'
+    form_edit_rules = [
+        'lectures',
+        UnvalidatedList('lectures', 'lecture.edit_view'),
+        'examinants',
+        UnvalidatedList('examinants', 'examinant.edit_view'),
+        'date',
+        'solution',
+        'document_type',
+        'number_of_pages',
+        'comment',
+        'validated',
+        'submitted_by',
+        'file',
+        ViewButton(),
+    ]
     form_excluded_columns = ('validation_time', 'has_file', 'legacy_id')
     form_extra_fields = {'file': FileUploadField()}
     form_args = {
@@ -162,6 +177,7 @@ class LectureView(AuthModelView):
     form_excluded_columns = ('documents',)
     form_args = {
         'comment': {'validators': [Optional()]},
+        'aliases': {'validators': [Optional()]},
     }
     subject_labels = {
         'computer science': 'Informatik',
