@@ -162,6 +162,7 @@ class LectureView(AuthModelView):
     form_excluded_columns = ('documents',)
     form_args = {
         'comment': {'validators': [Optional()]},
+        'aliases': {'validators': [Optional()]},
     }
     subject_labels = {
         'computer science': 'Informatik',
