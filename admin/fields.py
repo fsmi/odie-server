@@ -14,10 +14,7 @@ class UnvalidatedList(HTML):
 
     def __call__(self, form, *args, **kwargs):
         obj_list = getattr(form, self.field_name).object_data
-        unval = []
-        for obj in obj_list:
-            if not obj.validated:
-                unval.append(obj)
+        unval = [obj for obj in obj_list if not obj.validated]
         if not unval:
             return ''
         return Markup(render_template('unvalidated_list.html', unvalidated_list=unval, linked_view=self.linked_view))
