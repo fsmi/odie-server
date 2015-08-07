@@ -292,6 +292,6 @@ def submit_document():
 @login_required
 def view_document(instance_id):
     doc = Document.query.get(instance_id)
-    if doc is None or doc.has_file is None:
+    if doc is None or not doc.has_file:
         raise ClientError('document not found', status=404)
     return send_file(document_path(doc.id))
