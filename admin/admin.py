@@ -38,6 +38,11 @@ class AuthViewMixin(BaseView):
 class AuthModelView(ModelView, AuthViewMixin):
     page_size = 50  # the default of 20 is a bit on the low side...
 
+class ClientRedirectView(BaseView):
+    @expose('/')
+    def index(self):
+        return redirect('../web/')
+
 class AuthIndexView(AuthViewMixin, AdminIndexView):
     # This is the only way I could find to make the Home tab de facto disappear:
     # name it '' and redirect to somewhere else.
@@ -226,6 +231,7 @@ admin = Admin(
     template_mode='bootstrap3',
     index_view=AuthIndexView())
 
+admin.add_view(ClientRedirectView(name='Zurück zu Odie'))
 admin.add_view(DocumentView(Document, sqla.session, name='Dokumente'))
 admin.add_view(LectureView(Lecture, sqla.session, name='Vorlesungen'))
 admin.add_view(ExaminantView(Examinant, sqla.session, name='Prüfer'))
