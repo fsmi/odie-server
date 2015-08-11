@@ -38,6 +38,11 @@ class AuthViewMixin(BaseView):
 class AuthModelView(ModelView, AuthViewMixin):
     page_size = 50  # the default of 20 is a bit on the low side...
 
+class ClientRedirectView(BaseView):
+    @expose('/')
+    def index(self):
+        return redirect('../web/')
+
 class AuthIndexView(AuthViewMixin, AdminIndexView):
     # This is the only way I could find to make the Home tab de facto disappear:
     # name it '' and redirect to somewhere else.
@@ -74,22 +79,23 @@ class DocumentView(AuthModelView):
         return file
 
     def _handle_file_upload(self, file, form, model):
-        generate_barcode = False
+        got_new_file = False
         if file.data:
             if model.has_file:
                 # delete old file
                 os.unlink(document_path(model.id))
             save_file(model, file.data)
             if form.validated.data:
-                generate_barcode = True
+                got_new_file = True
 
         if model.validation_time is None and form.validated.data:
             # document has just been validated for the first time
             model.validation_time = datetime.datetime.now()
-            generate_barcode = True
+            got_new_file = True
 
-        if generate_barcode:
-            barcode.bake_barcode(model)
+        if got_new_file:
+            if model.document_type != 'written':
+                barcode.bake_barcode(model)
             config.document_validated(document_path(model.id))
 
     def update_model(self, form, model):
@@ -225,6 +231,7 @@ admin = Admin(
     template_mode='bootstrap3',
     index_view=AuthIndexView())
 
+admin.add_view(ClientRedirectView(name='Zurück zu Odie'))
 admin.add_view(DocumentView(Document, sqla.session, name='Dokumente'))
 admin.add_view(LectureView(Lecture, sqla.session, name='Vorlesungen'))
 admin.add_view(ExaminantView(Examinant, sqla.session, name='Prüfer'))
