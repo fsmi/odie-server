@@ -41,7 +41,7 @@ class AuthModelView(ModelView, AuthViewMixin):
 class ClientRedirectView(BaseView):
     @expose('/')
     def index(self):
-        return redirect('../web/')
+        return redirect(url_for('.index') + '../../web/')
 
 class AuthIndexView(AuthViewMixin, AdminIndexView):
     # This is the only way I could find to make the Home tab de facto disappear:
