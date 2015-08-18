@@ -41,7 +41,7 @@ class AuthModelView(ModelView, AuthViewMixin):
 class ClientRedirectView(BaseView):
     @expose('/')
     def index(self):
-        return redirect('../web/')
+        return redirect(url_for('.index') + '../../web/')
 
 class AuthIndexView(AuthViewMixin, AdminIndexView):
     # This is the only way I could find to make the Home tab de facto disappear:
@@ -128,12 +128,13 @@ class DocumentView(AuthModelView):
         'document_type',
         'number_of_pages',
         'comment',
+        'present_in_physical_folder',
         'validated',
         'submitted_by',
         'file',
         ViewButton(),
     ]
-    form_excluded_columns = ('validation_time', 'has_file', 'legacy_id')
+    form_excluded_columns = ('validation_time', 'has_file', 'legacy_id')  # this isn't strictly necessary, but it shuts up a warning
     form_extra_fields = {'file': FileUploadField()}
     form_args = {
         'comment': {'validators': [Optional()]},
@@ -141,8 +142,8 @@ class DocumentView(AuthModelView):
     }
     column_list = (
         'id', 'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
-        'document_type', 'validated', 'validation_time', 'submitted_by')
-    column_filters = ('id', 'lectures', 'examinants', 'date', 'comment', 'document_type', 'validated', 'validation_time', 'submitted_by')
+        'document_type', 'present_in_physical_folder', 'validated', 'validation_time', 'submitted_by')
+    column_filters = ('id', 'lectures', 'examinants', 'date', 'comment', 'document_type', 'present_in_physical_folder', 'validated', 'validation_time', 'submitted_by')
     column_labels = {
         'id': 'ID',
         'lectures': 'Vorlesungen',
@@ -152,6 +153,7 @@ class DocumentView(AuthModelView):
         'solution': 'Lösung',
         'comment': 'Kommentar',
         'document_type': 'Typ',
+        'present_in_physical_folder': 'Ausgedruckt für Präsenzordner',
         'validated': 'Überprüft',
         'validation_time': 'Überprüft am',
         'submitted_by': 'Von',

@@ -52,6 +52,7 @@ class Document(sqla.Model):
     validation_time = Column(sqla.DateTime(timezone=True), nullable=True)
     submitted_by = Column(sqla.String, nullable=True)
     legacy_id = Column(sqla.Integer, nullable=True)  # old id from fs-deluxe, so we can recognize the old barcodes
+    present_in_physical_folder = Column(sqla.Boolean, server_default=sqlalchemy.sql.expression.false())
 
     @property
     def examinants_names(self):
