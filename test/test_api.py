@@ -20,7 +20,7 @@ class APITest(OdieTestCase):
 
     VALID_PRINTJOB = {
             'cover_text': 'Klausuren',
-            'document_ids': [1,2,2],
+            'document_ids': [1, 2, 2],
             'deposit_count': 1,
             'printer': 'FSI-Drucker',
             'cash_box': CASH_BOX,
@@ -151,6 +151,14 @@ class APITest(OdieTestCase):
         res = self.app.post('api/print', data=json.dumps(self.VALID_PRINTJOB))
         self.fromJsonResponse(res)
         self.assertEqual(res.status_code, 200)
+        self.logout()
+
+    def test_no_print_documents_without_files(self):
+        self.login()
+        pj = self.VALID_PRINTJOB.copy()
+        pj['document_ids'] = [3]  # see fill_data.py to ensure that this document doesn't specify has_file=True
+        res = self.app.post('api/print', data=json.dumps(pj))
+        self.assertEqual(res.status_code, 401)
         self.logout()
 
     def test_orders_no_get_unauthenticated(self):
