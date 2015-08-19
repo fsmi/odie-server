@@ -198,7 +198,7 @@ class LectureView(AuthModelView):
     }
     column_labels = {
         'subject': 'Fach',
-        'comment': 'Kommentar',
+        'comment': 'Öffentlicher Kommentar (HTML)',
         'validated': 'Überprüft',
         'aliases': 'Aliase',
     }

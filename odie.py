@@ -1,7 +1,5 @@
 #! /usr/bin/env python3
 
-import config  # pylint: disable=unused-import
-
 from functools import partial
 
 from flask import Flask
@@ -10,6 +8,7 @@ from flask.ext.login import LoginManager
 
 app = Flask("odie", template_folder='admin/templates', static_folder='admin/static')
 
+import config  # pylint: disable=unused-import
 app.config.from_object('config.FlaskConfig')
 
 if app.config['DEBUG']:
