@@ -16,6 +16,8 @@ from flask_admin import Admin, BaseView, AdminIndexView, expose
 from flask_admin.form import FileUploadField
 from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
+from sqlalchemy.inspection import inspect
+from sqlalchemy.orm.properties import RelationshipProperty
 from wtforms.validators import Optional
 
 def _dateFormatter(attr_name):
@@ -24,9 +26,9 @@ def _dateFormatter(attr_name):
         return d.date() if d else ''
     return f
 
-
 class AuthViewMixin(BaseView):
     allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
+
     def is_accessible(self):
         return current_user.is_authenticated() \
                 and any(True for perm in self.allowed_roles if current_user.has_permission(perm))
@@ -35,8 +37,56 @@ class AuthViewMixin(BaseView):
         if not self.is_accessible():
             return self.render('unauthorized.html')
 
+
 class AuthModelView(ModelView, AuthViewMixin):
     page_size = 50  # the default of 20 is a bit on the low side...
+
+    def _log_model_changes(self, model, state):
+
+        if state == 'changed' and not sqla.session.is_modified(model):
+            return
+
+        msg = '{} {} by {}\n\n'.format(model.__class__.__name__, state, current_user.full_name)
+        view = model_views[model.__class__]
+        attrs = inspect(model).attrs
+        for (col, _) in self.get_list_columns():
+            attr = attrs[col]
+            prop = model.__class__.__mapper__.attrs[col]
+            changed = state == 'changed' and attr.history.has_changes()
+            if changed and isinstance(attr.value, datetime.datetime):
+                # special case: convert attr.value from naive to aware datetime
+                val = attr.value.replace(tzinfo=attr.history.deleted[0].tzinfo)
+                changed = val != attr.history.deleted[0]
+
+            if changed:
+                if isinstance(prop, RelationshipProperty):
+                    msg += '**{}: {}**\n'.format(attr.key, ', '.join(
+                        list(map(str, attr.history.unchanged)) +
+                        ['-{}'.format(val) for val in attr.history.deleted] +
+                        ['+{}'.format(val) for val in attr.history.added]
+                    ))
+                else:
+                    msg += '**{}: {} -> {}**\n'.format(
+                        attr.key, attr.history.deleted[0], attr.history.added[0]
+                    )
+            else:
+                if isinstance(prop, RelationshipProperty):
+                    msg += '{}: {}\n'.format(attr.key, ', '.join(map(str, attr.value)))
+                else:
+                    msg += '{}: {}\n'.format(attr.key, attr.value)
+
+        if state != 'deleted':
+            msg += '\n' + url_for(view.endpoint + '.edit_view', id=model.id, _external=True)
+
+        config.log_admin_audit(msg)
+
+    def on_model_change(self, form, model, is_created):
+        self._log_model_changes(model, 'created' if is_created else 'changed')
+
+    def delete_model(self, model):
+        self._log_model_changes(model, 'deleted')
+        return super().delete_model(model)
+
 
 class ClientRedirectView(BaseView):
     @expose('/')
@@ -234,8 +284,13 @@ admin = Admin(
     template_mode='bootstrap3',
     index_view=AuthIndexView())
 
+model_views = {
+    Document: DocumentView(Document, sqla.session, name='Dokumente'),
+    Lecture: LectureView(Lecture, sqla.session, name='Vorlesungen'),
+    Examinant: ExaminantView(Examinant, sqla.session, name='Prüfer'),
+    Deposit: DepositView(Deposit, sqla.session, name='Pfand'),
+}
+
 admin.add_view(ClientRedirectView(name='Zurück zu Odie'))
-admin.add_view(DocumentView(Document, sqla.session, name='Dokumente'))
-admin.add_view(LectureView(Lecture, sqla.session, name='Vorlesungen'))
-admin.add_view(ExaminantView(Examinant, sqla.session, name='Prüfer'))
-admin.add_view(DepositView(Deposit, sqla.session, name='Pfand'))
+for view in model_views.values():
+    admin.add_view(view)

@@ -87,3 +87,8 @@ ADMIN_PANEL_ALLOWED_GROUPS = ['fsusers']
 
 def try_get_office(user):
     return missing
+
+def log_admin_audit(msg):
+    from odie import app
+
+    app.logger.info(msg)
