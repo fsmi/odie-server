@@ -72,6 +72,7 @@ def login():
     return schemas.serialize({'user': current_user, 'token': csrf._get_token()}, schemas.LoginDumpSchema)
 
 
+@csrf.exempt
 @api_route('/api/logout', methods=['POST'])
 @login_required
 def logout():
