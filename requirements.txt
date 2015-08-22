@@ -3,5 +3,6 @@ Flask-SQLAlchemy
 Flask-Login
 Flask-CORS
 Flask-Admin
+Flask-Seasurf
 marshmallow>=2.0.0b3
 pypdf2

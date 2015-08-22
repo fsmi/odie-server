@@ -32,7 +32,7 @@ class PaginatedResultSchema(Schema):
     total = fields.Int(attribute='pagination.total')
 
 
-class UserLoadSchema(Schema):
+class LoginLoadSchema(Schema):
     username = fields.Str(required=True)
     password = fields.Str(required=True)
 
@@ -42,6 +42,11 @@ class UserDumpSchema(Schema):
     first_name = fields.Str()
     last_name = fields.Str()
     office = fields.Function(config.try_get_office)
+
+
+class LoginDumpSchema(Schema):
+    user = fields.Nested(UserDumpSchema)
+    token = fields.Str()
 
 
 class DocumentDumpSchema(IdSchema):
@@ -60,6 +65,7 @@ class DocumentDumpSchema(IdSchema):
     @staticmethod
     def scrub_submitted_by(obj):
         return obj.submitted_by if current_user.is_authenticated() else missing
+
 
 class ExaminantSchema(IdSchema):
     name = fields.Str()

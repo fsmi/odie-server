@@ -6,6 +6,7 @@ import logging
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
+from flask.ext.seasurf import SeaSurf  # CSRF. Got it?
 
 app = Flask("odie", template_folder='admin/templates', static_folder='admin/static')
 
@@ -22,6 +23,8 @@ else:
     handler.setLevel(logging.INFO)
     handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s in %(module)s: %(message)s'))
     app.logger.addHandler(handler)
+
+csrf = SeaSurf(app)
 
 sqla = SQLAlchemy(app)
 login_manager = LoginManager()

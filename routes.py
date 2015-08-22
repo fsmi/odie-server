@@ -14,7 +14,7 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 from sqlalchemy.orm import subqueryload
 from sqlalchemy.orm.exc import NoResultFound
 
-from odie import app, sqla, ClientError
+from odie import app, sqla, csrf, ClientError
 from api_utils import deserialize, endpoint, filtered_results, api_route, handle_client_errors, document_path, save_file
 from db.documents import Lecture, Deposit, Document, Examinant
 from db.odie import Order
@@ -53,11 +53,12 @@ def scanner(location, id):
     return Response(scanner_stream(location, id, current_user.first_name), mimetype='text/event-stream', headers={'X-Accel-Buffering': 'no'})
 
 
+@csrf.exempt
 @api_route('/api/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         if not current_user.is_authenticated():
-            (obj, errors) = schemas.UserLoadSchema().load(request.get_json(force=True))
+            (obj, errors) = schemas.LoginLoadSchema().load(request.get_json(force=True))
             if errors:
                 raise ClientError(*errors)
             user = User.authenticate(obj['username'], obj['password'])
@@ -66,9 +67,12 @@ def login():
     if not current_user.is_authenticated():
         raise ClientError('permission denied', status=401)
 
-    return schemas.serialize(current_user, schemas.UserDumpSchema)
+    # Explicitly pass the csrf token cookie value for cross-origin clients.
+    # The client has provided a valid login, so it should be trustworthy.
+    return schemas.serialize({'user': current_user, 'token': csrf._get_token()}, schemas.LoginDumpSchema)
 
 
+@csrf.exempt
 @api_route('/api/logout', methods=['POST'])
 @login_required
 def logout():
@@ -157,13 +161,14 @@ endpoint(
         query=Order.query)
 ))
 
+csrf.exempt(
 api_route('/api/orders', methods=['POST'])(
 endpoint(
         schemas={
             'POST': schemas.OrderLoadSchema
         },
         query=None)
-)
+))
 
 api_route('/api/orders/<int:instance_id>', methods=['GET', 'DELETE'])(
 login_required(
@@ -227,6 +232,7 @@ def _allowed_file(filename):
     return os.path.splitext(filename)[1] in config.SUBMISSION_ALLOWED_FILE_EXTENSIONS
 
 
+@csrf.exempt
 @api_route('/api/documents', methods=['POST'])
 def submit_document():
     """Student document submission endpoint

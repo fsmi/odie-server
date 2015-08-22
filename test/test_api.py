@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+from test.harness import OdieTestCase, ODIE_DIR
+
 import config
 import datetime
 import os
@@ -8,7 +10,7 @@ import json
 import random
 
 from db.documents import Document, Lecture
-from test.harness import OdieTestCase, ODIE_DIR
+from odie import csrf
 
 class APITest(OdieTestCase):
     VALID_USER = 'guybrush'
@@ -41,11 +43,22 @@ class APITest(OdieTestCase):
             'amount': 42,
         }
 
+    token = None
+
     def login(self, user=VALID_USER, password=VALID_PASS):
-        return self.app.post('/api/login', data=json.dumps({
+        res = self.app.post('/api/login', data=json.dumps({
                 'username': user,
                 'password': password
             }))
+        if res.status_code == 200:
+            self.token = self.fromJsonResponse(res)['token']
+        return res
+
+    def post_auth(self, *args, **kwargs):
+        return self.app.post(*args, headers={'X-CSRFToken': self.token}, **kwargs)
+
+    def delete_auth(self, *args, **kwargs):
+        return self.app.delete(*args, headers={'X-CSRFToken': self.token}, **kwargs)
 
     def validate_lecture(self, lecture):
         self.assertIn('name', lecture)
@@ -136,19 +149,27 @@ class APITest(OdieTestCase):
         res = self.app.get('/api/login')
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
-        self.assertIn('username', data)
-        self.assertIn('first_name', data)
-        self.assertIn('last_name', data)
+        self.assertIn('user', data)
+        self.assertIn('token', data)
 
     ## tests for authenticated api ##
 
     def test_no_printing_unauthenticated(self):
+        try:
+            csrf._csrf_disable = True  # let's check login_required at least once
+            res = self.app.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
+            self.assertEqual(res.status_code, 401)
+        finally:
+            csrf._csrf_disable = False
+
+    def test_no_printing_csrf(self):
+        self.login()
         res = self.app.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 403)
 
     def test_print(self):
         self.login()
-        res = self.app.post('api/print', data=json.dumps(self.VALID_PRINTJOB))
+        res = self.post_auth('api/print', data=json.dumps(self.VALID_PRINTJOB))
         self.fromJsonResponse(res)
         self.assertEqual(res.status_code, 200)
         self.logout()
@@ -157,7 +178,7 @@ class APITest(OdieTestCase):
         self.login()
         pj = self.VALID_PRINTJOB.copy()
         pj['document_ids'] = [3]  # see fill_data.py to ensure that this document doesn't specify has_file=True
-        res = self.app.post('api/print', data=json.dumps(pj))
+        res = self.post_auth('api/print', data=json.dumps(pj))
         self.assertEqual(res.status_code, 401)
         self.logout()
 
@@ -167,7 +188,7 @@ class APITest(OdieTestCase):
 
     def test_orders_no_delete_unauthenticated(self):
         res = self.app.delete('/api/orders/1')
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 403)
 
     def test_orders_state(self):
         self.login()
@@ -192,7 +213,7 @@ class APITest(OdieTestCase):
         self.assertEqual(len(posted_order), 1)
         self.assertEqual(posted_order[0]['documents'][0]['id'], 1)
         instance_id = posted_order[0]['id']
-        res = self.app.delete('/api/orders/' + str(instance_id))
+        res = self.delete_auth('/api/orders/' + str(instance_id))
         self.assertEqual(res.status_code, 200)
         res = self.app.get('/api/orders')
         for order in self.fromJsonResponse(res):
@@ -204,7 +225,7 @@ class APITest(OdieTestCase):
 
     def test_deposits_no_return_unauthenticated(self):
         res = self.app.post('/api/log_deposit_return', data=json.dumps(self.VALID_DEPOSIT_RETURN))
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 403)
 
     def test_deposits_state(self):
         self.login()
@@ -215,7 +236,7 @@ class APITest(OdieTestCase):
         id_to_delete = random.choice(deposits)['id']
         data = self.VALID_DEPOSIT_RETURN
         data['id'] = id_to_delete
-        res = self.app.post('/api/log_deposit_return', data=json.dumps(data))
+        res = self.post_auth('/api/log_deposit_return', data=json.dumps(data))
         self.assertEqual(res.status_code, 200)
         for deposit in self.fromJsonResponse(self.app.get('/api/deposits')):
             self.assertNotEqual(deposit['id'], id_to_delete)
@@ -223,7 +244,7 @@ class APITest(OdieTestCase):
     def test_log_deposit_return_with_document(self):
         self.assertIsNotNone(Document.query.get(6).submitted_by)
         self.login()
-        res = self.app.post('/api/log_deposit_return', data=json.dumps({
+        res = self.post_auth('/api/log_deposit_return', data=json.dumps({
             'cash_box': self.CASH_BOX,
             'id': 1,
             'document_id': 6
@@ -233,20 +254,20 @@ class APITest(OdieTestCase):
 
     def test_no_donation_unauthenticated(self):
         res = self.app.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 403)
 
     def test_donation(self):
         self.login()
-        res = self.app.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        res = self.post_auth('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))
         self.assertEqual(res.status_code, 200)
 
     def test_no_log_erroneous_sale_unauthenticated(self):
         res = self.app.post('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 403)
 
     def test_log_erroneous_sale(self):
         self.login()
-        res = self.app.post('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        res = self.post_auth('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
         self.assertEqual(res.status_code, 200)
 
     ## pagination tests ##
