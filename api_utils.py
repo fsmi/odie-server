@@ -5,11 +5,11 @@ import os
 import json
 
 from odie import app, sqla, ClientError
-from serialization_schemas import serialize, PaginatedResultSchema
 
 from functools import wraps
 from flask import Flask, jsonify, request
 from jsonquery import jsonquery
+from marshmallow import Schema, fields
 from sqlalchemy import inspect
 from PyPDF2 import PdfFileReader
 from PyPDF2.utils import PdfReadError
@@ -38,6 +38,14 @@ def save_file(document, file_storage):
     document.number_of_pages = number_of_pages(document)
 
 
+def serialize(data, schema, many=False):
+    res = schema().dump(data, many)
+    if res.errors:
+        raise ClientError(*res.errors)
+    else:
+        return res.data
+
+
 class PaginatedResult(object):
     """Wraps results with pagination metadata"""
 
@@ -60,6 +68,13 @@ def deserialize(schema):
             return f(*args, data=obj, **kwargs)
         return wrapped_f
     return _decorator
+
+
+class PaginatedResultSchema(Schema):
+    data = fields.Raw()
+    page = fields.Int(attribute='pagination.page')
+    number_of_pages = fields.Int(attribute='pagination.pages')
+    total = fields.Int(attribute='pagination.total')
 
 
 def filtered_results(query, schema, paginate=True):
