@@ -127,6 +127,12 @@ class PrintJobLoadSchema(Schema):
     printer = PrinterField()
 
 
+class PrintForFolderLoadSchema(Schema):
+    cover_text = fields.Str(required=True)
+    document_ids = fields.List(fields.Int(), required=True)
+    printer = PrinterField()
+
+
 class DonationLoadSchema(Schema):
     amount = fields.Int(required=True, validate=lambda i: i != 0)
     cash_box = CashBoxField()

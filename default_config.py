@@ -9,7 +9,7 @@ import tempfile
 
 from marshmallow.utils import missing
 
-def print_documents(doc_paths: list, cover_text: str, printer: str):
+def print_documents(doc_paths: list, cover_text: str, printer: str, usercode: int):
     print("Docs %s for %s on %s" % (str(doc_paths), cover_text, printer))
 
 def document_validated(doc_path: str):
@@ -84,6 +84,13 @@ GARFIELD_ACCOUNTING = False
 ITEMS_PER_PAGE = 20
 DOCUMENT_DIRECTORY = os.path.join(tempfile.gettempdir(), 'odie')
 ADMIN_PANEL_ALLOWED_GROUPS = ['fsusers']
+
+PRINTER_USERCODES = {'internal': 3974}
+for cash_box in FS_CONFIG['OFFICES']['FSI']['cash_boxes']:
+    PRINTER_USERCODES[cash_box] = 2222
+for cash_box in FS_CONFIG['OFFICES']['FSM']['cash_boxes']:
+    PRINTER_USERCODES[cash_box] = 2224
+
 
 def try_get_office(user):
     return missing

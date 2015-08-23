@@ -83,18 +83,32 @@ def _lectures(document_ids):
     return Lecture.query.filter(Lecture.documents.any(
         Document.id.in_(document_ids))).all()
 
+def _printable_documents(document_ids):
+    document_objs = Document.query.filter(Document.id.in_(document_ids)).all()
+    if any(not doc.has_file for doc in document_objs):
+        raise ClientError('Tried to print at least one document without file', status=401)
+    # sort the docs into the same order they came in the request
+    docs_by_id = {doc.id: doc for doc in document_objs}
+    return [docs_by_id[id] for id in document_ids]
+
+
+@api_route('/api/print_for_folder', methods=['POST'])
+@deserialize(schemas.PrintForFolderLoadSchema)
+@login_required
+def print_for_folder(data):
+    documents = _printable_documents(data['document_ids'])
+    paths = [document_path(doc.id) for doc in documents]
+    usercode = config.PRINTER_USERCODES['internal']
+    config.print_documents(paths, data['cover_text'], data['printer'], usercode)
+    for doc in documents:
+        doc.present_in_physical_folder = True
+    sqla.session.commit()
 
 @api_route('/api/print', methods=['POST'])
 @deserialize(schemas.PrintJobLoadSchema)
 @login_required
 def print_documents(data):
-    ids = data['document_ids']
-    document_objs = Document.query.filter(Document.id.in_(ids)).all()
-    if any(not doc.has_file for doc in document_objs):
-        raise ClientError('Tried to print at least one document without file', status=401)
-    # sort the docs into the same order they came in the request
-    docs_by_id = {doc.id: doc for doc in document_objs}
-    documents = [docs_by_id[id] for id in ids]
+    documents = _printable_documents(data['document_ids'])
 
     assert data['deposit_count'] >= 0
     price = sum(doc.price for doc in documents)
@@ -102,8 +116,9 @@ def print_documents(data):
     price = 10 * (price/10 + (1 if price % 10 else 0))
 
     if documents:
-        paths = [document_path(doc.id) for doc in documents if doc.has_file]
-        config.print_documents(paths, data['cover_text'], data['printer'])
+        paths = [document_path(doc.id) for doc in documents]
+        usercode = config.PRINTER_USERCODES[data['cash_box']]
+        config.print_documents(paths, data['cover_text'], data['printer'], usercode)
         num_pages = sum(doc.number_of_pages for doc in documents)
         db.accounting.log_exam_sale(num_pages, price, current_user, data['cash_box'])
     for _ in range(data['deposit_count']):
