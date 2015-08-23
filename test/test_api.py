@@ -179,7 +179,7 @@ class APITest(OdieTestCase):
         pj = self.VALID_PRINTJOB.copy()
         pj['document_ids'] = [3]  # see fill_data.py to ensure that this document doesn't specify has_file=True
         res = self.post_auth('api/print', data=json.dumps(pj))
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 400)
         self.logout()
 
     def test_orders_no_get_unauthenticated(self):

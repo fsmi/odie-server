@@ -86,7 +86,7 @@ def _lectures(document_ids):
 def _printable_documents(document_ids):
     document_objs = Document.query.filter(Document.id.in_(document_ids)).all()
     if any(not doc.has_file for doc in document_objs):
-        raise ClientError('Tried to print at least one document without file', status=401)
+        raise ClientError('Tried to print at least one document without file', status=400)
     # sort the docs into the same order they came in the request
     docs_by_id = {doc.id: doc for doc in document_objs}
     return [docs_by_id[id] for id in document_ids]
