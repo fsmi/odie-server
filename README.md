@@ -26,7 +26,9 @@ Here's a small map of the api side of the project:
   Declarative definition of the database tables we use. These include parts of the `garfield` database (into which we save all documents and their associated data) and parts of the `fsmi` database (which we query for user auth)
 * `api_utils.py`  
   We're using Flask, Flask-login, SQLAlchemy, jsonquery and marshmallow. That means a lot of work is done for us and what's left of most API endpoints is mostly boilerplate for stringing all of this together. `api_utils.py` is where we abstract all of that away, too, so most API endpoints can be generated with a simple call to `api_utils.endpoint`. Also found there: grab bag of small utility functions that would only clutter routes.py.
+* `barcode/barcode.py`  
+  This is where barcode scanner support lives. It also handles putting barcodes on transcripts.
 
-The admin panel is built using Flask-Admin. Since this already does all of the heavy lifting for us, we only massage / tweak it to fit our needs.
+The admin panel is built using Flask-Admin. Since this already does all of the heavy lifting for us, we only massage / tweak it to fit our needs. Coaxing it into doing what we need it to can be a bit fiddly. Before adding "just one more patch", please consider whether a rewrite wouldn't be more appropriate. (don't let fsdeluxe happen again.)
 
 The rest of the files should be fairly straight-forward. Godspeed.
