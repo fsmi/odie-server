@@ -78,7 +78,7 @@ class AuthModelView(ModelView, AuthViewMixin):
         if state != 'deleted':
             msg += '\n' + url_for(view.endpoint + '.edit_view', id=model.id, _external=True)
 
-        config.log_admin_audit(msg)
+        config.log_admin_audit(self, model, msg)
 
     def on_model_change(self, form, model, is_created):
         self._log_model_changes(model, 'created' if is_created else 'changed')
