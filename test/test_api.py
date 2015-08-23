@@ -182,6 +182,25 @@ class APITest(OdieTestCase):
         self.assertEqual(res.status_code, 400)
         self.logout()
 
+    VALID_PRINTJOB_FOR_FOLDER = {
+            'cover_text': 'Protokollamt-zeugs',
+            'document_ids': VALID_PRINTJOB['document_ids'],
+            'printer': VALID_PRINTJOB['printer'],
+        }
+
+    def test_no_print_for_folder_unauthenticated(self):
+        res = self.app.post('/api/print_for_folder', data=json.dumps(self.VALID_PRINTJOB_FOR_FOLDER))
+        self.assertEqual(res.status_code, 403)
+
+    def test_print_for_folder(self):
+        docs = Document.query.filter(Document.id.in_(self.VALID_PRINTJOB_FOR_FOLDER['document_ids']))
+        self.assertFalse(any(doc.present_in_physical_folder for doc in docs))
+        self.login()
+        res = self.post_auth('/api/print_for_folder', data=json.dumps(self.VALID_PRINTJOB_FOR_FOLDER))
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(all(doc.present_in_physical_folder for doc in docs))
+        self.logout()
+
     def test_orders_no_get_unauthenticated(self):
         res = self.app.get('/api/orders')
         self.assertEqual(res.status_code, 401)
