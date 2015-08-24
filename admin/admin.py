@@ -3,6 +3,7 @@
 import barcode
 import config
 
+import collections
 import datetime
 import os
 
@@ -30,8 +31,7 @@ class AuthViewMixin(BaseView):
     allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
 
     def is_accessible(self):
-        return current_user.is_authenticated() \
-                and any(True for perm in self.allowed_roles if current_user.has_permission(perm))
+        return current_user.is_authenticated() and current_user.has_permission(*self.allowed_roles)
 
     def _handle_view(self, name, **kwargs):
         if not self.is_accessible():
@@ -284,12 +284,12 @@ admin = Admin(
     template_mode='bootstrap3',
     index_view=AuthIndexView())
 
-model_views = {
-    Document: DocumentView(Document, sqla.session, name='Dokumente'),
-    Lecture: LectureView(Lecture, sqla.session, name='Vorlesungen'),
-    Examinant: ExaminantView(Examinant, sqla.session, name='Prüfer'),
-    Deposit: DepositView(Deposit, sqla.session, name='Pfand'),
-}
+model_views = collections.OrderedDict([
+    (Document, DocumentView(Document, sqla.session, name='Dokumente')),
+    (Lecture, LectureView(Lecture, sqla.session, name='Vorlesungen')),
+    (Examinant, ExaminantView(Examinant, sqla.session, name='Prüfer')),
+    (Deposit, DepositView(Deposit, sqla.session, name='Pfand')),
+])
 
 admin.add_view(ClientRedirectView(name='Zurück zu Odie'))
 for view in model_views.values():
