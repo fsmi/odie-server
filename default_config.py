@@ -28,6 +28,7 @@ class FlaskConfig(object):
     DEBUG = True
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
     STATIC_FOLDER = 'admin/static'
+    CSRF_COOKIE_NAME = 'csrf_token'  # important for flask-admin compatibility
 
 # things specific to odie: saved orders
 odie_table_args = {
