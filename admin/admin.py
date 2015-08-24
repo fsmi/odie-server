@@ -3,6 +3,7 @@
 import barcode
 import config
 
+import collections
 import datetime
 import os
 
@@ -284,12 +285,12 @@ admin = Admin(
     template_mode='bootstrap3',
     index_view=AuthIndexView())
 
-model_views = {
-    Document: DocumentView(Document, sqla.session, name='Dokumente'),
-    Lecture: LectureView(Lecture, sqla.session, name='Vorlesungen'),
-    Examinant: ExaminantView(Examinant, sqla.session, name='Prüfer'),
-    Deposit: DepositView(Deposit, sqla.session, name='Pfand'),
-}
+model_views = collections.OrderedDict([
+    (Document, DocumentView(Document, sqla.session, name='Dokumente')),
+    (Lecture, LectureView(Lecture, sqla.session, name='Vorlesungen')),
+    (Examinant, ExaminantView(Examinant, sqla.session, name='Prüfer')),
+    (Deposit, DepositView(Deposit, sqla.session, name='Pfand')),
+])
 
 admin.add_view(ClientRedirectView(name='Zurück zu Odie'))
 for view in model_views.values():
