@@ -10,7 +10,7 @@ Sorry about the literal SQL statements, but reflecting the tables
 incurred a >1s lag on startup.
 
 Unless stated otherwise, parameters are supposed to be of the type as
-specified in serialization_schemas.py (e.g. printjob should have
+specified in their respective marshmallow schemas (e.g. printjob should have
 the fields of a deserialized PrintJobSchema). Monetary parameters
 (price/amount) are to be entered in cents and converted to whatever
 the database internally uses in the logging functions
