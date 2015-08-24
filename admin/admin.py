@@ -31,8 +31,7 @@ class AuthViewMixin(BaseView):
     allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
 
     def is_accessible(self):
-        return current_user.is_authenticated() \
-                and any(True for perm in self.allowed_roles if current_user.has_permission(perm))
+        return current_user.is_authenticated() and current_user.has_permission(*self.allowed_roles)
 
     def _handle_view(self, name, **kwargs):
         if not self.is_accessible():
