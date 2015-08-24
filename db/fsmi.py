@@ -7,6 +7,7 @@ import db.acl as acl
 
 from flask.ext.login import UserMixin
 from odie import sqla, login_manager, Column
+from sqlalchemy.sql import column
 
 class User(sqla.Model, UserMixin):
     __tablename__ = 'benutzer'
@@ -23,8 +24,8 @@ class User(sqla.Model, UserMixin):
     def full_name(self):
         return self.first_name + ' ' + self.last_name
 
-    def has_permission(self, perm_name):
-        return self.effective_permissions.filter_by(name=perm_name).first() is not None
+    def has_permission(self, *perm_names):
+        return self.effective_permissions.filter(acl.Permission.name.in_(perm_names)).first() is not None
 
     @staticmethod
     def authenticate(username, password):
