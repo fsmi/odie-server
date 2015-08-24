@@ -80,7 +80,7 @@ FS_CONFIG = {
     },
 }
 SUBMISSION_ALLOWED_FILE_EXTENSIONS = ['.pdf']
-GARFIELD_ACCOUNTING = False
+LOCAL_SERVER = True
 ITEMS_PER_PAGE = 20
 DOCUMENT_DIRECTORY = os.path.join(tempfile.gettempdir(), 'odie')
 ADMIN_PANEL_ALLOWED_GROUPS = ['fsusers']

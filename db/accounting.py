@@ -37,7 +37,7 @@ def log_deposit(deposit, user, cashbox: str):
 def log_deposit_return(deposit, user, cashbox: str):
     pass
 
-if config.GARFIELD_ACCOUNTING:
+if not config.LOCAL_SERVER:
 
     procs = sqlalchemy.sql.func.garfield
     _qry = text("""SELECT cash_box_name, cash_boxes.cash_box_id

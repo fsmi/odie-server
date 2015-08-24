@@ -3,10 +3,35 @@
 import crypt
 
 import config
+import datetime
 import db.acl as acl
 
 from flask.ext.login import UserMixin
 from odie import sqla, login_manager, Column
+
+
+# In the real database, cookies is a view which automatically handles deleting expired cookies.
+# When mapping this, we can just treat it like any other table, though... with a couple of caveats
+
+class Cookie(sqla.Model):
+    __tablename__ = 'cookies'
+    __table_args__ = config.fsmi_table_args
+
+    sid = Column(sqla.Text, primary_key=True)
+    user_id = Column(sqla.Integer, sqla.ForeignKey('public.benutzer.benutzer_id'), name='benutzer_id')
+    user = sqla.relationship('User')
+    last_action = Column(sqla.DateTime, primary_key=True)
+    lifetime = Column(sqla.Integer)
+
+    def refresh(self):
+        if not config.LOCAL_SERVER:
+            # we can't use an SQL expression for this, because then sqlalchemy will try to fetch the
+            # result of that with a RETURNING clause, which doesn't work on this view.
+            # If we inform sqlalchemy of all values of the mapped instance by keeping them inside python,
+            # it's fine though
+            now = datetime.datetime.now()
+            sqla.session.add(Cookie(sid=self.sid, user_id=self.user_id, last_action=now, lifetime=self.lifetime))
+
 
 class User(sqla.Model, UserMixin):
     __tablename__ = 'benutzer'
@@ -37,6 +62,3 @@ class User(sqla.Model, UserMixin):
         else:
             return None
 
-    @login_manager.user_loader
-    def load(user_id):  # pylint: disable=no-self-argument
-        return User.query.get(user_id)

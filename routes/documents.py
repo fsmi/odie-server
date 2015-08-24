@@ -110,8 +110,8 @@ def _allowed_file(filename):
     return os.path.splitext(filename)[1] in config.SUBMISSION_ALLOWED_FILE_EXTENSIONS
 
 
-@csrf.exempt
 @api_route('/api/documents', methods=['POST'])
+@csrf.exempt
 def submit_document():
     """Student document submission endpoint
 
