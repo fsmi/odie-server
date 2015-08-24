@@ -10,7 +10,6 @@ import os
 import subprocess
 import socket
 import tempfile
-import threading
 
 from api_utils import document_path
 from db.documents import Document
@@ -117,7 +116,7 @@ class BarcodeScanner(object):
     Luckily the server's pretty resilient against hijinks.
     """
     def __init__(self, host, port, username):
-        username = ('%s_(Odie_%s)' % (username.replace(' ', '_'), str(threading.current_thread().ident))).encode('utf-8')
+        username = ('%s_(Odie_%s)' % (username.replace(' ', '_'), str(os.getpid()))).encode('utf-8')
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(5)
         self.sock.connect((host, port))
