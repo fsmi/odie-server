@@ -64,6 +64,8 @@ LASER_SCANNERS = {
     ],
 }
 FS_CONFIG = {
+    'LOGIN_PAGE': '/login',
+    'LOGOUT_URL': '/logout',
     'DEPOSIT_PRICE': 500,  # in cents
     'PRICE_PER_PAGE': 3,   # in cents
     'OFFICES': {
