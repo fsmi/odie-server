@@ -46,10 +46,11 @@ class APITest(OdieTestCase):
     token = None
 
     def login(self, user=VALID_USER, password=VALID_PASS):
-        res = self.app.post('/api/login', data=json.dumps({
+        self.app.post('/login', data={
                 'username': user,
                 'password': password
-            }))
+            })
+        res = self.app.get('/api/user_info')
         if res.status_code == 200:
             self.token = self.fromJsonResponse(res)['token']
         return res
@@ -119,34 +120,22 @@ class APITest(OdieTestCase):
 
     ## login tests ##
 
-    def test_malformed_login(self):
-        res = self.app.post('/api/login', data=json.dumps({'username':self.VALID_USER}))
-        self.assertEqual(res.status_code, 400)
-
-    def test_invalid_login(self):
-        res = self.login(user='I am not a username', password='neither am I a password')
-        self.assertEqual(res.status_code, 401)
-
-    def test_valid_login(self):
-        res = self.login(self.VALID_USER, self.VALID_PASS)
-        self.assertEqual(res.status_code, 200)
-
-    def test_login_no_get_unauthenticated(self):
-        res = self.app.get('/api/login')
+    def test_user_info_no_get_unauthenticated(self):
+        res = self.app.get('/api/user_info')
         self.assertEqual(res.status_code, 401)
 
     def test_login_logout(self):
         def is_logged_in():
-            return self.app.post('/api/login', data=json.dumps({})).status_code == 200
+            return self.app.get('/api/user_info').status_code == 200
         self.assertFalse(is_logged_in())
         self.login(self.VALID_USER, self.VALID_PASS)
         self.assertTrue(is_logged_in())
         self.logout()
         self.assertFalse(is_logged_in())
 
-    def test_login_get_authenticated(self):
+    def test_user_info_get_authenticated(self):
         self.login()
-        res = self.app.get('/api/login')
+        res = self.app.get('/api/user_info')
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
         self.assertIn('user', data)
