@@ -19,12 +19,12 @@ class OdieTestCase(unittest.TestCase):
         return data['data']
 
     def logout(self):
-        return self.app.post('/api/logout')
+        return self.app.get('/logout')
 
     @classmethod
     def setUpClass(cls):
         # this should go without saying, but... don't run these tests in production
-        assert config.FlaskConfig.DEBUG, "These tests are destructive, I refuse to run them in production"
+        assert config.FlaskConfig.DEBUG and config.LOCAL_SERVER, "These tests are destructive, I refuse to run them in production"
         subprocess.call([os.path.join(ODIE_DIR, 'scripts', 'delete_everything_in_all_databases.sh')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.call([os.path.join(ODIE_DIR, 'scripts', 'create_schemas_and_tables.py')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
