@@ -30,7 +30,10 @@ login_page_text = """<html>
 @csrf.exempt
 def login_page():
     if request.method == 'GET':
-        return login_page_text % urllib.parse.quote_plus(request.args.get('next'))
+        # NB: Due to severe PHP, you'll need to also provide a (potentially empty)
+        # target_paras GET parameter for redirection to work properly when logging into
+        # the real fsmi servers.
+        return login_page_text % urllib.parse.quote_plus(request.args.get('target_path'))
     user = User.authenticate(request.form['username'], request.form['password'])
     if user:
         # see comment in fsmi.Cookie.refresh as to why we need this in python
@@ -39,7 +42,7 @@ def login_page():
         sqla.session.add(Cookie(sid=cookie, user_id=user.id, last_action=now, lifetime=172800))
         login_user(user)
         sqla.session.commit()
-        response = app.make_response(redirect(request.args.get('next')))
+        response = app.make_response(redirect(request.args.get('target_path')))
         response.set_cookie('FSMISESSID', value=cookie)
         return response
     return 'Nope'
@@ -51,7 +54,7 @@ def login_page():
 def logout():
     Cookie.query.filter_by(user_id=current_user.id).delete()
     sqla.session.commit()
-    response = app.make_response(redirect(request.args.get('next')))
+    response = app.make_response(redirect(request.args.get('target_path')))
     response.set_cookie('FSMISESSID', value='', expires=0)
     logout_user()
     return response
