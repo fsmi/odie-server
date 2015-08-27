@@ -170,6 +170,7 @@ def submit_document():
     sqla.session.flush()  # necessary for id field to be populated
     save_file(new_doc, file)
     sqla.session.commit()
+    app.logger.info("New document submitted (id: {})".format(new_doc.id))
     return {}
 
 # take heed when renaming this, it's referenced as string in the admin UI
