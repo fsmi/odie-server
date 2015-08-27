@@ -24,14 +24,14 @@ import create_schemas_and_tables
 
 def fill():
     lectures = [
-            Lecture(name='Fortgeschrittenes Nichtstun', aliases=['Ugh'], subject='other', validated=True),
-            Lecture(name='Moderne Programmierumgebungen am Beispiel von .SEXY', aliases=['.SEXY'], subject='computer science', validated=True),
-            Lecture(name='"Advanced" Operating Systems', aliases=['Stupid Operating Systems'], subject='computer science', validated=True),
-            Lecture(name='Einführung in die Kozuch-Theorie', aliases=[], subject='mathematics', validated=True),
-            Lecture(name='Einführung in Redundanz', aliases=['Redundanz'], subject='computer science', validated=True),
-            Lecture(name='Nanokernel Construction', aliases=[], subject='computer science', validated=True),
-            Lecture(name='Mensch-Toastbrot-Toaster-Kommunikation', aliases=['MTTK'], subject='computer science', validated=True),
-            Lecture(name='Einf�hrung in Encoding', aliases=['=?ISO-8859-1?Q?Einf?hrung in Encoding'], subject='computer science', validated=True),
+            Lecture(name='Fortgeschrittenes Nichtstun', aliases=['Ugh'], validated=True),
+            Lecture(name='Moderne Programmierumgebungen am Beispiel von .SEXY', aliases=['.SEXY'], validated=True),
+            Lecture(name='"Advanced" Operating Systems', aliases=['Stupid Operating Systems'], validated=True),
+            Lecture(name='Einführung in die Kozuch-Theorie', aliases=[], validated=True),
+            Lecture(name='Einführung in Redundanz', aliases=['Redundanz'], validated=True),
+            Lecture(name='Nanokernel Construction', aliases=[], validated=True),
+            Lecture(name='Mensch-Toastbrot-Toaster-Kommunikation', aliases=['MTTK'], validated=True),
+            Lecture(name='Einf�hrung in Encoding', aliases=['=?ISO-8859-1?Q?Einf?hrung in Encoding'], validated=True),
         ]
 
     for l in lectures:
@@ -53,12 +53,12 @@ def fill():
 
     # assumptions in tests: the first two documents have has_file=True, the third one doesn't
     docs = [
-                Document(lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=time(2010, 4, 1), number_of_pages=4, document_type='oral', validated=True, has_file=True),
-                Document(lectures=[lectures[6], lectures[7]], examinants=[profs[1]], date=time(2004, 10, 4), number_of_pages=1, document_type='oral', validated=True, has_file=True),
-                Document(lectures=[lectures[4], lectures[3], lectures[2]], examinants=[profs[1], profs[0]], date=time(2004, 8, 2), number_of_pages=2, document_type='oral', validated=True),
-                Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 1, 1), number_of_pages=7, document_type='oral', validated=True),
-                Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 2, 3), number_of_pages=7, document_type='oral', validated=True),
-                Document(lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2001, 2, 3), number_of_pages=2, document_type='oral', validated=False, submitted_by='Monty Montgomery'),
+                Document(department='computer science', lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=time(2010, 4, 1), number_of_pages=4, document_type='oral', validated=True, has_file=True),
+                Document(department='computer science', lectures=[lectures[6], lectures[7]], examinants=[profs[1]], date=time(2004, 10, 4), number_of_pages=1, document_type='oral', validated=True, has_file=True),
+                Document(department='computer science', lectures=[lectures[4], lectures[3], lectures[2]], examinants=[profs[1], profs[0]], date=time(2004, 8, 2), number_of_pages=2, document_type='oral', validated=True),
+                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 1, 1), number_of_pages=7, document_type='oral', validated=True),
+                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 2, 3), number_of_pages=7, document_type='oral', validated=True),
+                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2001, 2, 3), number_of_pages=2, document_type='oral', validated=False, submitted_by='Monty Montgomery'),
         ]
 
     for d in docs:

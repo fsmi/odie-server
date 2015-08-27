@@ -14,6 +14,7 @@ class IdSchema(Schema):
 
 
 class DocumentDumpSchema(IdSchema):
+    department = fields.Str()
     lectures = fields.List(fields.Nested(IdSchema))
     examinants = fields.List(fields.Nested(IdSchema))
     date = fields.Date()
