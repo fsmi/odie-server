@@ -17,7 +17,7 @@ the database internally uses in the logging functions
 """
 
 from sqlalchemy import cast, text, String
-from odie import sqla
+from odie import app, sqla
 
 import config
 import sqlalchemy
@@ -27,15 +27,15 @@ class AccountingException(Exception):
 
 # pylint: disable=function-redefined
 def log_donation(user, amount: int, cashbox: str):
-    pass
+    app.logger.info("Donation: {} put {} cents into {}".format(user.username, amount, cashbox))
 def log_exam_sale(pages: int, price: int, user, cashbox: str):
-    pass
+    app.logger.info("Exam Sale: {} sold {} pages, put {} cents into {}".format(user.username, pages, price, cashbox))
 def log_erroneous_sale(price: int, user, cashbox: str):
-    pass
+    app.logger.info("Correction: {} marked {} cents from {} as erroneously sold".format(user.username, price, cashbox))
 def log_deposit(deposit, user, cashbox: str):
-    pass
+    app.logger.info("Deposit: {} put {} cents into {}".format(user.username, deposit.price, cashbox))
 def log_deposit_return(deposit, user, cashbox: str):
-    pass
+    app.logger.info("Deposit: {} returned deposit to {}, took {} cents out of {}".format(user.username, deposit.name, deposit.price, cashbox))
 
 if not config.LOCAL_SERVER:
 
@@ -51,7 +51,7 @@ if not config.LOCAL_SERVER:
         qry = text("""SELECT user_id FROM garfield.users WHERE user_name = :username""")
         r = sqla.session.execute(qry.bindparams(username=user.username)).scalar()
         if r is None:
-            raise AccountingException('User not found')
+            raise AccountingException('User not found: %s' % user.username)
         return r
 
 
@@ -59,6 +59,7 @@ if not config.LOCAL_SERVER:
         user_id = _garfield_user_id(user)
         amount = amount / 100  # garfield uses floats, because of course it does
         proc = procs.donation_accept(cash_box_ids[cashbox], 'MONEY', amount, user_id)
+        app.logger.info("Donation: {} put {} € into {}".format(user.username, amount, cashbox))
         sqla.session.execute(proc).scalar()
 
 
@@ -71,12 +72,16 @@ if not config.LOCAL_SERVER:
 
 
     def log_exam_sale(pages: int, price: int, user, cashbox: str):
-        _log_exam_action(pages, price / 100, user, cashbox, 'EXAM_SALE')
+        price = price / 100
+        app.logger.info("Exam Sale: {} sold {} pages, put {} € into {}".format(user.username, pages, price, cashbox))
+        _log_exam_action(pages, price, user, cashbox, 'EXAM_SALE')
 
 
     def log_erroneous_sale(price: int, user, cashbox: str):
         """price is assumed to be positive"""
-        _log_exam_action(0, price / -100, user, cashbox, 'EXAM_SALE_CANCEL')
+        price = price / -100
+        app.logger.info("Correction: {} marked {} € from {} as erroneously sold".format(user.username, price, cashbox))
+        _log_exam_action(0, price, user, cashbox, 'EXAM_SALE_CANCEL')
 
 
     def _log_deposit_action(deposit, user, cashbox: str, final_amount: float, action: str):
@@ -89,11 +94,11 @@ if not config.LOCAL_SERVER:
 
 
     def log_deposit(deposit, user, cashbox: str):
-        _log_deposit_action(deposit, user, cashbox,
-                config.FS_CONFIG['DEPOSIT_PRICE'] / 100,
-                'EXAM_DEPOSIT_PAYMENT')
+        price = config.FS_CONFIG['DEPOSIT_PRICE'] / 100,
+        app.logger.info("Deposit: {} put {} € into {}".format(user.username, price, cashbox))
+        _log_deposit_action(deposit, user, cashbox, price, 'EXAM_DEPOSIT_PAYMENT')
 
     def log_deposit_return(deposit, user, cashbox: str):
-        _log_deposit_action(deposit, user, cashbox,
-                config.FS_CONFIG['DEPOSIT_PRICE'] / -100,
-                'EXAM_DEPOSIT_WITHDRAWAL')
+        price = config.FS_CONFIG['DEPOSIT_PRICE'] / -100,
+        app.logger.info("Deposit: {} returned deposit to {}, took {} € out of {}".format(user.username, deposit.name, price, cashbox))
+        _log_deposit_action(deposit, user, cashbox, price, 'EXAM_DEPOSIT_WITHDRAWAL')

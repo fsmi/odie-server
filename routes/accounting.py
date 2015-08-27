@@ -15,6 +15,7 @@ class ErroneousSaleLoadSchema(Schema):
     amount = fields.Int(required=True, validate=lambda i: i > 0)
     cash_box = CashBoxField()
 
+# db.accounting does its own logging, so these endpoints don't
 
 @api_route('/api/log_erroneous_sale', methods=['POST'])
 @login_required

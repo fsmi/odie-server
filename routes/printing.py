@@ -7,7 +7,7 @@ from flask.ext.login import current_user, login_required
 from marshmallow import fields, Schema
 
 from .common import CashBoxField, PrinterField
-from odie import sqla, ClientError
+from odie import app, sqla, ClientError
 from api_utils import deserialize, api_route, document_path
 from db.documents import Lecture, Deposit, Document
 
@@ -38,6 +38,7 @@ def print_for_folder(data):
     documents = _printable_documents(data['document_ids'])
     paths = [document_path(doc.id) for doc in documents]
     usercode = config.PRINTER_USERCODES['internal']
+    app.logger.info("Printing document ids {} ({} in total) for physical folders on {}".format([doc.id for doc in documents], len(documents), data['printer']))
     config.print_documents(paths, data['cover_text'], data['printer'], usercode)
     for doc in documents:
         doc.present_in_physical_folder = True
@@ -51,6 +52,8 @@ class PrintJobLoadSchema(Schema):
     deposit_count = fields.Int(required=True)
     printer = PrinterField()
 
+
+# all interesting actions in this route are logged by the db accounting side
 
 @api_route('/api/print', methods=['POST'])
 @deserialize(PrintJobLoadSchema)
@@ -66,6 +69,7 @@ def print_documents(data):
     if documents:
         paths = [document_path(doc.id) for doc in documents]
         usercode = config.PRINTER_USERCODES[data['cash_box']]
+        app.logger.info("Printing document ids {} ({} in total) on {} for {}".format([doc.id for doc in documents], len(documents), data['printer'], data['cover_text']))
         config.print_documents(paths, data['cover_text'], data['printer'], usercode)
         num_pages = sum(doc.number_of_pages for doc in documents)
         db.accounting.log_exam_sale(num_pages, price, current_user, data['cash_box'])
