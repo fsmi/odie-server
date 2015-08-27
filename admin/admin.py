@@ -35,7 +35,7 @@ class AuthViewMixin(BaseView):
 
     def _handle_view(self, name, **kwargs):
         if not self.is_accessible():
-            return self.render('unauthorized.html')
+            return self.render('unauthorized.html', login_page=config.FS_CONFIG['LOGIN_PAGE'])
 
 
 class AuthModelView(ModelView, AuthViewMixin):
