@@ -43,14 +43,14 @@ class User(sqla.Model, UserMixin):
     first_name = Column(sqla.Text, name='vorname')
     last_name = Column(sqla.Text, name='nachname')
     pw_hash = Column(sqla.String(255), name='passwort')
-    effective_permissions = sqla.relationship('Permission', secondary=acl.effective_permissions, lazy='dynamic')
+    effective_permissions = sqla.relationship('Permission', secondary=acl.effective_permissions, lazy='joined')
 
     @property
     def full_name(self):
         return self.first_name + ' ' + self.last_name
 
     def has_permission(self, *perm_names):
-        return self.effective_permissions.filter(acl.Permission.name.in_(perm_names)).first() is not None
+        return any(perm.name in perm_names for perm in self.effective_permissions)
 
     @staticmethod
     def authenticate(username, password):
@@ -62,4 +62,3 @@ class User(sqla.Model, UserMixin):
             return user
         else:
             return None
-
