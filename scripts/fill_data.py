@@ -24,7 +24,7 @@ import create_schemas_and_tables
 
 def fill():
     lectures = [
-            Lecture(name='Fortgeschrittenes Nichtstun', aliases=['Ugh'], subject='both', validated=True),
+            Lecture(name='Fortgeschrittenes Nichtstun', aliases=['Ugh'], subject='other', validated=True),
             Lecture(name='Moderne Programmierumgebungen am Beispiel von .SEXY', aliases=['.SEXY'], subject='computer science', validated=True),
             Lecture(name='"Advanced" Operating Systems', aliases=['Stupid Operating Systems'], subject='computer science', validated=True),
             Lecture(name='Einführung in die Kozuch-Theorie', aliases=[], subject='mathematics', validated=True),

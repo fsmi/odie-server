@@ -240,7 +240,6 @@ class LectureView(AuthModelView):
     subject_labels = {
         'computer science': 'Informatik',
         'mathematics': 'Mathematik',
-        'both': 'Beides',
         'other': 'Anderes (Ergänzungsfach)',
     }
     column_formatters = {

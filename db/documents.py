@@ -14,7 +14,7 @@ class Lecture(sqla.Model):
     id = Column(sqla.Integer, primary_key=True)
     name = Column(sqla.String)
     aliases = Column(postgres.ARRAY(sqla.String), server_default='{}')
-    subject = Column(sqla.Enum('mathematics', 'computer science', 'both', 'other', name='subject', inherit_schema=True))
+    subject = Column(sqla.Enum('mathematics', 'computer science', 'other', name='subject', inherit_schema=True))
     comment = Column(sqla.String, server_default='')
     validated = Column(sqla.Boolean)
 

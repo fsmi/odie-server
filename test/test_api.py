@@ -321,7 +321,7 @@ class APITest(OdieTestCase):
                 'lectures': [
                     "Fortgeschrittenes Nichtstun",
                 ],
-                'subject': 'both',
+                'subject': 'computer science',
                 'examinants': ["Anon Ymous"],
                 'date': '2010-01-01T00:00:00',
                 'document_type': 'oral',

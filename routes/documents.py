@@ -103,7 +103,7 @@ class DocumentLoadSchema(Schema):  # used by student document submission
     date = fields.Date(required=True)
     document_type = fields.Str(required=True, validate=OneOf(['oral', 'oral reexam']))
     student_name = fields.Str(required=True)
-    subject = fields.Str(required=True, validate=OneOf(['computer science', 'mathematics', 'both', 'other']))
+    subject = fields.Str(required=True, validate=OneOf(['computer science', 'mathematics', 'other']))
 
 
 def _allowed_file(filename):
