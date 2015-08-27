@@ -52,6 +52,7 @@ class AuthModelView(ModelView, AuthViewMixin):
         for (col, _) in self.get_list_columns():
             attr = attrs[col]
             prop = model.__class__.__mapper__.attrs[col]
+            is_list = isinstance(prop, RelationshipProperty) and prop.uselist
             changed = state == 'changed' and attr.history.has_changes()
             if changed and isinstance(attr.value, datetime.datetime):
                 # special case: convert attr.value from naive to aware datetime
@@ -59,7 +60,7 @@ class AuthModelView(ModelView, AuthViewMixin):
                 changed = val != attr.history.deleted[0]
 
             if changed:
-                if isinstance(prop, RelationshipProperty):
+                if is_list:
                     msg += '**{}: {}**\n'.format(attr.key, ', '.join(
                         list(map(str, attr.history.unchanged)) +
                         ['-{}'.format(val) for val in attr.history.deleted] +
@@ -70,7 +71,7 @@ class AuthModelView(ModelView, AuthViewMixin):
                         attr.key, attr.history.deleted[0], attr.history.added[0]
                     )
             else:
-                if isinstance(prop, RelationshipProperty):
+                if is_list:
                     msg += '{}: {}\n'.format(attr.key, ', '.join(map(str, attr.value)))
                 else:
                     msg += '{}: {}\n'.format(attr.key, attr.value)
