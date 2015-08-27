@@ -169,6 +169,7 @@ class DocumentView(AuthModelView):
 
     list_template = 'document_list.html'
     form_edit_rules = [
+        'department',
         'lectures',
         UnvalidatedList('lectures', 'lecture.edit_view'),
         'examinants',
@@ -191,11 +192,12 @@ class DocumentView(AuthModelView):
         'number_of_pages': {'validators': [Optional()]},
     }
     column_list = (
-        'id', 'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
+        'id', 'department', 'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
         'document_type', 'present_in_physical_folder', 'validated', 'validation_time', 'submitted_by')
-    column_filters = ('id', 'lectures', 'examinants', 'date', 'comment', 'document_type', 'present_in_physical_folder', 'validated', 'validation_time', 'submitted_by')
+    column_filters = ('id', 'department', 'lectures', 'examinants', 'date', 'comment', 'document_type', 'present_in_physical_folder', 'validated', 'validation_time', 'submitted_by')
     column_labels = {
         'id': 'ID',
+        'department': 'Fakultät',
         'lectures': 'Vorlesungen',
         'examinants': 'Prüfer',
         'date': 'Datum',
@@ -208,10 +210,16 @@ class DocumentView(AuthModelView):
         'validation_time': 'Überprüft am',
         'submitted_by': 'Von',
     }
+
     doctype_labels = {
         'oral': 'Mündl.',
         'written': 'Schriftl.',
         'oral reexam': 'Nachprüfung',
+    }
+    department_labels = {
+        'computer science': 'Informatik',
+        'mathematics': 'Mathematik',
+        'other': 'Andere (Ergänzungsfach)',
     }
 
     def format_solution(v, c, model, n):
@@ -225,6 +233,7 @@ class DocumentView(AuthModelView):
         return ''
 
     column_formatters = {
+        'department': lambda v, c, m, n: DocumentView.department_labels[m.department],
         'document_type': lambda v, c, m, n: DocumentView.doctype_labels[m.document_type],
         'solution': format_solution,
         'date': _dateFormatter('date'),
@@ -237,21 +246,12 @@ class LectureView(AuthModelView):
         'comment': {'validators': [Optional()]},
         'aliases': {'validators': [Optional()]},
     }
-    subject_labels = {
-        'computer science': 'Informatik',
-        'mathematics': 'Mathematik',
-        'other': 'Anderes (Ergänzungsfach)',
-    }
-    column_formatters = {
-        'subject': lambda v, c, m, n: LectureView.subject_labels[m.subject],
-    }
     column_labels = {
-        'subject': 'Fach',
         'comment': 'Öffentlicher Kommentar (HTML)',
         'validated': 'Überprüft',
         'aliases': 'Aliase',
     }
-    column_filters = ('id', 'name', 'subject', 'validated')
+    column_filters = ('id', 'name', 'validated')
     column_searchable_list = ['name']
 
 class ExaminantView(AuthModelView):

@@ -14,7 +14,6 @@ class Lecture(sqla.Model):
     id = Column(sqla.Integer, primary_key=True)
     name = Column(sqla.String)
     aliases = Column(postgres.ARRAY(sqla.String), server_default='{}')
-    subject = Column(sqla.Enum('mathematics', 'computer science', 'other', name='subject', inherit_schema=True))
     comment = Column(sqla.String, server_default='')
     validated = Column(sqla.Boolean)
 
@@ -38,6 +37,7 @@ class Document(sqla.Model):
     __table_args__ = config.documents_table_args
 
     id = Column(sqla.Integer, primary_key=True)
+    department = Column(sqla.Enum('mathematics', 'computer science', 'other', name='department', inherit_schema=True))
     lectures = sqla.relationship('Lecture', secondary=lectureDocs,
             backref=sqla.backref('documents', lazy='dynamic'))
     examinants = sqla.relationship('Examinant', secondary=documentExaminants,

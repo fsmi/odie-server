@@ -102,9 +102,9 @@ def document_from_barcode(barcode):
     if namespace == LEGACY_GS1_CS_ORAL_NAMESPACE:
         return Document.query.filter_by(document_type='oral', legacy_id=id).first()
     if namespace == LEGACY_GS1_CS_WRITTEN_NAMESPACE:
-        return Document.query.filter_by(document_type='written', legacy_id=id, subject='computer science').first()
+        return Document.query.filter_by(document_type='written', legacy_id=id, department='computer science').first()
     if namespace == LEGACY_GS1_CS_WRITTEN_NAMESPACE:
-        return Document.query.filter_by(document_type='written', legacy_id=id, subject='mathematics').first()
+        return Document.query.filter_by(document_type='written', legacy_id=id, department='mathematics').first()
     if namespace == GS1_NAMESPACE:
         return Document.query.get(id)
     else:

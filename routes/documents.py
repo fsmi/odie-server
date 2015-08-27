@@ -46,7 +46,6 @@ def scanner(location, id):
 class LectureDumpSchema(IdSchema):
     name = fields.Str()
     aliases = fields.List(fields.Str())
-    subject = fields.Str()
     comment = fields.Str()
     validated = fields.Boolean()
 
@@ -98,12 +97,12 @@ def documents_metadata():
 
 
 class DocumentLoadSchema(Schema):  # used by student document submission
+    department = fields.Str(required=True, validate=OneOf(['computer science', 'mathematics', 'other']))
     lectures = fields.List(fields.Str(), required=True)
     examinants = fields.List(fields.Str(), required=True)
     date = fields.Date(required=True)
     document_type = fields.Str(required=True, validate=OneOf(['oral', 'oral reexam']))
     student_name = fields.Str(required=True)
-    subject = fields.Str(required=True, validate=OneOf(['computer science', 'mathematics', 'other']))
 
 
 def _allowed_file(filename):
@@ -128,20 +127,17 @@ def submit_document():
     if errors:
         raise ClientError(*errors)
     assert 'file' in request.files
-    subject = data['subject']
     file = request.files['file']
     if not _allowed_file(file.filename):
         raise ClientError('file extension not allowed', status=406)
     lectures = []
     for lect in data['lectures']:
         try:
-            l = Lecture.query.filter_by(name=lect, subject=subject).one()
+            l = Lecture.query.filter_by(name=lect).one()
             lectures.append(l)
         except NoResultFound:
             # no dice, add a new unverified lecture
-            l = Lecture(name=lect,
-                    subject=subject,
-                    validated=False)
+            l = Lecture(name=lect, validated=False)
             lectures.append(l)
             sqla.session.add(l)
     examinants = []
@@ -156,6 +152,7 @@ def submit_document():
     date = data['date']
     assert date <= datetime.date.today()
     new_doc = Document(
+            department=data['department'],
             lectures=lectures,
             examinants=examinants,
             date=date,

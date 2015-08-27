@@ -65,11 +65,10 @@ class APITest(OdieTestCase):
         self.assertIn('name', lecture)
         self.assertIn('aliases', lecture)
         self.assertNotIn('name', lecture['aliases'])
-        self.assertIn('subject', lecture)
-        self.assertIsInstance(lecture['subject'], str)
         self.assertIn('comment', lecture)
 
     def validate_document(self, document):
+        self.assertIn('department', document)
         self.assertIn('lectures', document)
         # TODO
         pass
@@ -321,7 +320,7 @@ class APITest(OdieTestCase):
                 'lectures': [
                     "Fortgeschrittenes Nichtstun",
                 ],
-                'subject': 'computer science',
+                'department': 'computer science',
                 'examinants': ["Anon Ymous"],
                 'date': '2010-01-01T00:00:00',
                 'document_type': 'oral',
