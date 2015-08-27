@@ -17,7 +17,7 @@ from db.fsmi import User, Cookie
 login_page_text = """<html>
 <body>
 <h1>Login</h1>
-<form action="/login?next=%s" method='post'>
+<form action="/login?target_path=%s" method='post'>
   <input name='username' placeholder="Username"/>
   <input name='password' placeholder="Password" type='password'/>
   <button type='submit'>Login</button>
@@ -49,6 +49,7 @@ def login_page():
 
 
 @app.route('/logout')
+@csrf.exempt
 @handle_client_errors
 @login_required
 def logout():
