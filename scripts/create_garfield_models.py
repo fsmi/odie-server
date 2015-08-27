@@ -21,6 +21,7 @@ config.FlaskConfig.SQLALCHEMY_BINDS = {'garfield': uri}
 config.FlaskConfig.SQLALCHEMY_DATABASE_URI = uri
 
 import sqlalchemy
+import db.garfield  # pylint: disable=unused-import
 import db.documents  # pylint: disable=unused-import
 import db.odie  # pylint: disable=unused-import
 
@@ -37,6 +38,7 @@ def createSchema(name, bind=None):
 
 createSchema('public')
 createSchema('odie')
+createSchema('garfield')
 createSchema('documents')
 
 sqla.create_all()

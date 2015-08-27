@@ -1,5 +1,5 @@
 [MESSAGES CONTROL]
-disable=unused-argument,missing-docstring,line-too-long,no-init,invalid-name,too-many-ancestors,too-few-public-methods,locally-disabled,redefined-builtin,global-statement,bad-continuation,fixme
+disable=unused-argument,missing-docstring,line-too-long,no-init,invalid-name,too-many-ancestors,too-few-public-methods,locally-disabled,redefined-builtin,global-statement,bad-continuation,fixme,no-self-use
 
 [TYPECHECK]
 generated-members=query

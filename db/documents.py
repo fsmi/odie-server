@@ -5,6 +5,7 @@ import sqlalchemy
 
 from odie import sqla, Column
 from sqlalchemy.dialects import postgres
+from db import garfield
 
 
 class Lecture(sqla.Model):
@@ -32,6 +33,9 @@ documentExaminants = sqla.Table('document_examinants',
         **config.documents_table_args)
 
 
+document_type = sqla.Enum('oral', 'written', 'oral reexam', name='document_type', inherit_schema=True)
+
+
 class Document(sqla.Model):
     __tablename__ = 'documents'
     __table_args__ = config.documents_table_args
@@ -46,13 +50,12 @@ class Document(sqla.Model):
     number_of_pages = Column(sqla.Integer, server_default='0')
     solution = Column(sqla.Enum('official', 'inofficial', 'none', name='solution', inherit_schema=True), nullable=True)
     comment = Column(sqla.String, server_default='')
-    document_type = Column(sqla.Enum('oral', 'written', 'oral reexam', name='type', inherit_schema=True))
+    document_type = Column(document_type)
     has_file = Column(sqla.Boolean, server_default=sqlalchemy.sql.expression.false())
     validated = Column(sqla.Boolean)
     validation_time = Column(sqla.DateTime(timezone=True), nullable=True)
     submitted_by = Column(sqla.String, nullable=True)
     legacy_id = Column(sqla.Integer, nullable=True)  # old id from fs-deluxe, so we can recognize the old barcodes
-    present_in_physical_folder = Column(sqla.Boolean, server_default=sqlalchemy.sql.expression.false())
 
     @property
     def examinants_names(self):
@@ -63,7 +66,6 @@ class Document(sqla.Model):
         return config.FS_CONFIG['PRICE_PER_PAGE'] * self.number_of_pages
 
 
-
 class Examinant(sqla.Model):
     __tablename__ = 'examinants'
     __table_args__ = config.documents_table_args
@@ -71,6 +73,40 @@ class Examinant(sqla.Model):
     id = Column(sqla.Integer, primary_key=True)
     name = Column(sqla.String)
     validated = Column(sqla.Boolean)
+
+    def __str__(self):
+        return self.name
+
+
+folder_docs = sqla.Table('folder_docs',
+        Column('folder_id', sqla.Integer, sqla.ForeignKey('documents.folders.id', ondelete='CASCADE')),
+        Column('document_id', sqla.Integer, sqla.ForeignKey('documents.documents.id', ondelete='CASCADE')),
+        **config.documents_table_args)
+
+folder_examinants = sqla.Table('folder_examinants',
+        Column('folder_id', sqla.Integer, sqla.ForeignKey('documents.folders.id', ondelete='CASCADE')),
+        Column('examinant_id', sqla.Integer, sqla.ForeignKey('documents.examinants.id', ondelete='CASCADE')),
+        **config.documents_table_args)
+
+folder_lectures = sqla.Table('folder_lectures',
+        Column('folder_id', sqla.Integer, sqla.ForeignKey('documents.folders.id', ondelete='CASCADE')),
+        Column('lecture_id', sqla.Integer, sqla.ForeignKey('documents.lectures.id', ondelete='CASCADE')),
+        **config.documents_table_args)
+
+
+class Folder(sqla.Model):
+    __tablename__ = 'folders'
+    __table_args__ = config.documents_table_args
+
+    id = Column(sqla.Integer, primary_key=True)
+    name = Column(sqla.String)
+    location_id = Column(sqla.Integer, sqla.ForeignKey(garfield.Location.id))
+    document_type = Column(document_type)
+
+    location = sqla.relationship(garfield.Location, backref='folders', lazy='joined', uselist=False)
+    examinants = sqla.relationship('Examinant', secondary=folder_examinants, backref=sqla.backref('folders'), lazy='subquery')
+    lectures = sqla.relationship('Lecture', secondary=folder_lectures, backref=sqla.backref('folders'), lazy='subquery')
+    printed_docs = sqla.relationship('Document', secondary=folder_docs, backref=sqla.backref('printed_in'))
 
     def __str__(self):
         return self.name

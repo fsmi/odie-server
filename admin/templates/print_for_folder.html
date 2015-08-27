@@ -1,0 +1,23 @@
+{% extends 'main.html' %}
+{% block body %}
+<ul>
+  {% for folder in folders %}
+  <li>{{ folder[0].name }} ({{ folder[1] }})</li>
+  {% endfor %}
+</ul>
+<form action="{{ url_for('.print_all') }}" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+  <button class="btn btn-primary" name="button" value="button">Alle drucken</button>
+</form>
+{% if printed_folders %}
+Letzter Druck:
+<ul>
+  {% for folder in printed_folders %}
+  <li>{{ folder[0].name }} ({{ folder[1] }})</li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% if examinants_without_folders %}
+<p>Hinweis: Prüfer ohne Ordner: {{ examinants_without_folders | join(', ') }}</p>
+{% endif %}
+{% endblock %}

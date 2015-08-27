@@ -12,7 +12,8 @@ import crypt
 
 from odie import sqla
 
-from db.documents import Lecture, Document, Examinant, Deposit
+from db.documents import Lecture, Document, Examinant, Deposit, Folder
+from db.garfield import Location
 from db.fsmi import User
 from db.acl import Permission
 from db.odie import Order
@@ -65,17 +66,32 @@ def fill():
         sqla.session.add(d)
 
 
+    # Location
 
+    fsi = Location(name='FSI', description='Info-Raum')
+    sqla.session.add(fsi)
+    fsm = Location(name='FSM', description='Mathe-Raum')
+    sqla.session.add(fsm)
+
+
+    # Folder
+
+    folders = [
+        Folder(name='Mündliche Nachprüfungen', document_type='oral reexam', location=fsi),  # hyper-special folder
+        Folder(name='Fo realz', examinants=[profs[0], profs[2]], document_type='oral', location=fsi),
+        Folder(name='Best buddies', lectures=[lectures[7]], examinants=[profs[2]], document_type='written', location=fsm),
+    ]
+
+    for f in folders:
+        sqla.session.add(f)
 
 
     # Order
 
-    sqla.session.add(Order(name='Hatsune Miku', document_ids=[1,4], creation_time=time(2009, 4, 2)))
-    sqla.session.add(Order(name='Megurine Luka', document_ids=[4,3,2], creation_time=time(2012, 10, 10)))
-    sqla.session.add(Order(name='Kagamine Rin', document_ids=[2], creation_time=time(2011, 1, 3)))
-    sqla.session.add(Order(name='Kagamine Len', document_ids=[2], creation_time=time(2014, 1, 2)))
-
-
+    sqla.session.add(Order(name='Hatsune Miku', document_ids=[1,4], creation_time=datetime(2009, 4, 2)))
+    sqla.session.add(Order(name='Megurine Luka', document_ids=[4,3,2], creation_time=datetime(2012, 10, 10)))
+    sqla.session.add(Order(name='Kagamine Rin', document_ids=[2], creation_time=datetime(2011, 1, 3)))
+    sqla.session.add(Order(name='Kagamine Len', document_ids=[2], creation_time=datetime(2014, 1, 2)))
 
 
     # Users and auth
