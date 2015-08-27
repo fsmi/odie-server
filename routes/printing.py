@@ -12,39 +12,6 @@ from api_utils import deserialize, api_route, document_path
 from db.documents import Lecture, Deposit, Document
 
 
-def _lectures(document_ids):
-    return Lecture.query.filter(Lecture.documents.any(
-        Document.id.in_(document_ids))).all()
-
-def _printable_documents(document_ids):
-    document_objs = Document.query.filter(Document.id.in_(document_ids)).all()
-    if any(not doc.has_file for doc in document_objs):
-        raise ClientError('Tried to print at least one document without file', status=400)
-    # sort the docs into the same order they came in the request
-    docs_by_id = {doc.id: doc for doc in document_objs}
-    return [docs_by_id[id] for id in document_ids]
-
-
-class PrintForFolderLoadSchema(Schema):
-    cover_text = fields.Str(required=True)
-    document_ids = fields.List(fields.Int(), required=True)
-    printer = PrinterField()
-
-
-@api_route('/api/print_for_folder', methods=['POST'])
-@deserialize(PrintForFolderLoadSchema)
-@login_required
-def print_for_folder(data):
-    documents = _printable_documents(data['document_ids'])
-    paths = [document_path(doc.id) for doc in documents]
-    usercode = config.PRINTER_USERCODES['internal']
-    app.logger.info("Printing document ids {} ({} in total) for physical folders on {}".format([doc.id for doc in documents], len(documents), data['printer']))
-    config.print_documents(paths, data['cover_text'], data['printer'], usercode)
-    for doc in documents:
-        doc.present_in_physical_folder = True
-    sqla.session.commit()
-
-
 class PrintJobLoadSchema(Schema):
     cover_text = fields.Str(required=True)
     cash_box = CashBoxField()
@@ -59,7 +26,13 @@ class PrintJobLoadSchema(Schema):
 @deserialize(PrintJobLoadSchema)
 @login_required
 def print_documents(data):
-    documents = _printable_documents(data['document_ids'])
+    document_ids = data['document_ids']
+    document_objs = Document.query.filter(Document.id.in_(document_ids)).all()
+    if any(not doc.has_file for doc in document_objs):
+        raise ClientError('Tried to print at least one document without file', status=400)
+    # sort the docs into the same order they came in the request
+    docs_by_id = {doc.id: doc for doc in document_objs}
+    documents = [docs_by_id[id] for id in document_ids]
 
     assert data['deposit_count'] >= 0
     price = sum(doc.price for doc in documents)
@@ -69,16 +42,16 @@ def print_documents(data):
     if documents:
         paths = [document_path(doc.id) for doc in documents]
         usercode = config.PRINTER_USERCODES[data['cash_box']]
-        app.logger.info("Printing document ids {} ({} in total) on {} for {}".format([doc.id for doc in documents], len(documents), data['printer'], data['cover_text']))
         config.print_documents(paths, data['cover_text'], data['printer'], usercode)
         num_pages = sum(doc.number_of_pages for doc in documents)
         db.accounting.log_exam_sale(num_pages, price, current_user, data['cash_box'])
     for _ in range(data['deposit_count']):
+        lectures = Lecture.query.filter(Lecture.documents.any(Document.id.in_(document_ids))).all()
         dep = Deposit(
                 price=config.FS_CONFIG['DEPOSIT_PRICE'],
                 name=data['cover_text'],
                 by_user=current_user.full_name,
-                lectures=_lectures(data['document_ids']))
+                lectures=lectures)
         sqla.session.add(dep)
         db.accounting.log_deposit(dep, current_user, data['cash_box'])
     sqla.session.commit()

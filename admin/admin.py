@@ -9,7 +9,8 @@ import os
 
 from odie import app, sqla
 from api_utils import document_path, save_file
-from db.documents import Document, Lecture, Examinant, Deposit
+from db.documents import Document, Lecture, Examinant, Deposit, Folder
+from db.garfield import Location
 from .fields import ViewButton, UnvalidatedList
 
 from flask import redirect, url_for
@@ -52,6 +53,7 @@ class AuthModelView(ModelView, AuthViewMixin):
         for (col, _) in self.get_list_columns():
             attr = attrs[col]
             prop = model.__class__.__mapper__.attrs[col]
+            is_list = isinstance(prop, RelationshipProperty) and prop.uselist
             changed = state == 'changed' and attr.history.has_changes()
             if changed and isinstance(attr.value, datetime.datetime):
                 # special case: convert attr.value from naive to aware datetime
@@ -59,7 +61,7 @@ class AuthModelView(ModelView, AuthViewMixin):
                 changed = val != attr.history.deleted[0]
 
             if changed:
-                if isinstance(prop, RelationshipProperty):
+                if is_list:
                     msg += '**{}: {}**\n'.format(attr.key, ', '.join(
                         list(map(str, attr.history.unchanged)) +
                         ['-{}'.format(val) for val in attr.history.deleted] +
@@ -70,7 +72,7 @@ class AuthModelView(ModelView, AuthViewMixin):
                         attr.key, attr.history.deleted[0], attr.history.added[0]
                     )
             else:
-                if isinstance(prop, RelationshipProperty):
+                if is_list:
                     msg += '{}: {}\n'.format(attr.key, ', '.join(map(str, attr.value)))
                 else:
                     msg += '{}: {}\n'.format(attr.key, attr.value)
@@ -92,6 +94,56 @@ class ClientRedirectView(BaseView):
     @expose('/')
     def index(self):
         return redirect(url_for('.index') + '../../web/')
+
+class PrintForFolderView(AuthViewMixin):
+    allowed_roles = ['info_protokolle', 'mathe_protokolle']
+
+    def _query_unprinted(self, folder):
+        q = Document.query.filter_by(document_type=folder.document_type)
+        q = q.filter(~Document.printed_in.contains(folder))
+        if folder.examinants:
+            q = q.filter(Document.examinants.any(Examinant.folders.contains(folder)))
+        if folder.lectures:
+            q = q.filter(Document.lectures.any(Lecture.folders.contains(folder)))
+        return q
+
+    def _get_location(self):
+        # Nobody would ever be a member of both groups at the same time, right?
+        if current_user.has_permission('info_protokolle'):
+            return 'FSI'
+        if current_user.has_permission('mathe_protokolle'):
+            return 'FSM'
+
+    def _get_folders_with_counts(self):
+        for folder in Folder.query.filter(Location.name == self._get_location()).order_by(Folder.name).all():
+            count = self._query_unprinted(folder).count()
+            if count:
+                yield (folder, count)
+
+    @expose('/')
+    def index(self):
+        return self.render('print_for_folder.html',
+                           folders=self._get_folders_with_counts(),
+                           examinants_without_folders=Examinant.query.filter(~Examinant.folders.any()).order_by(Examinant.name).all())
+
+    @expose('/print-all', methods=['POST'])
+    def print_all(self):
+        folders = list(self._get_folders_with_counts())
+        for folder, _ in folders:
+            documents = self._query_unprinted(folder).all()
+            config.print_documents(
+                doc_paths=[document_path(doc.id) for doc in documents],
+                cover_text=None,
+                printer=config.FS_CONFIG['OFFICES'][self._get_location()]['printers'][0],
+                usercode=config.PRINTER_USERCODES['internal']
+            )
+            folder.printed_docs += documents
+            sqla.session.commit()
+
+        return self.render('print_for_folder.html',
+                           printed_folders=folders,
+                           examinants_without_folders=Examinant.query.filter(~Examinant.folders.any()).sort_by(Examinant.name).all())
+
 
 class AuthIndexView(AuthViewMixin, AdminIndexView):
     # This is the only way I could find to make the Home tab de facto disappear:
@@ -179,13 +231,12 @@ class DocumentView(AuthModelView):
         'document_type',
         'number_of_pages',
         'comment',
-        'present_in_physical_folder',
         'validated',
         'submitted_by',
         'file',
         ViewButton(),
     ]
-    form_excluded_columns = ('validation_time', 'has_file', 'legacy_id')  # this isn't strictly necessary, but it shuts up a warning
+    form_excluded_columns = ('validation_time', 'has_file', 'legacy_id', 'printed_in')  # this isn't strictly necessary, but it shuts up a warning
     form_extra_fields = {'file': FileUploadField()}
     form_args = {
         'comment': {'validators': [Optional()]},
@@ -193,8 +244,8 @@ class DocumentView(AuthModelView):
     }
     column_list = (
         'id', 'department', 'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
-        'document_type', 'present_in_physical_folder', 'validated', 'validation_time', 'submitted_by')
-    column_filters = ('id', 'department', 'lectures', 'examinants', 'date', 'comment', 'document_type', 'present_in_physical_folder', 'validated', 'validation_time', 'submitted_by')
+        'document_type', 'validated', 'validation_time', 'submitted_by')
+    column_filters = ('id', 'department', 'lectures', 'examinants', 'date', 'comment', 'document_type', 'validated', 'validation_time', 'submitted_by')
     column_labels = {
         'id': 'ID',
         'department': 'Fakultät',
@@ -205,7 +256,6 @@ class DocumentView(AuthModelView):
         'solution': 'Lösung',
         'comment': 'Kommentar',
         'document_type': 'Typ',
-        'present_in_physical_folder': 'Ausgedruckt für Präsenzordner',
         'validated': 'Überprüft',
         'validation_time': 'Überprüft am',
         'submitted_by': 'Von',
@@ -262,6 +312,15 @@ class ExaminantView(AuthModelView):
     column_filters = ('id', 'name', 'validated')
     column_searchable_list = ['name']
 
+class FolderView(AuthModelView):
+    form_excluded_columns = ('printed_docs',)
+    column_labels = {
+        'location': 'Ort',
+        'document_type': 'Dokumententyp',
+        'examinants': 'Prüfer',
+        'lectures': 'Vorlesungen'
+    }
+
 class DepositView(AuthModelView):
     allowed_roles = ['adm']
     column_labels = {
@@ -287,9 +346,11 @@ model_views = collections.OrderedDict([
     (Document, DocumentView(Document, sqla.session, name='Dokumente')),
     (Lecture, LectureView(Lecture, sqla.session, name='Vorlesungen')),
     (Examinant, ExaminantView(Examinant, sqla.session, name='Prüfer')),
+    (Folder, FolderView(Folder, sqla.session, name='Ordner')),
     (Deposit, DepositView(Deposit, sqla.session, name='Pfand')),
 ])
 
 admin.add_view(ClientRedirectView(name='Zurück zu Odie'))
 for view in model_views.values():
     admin.add_view(view)
+admin.add_view(PrintForFolderView(name='Protokolle für Ordner ausdrucken'))

@@ -5,6 +5,7 @@ echo "drop schema public cascade;" | psql -d fsmi
 
 echo "drop schema odie cascade;" | psql -d garfield
 echo "drop schema documents cascade;" | psql -d garfield
+echo "drop schema garfield cascade;" | psql -d garfield
 echo "drop schema public cascade;" | psql -d garfield
 
 echo "create schema public;" | psql -d fsmi

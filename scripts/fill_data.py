@@ -12,12 +12,13 @@ import crypt
 
 from odie import sqla
 
-from db.documents import Lecture, Document, Examinant, Deposit
+from db.documents import Lecture, Document, Examinant, Deposit, Folder
+from db.garfield import Location
 from db.fsmi import User
 from db.acl import Permission
 from db.odie import Order
 
-from datetime import datetime as time
+from datetime import datetime
 
 # force creation of schemas and tables
 import create_schemas_and_tables
@@ -53,29 +54,44 @@ def fill():
 
     # assumptions in tests: the first two documents have has_file=True, the third one doesn't
     docs = [
-                Document(department='computer science', lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=time(2010, 4, 1), number_of_pages=4, document_type='oral', validated=True, has_file=True),
-                Document(department='computer science', lectures=[lectures[6], lectures[7]], examinants=[profs[1]], date=time(2004, 10, 4), number_of_pages=1, document_type='oral', validated=True, has_file=True),
-                Document(department='computer science', lectures=[lectures[4], lectures[3], lectures[2]], examinants=[profs[1], profs[0]], date=time(2004, 8, 2), number_of_pages=2, document_type='oral', validated=True),
-                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 1, 1), number_of_pages=7, document_type='oral', validated=True),
-                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2000, 2, 3), number_of_pages=7, document_type='oral', validated=True),
-                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=time(2001, 2, 3), number_of_pages=2, document_type='oral', validated=False, submitted_by='Monty Montgomery'),
+                Document(department='computer science', lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=datetime(2010, 4, 1), validation_time=datetime(2010, 4, 2), number_of_pages=4, document_type='oral', validated=True, has_file=True),
+                Document(department='computer science', lectures=[lectures[6], lectures[7]], examinants=[profs[1]], date=datetime(2004, 10, 4), number_of_pages=1, validation_time=datetime(2010, 10, 5), document_type='oral', validated=True, has_file=True),
+                Document(department='computer science', lectures=[lectures[4], lectures[3], lectures[2]], examinants=[profs[1], profs[0]], date=datetime(2004, 8, 2), validation_time=datetime(2010, 8, 3), number_of_pages=2, document_type='oral', validated=True),
+                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=datetime(2000, 1, 1), validation_time=datetime(2000, 1, 2), number_of_pages=7, document_type='oral', validated=True),
+                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=datetime(2000, 2, 3), validation_time=datetime(2000, 2, 4), number_of_pages=7, document_type='oral', validated=True),
+                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=datetime(2001, 2, 3), validation_time=datetime(2001, 2, 4), number_of_pages=2, document_type='oral', validated=False, submitted_by='Monty Montgomery'),
         ]
 
     for d in docs:
         sqla.session.add(d)
 
 
+    # Location
 
+    fsi = Location(name='FSI', description='Info-Raum')
+    sqla.session.add(fsi)
+    fsm = Location(name='FSM', description='Mathe-Raum')
+    sqla.session.add(fsm)
+
+
+    # Folder
+
+    folders = [
+        Folder(name='Mündliche Nachprüfungen', document_type='oral reexam', location=fsi),  # hyper-special folder
+        Folder(name='Fo realz', examinants=[profs[0], profs[2]], document_type='oral', location=fsi),
+        Folder(name='Best buddies', lectures=[lectures[7]], examinants=[profs[2]], document_type='written', location=fsm),
+    ]
+
+    for f in folders:
+        sqla.session.add(f)
 
 
     # Order
 
-    sqla.session.add(Order(name='Hatsune Miku', document_ids=[1,4], creation_time=time(2009, 4, 2)))
-    sqla.session.add(Order(name='Megurine Luka', document_ids=[4,3,2], creation_time=time(2012, 10, 10)))
-    sqla.session.add(Order(name='Kagamine Rin', document_ids=[2], creation_time=time(2011, 1, 3)))
-    sqla.session.add(Order(name='Kagamine Len', document_ids=[2], creation_time=time(2014, 1, 2)))
-
-
+    sqla.session.add(Order(name='Hatsune Miku', document_ids=[1,4], creation_time=datetime(2009, 4, 2)))
+    sqla.session.add(Order(name='Megurine Luka', document_ids=[4,3,2], creation_time=datetime(2012, 10, 10)))
+    sqla.session.add(Order(name='Kagamine Rin', document_ids=[2], creation_time=datetime(2011, 1, 3)))
+    sqla.session.add(Order(name='Kagamine Len', document_ids=[2], creation_time=datetime(2014, 1, 2)))
 
 
     # Users and auth
