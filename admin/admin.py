@@ -13,7 +13,7 @@ from db.documents import Document, Lecture, Examinant, Deposit, Folder
 from db.garfield import Location
 from .fields import ViewButton, UnvalidatedList
 
-from flask import redirect, url_for
+from flask import redirect, request, url_for
 from flask_admin import Admin, BaseView, AdminIndexView, expose
 from flask_admin.form import FileUploadField
 from flask_admin.contrib.sqla import ModelView
@@ -36,9 +36,12 @@ class AuthViewMixin(BaseView):
     def is_accessible(self):
         return current_user.is_authenticated() and current_user.has_permission(*self.allowed_roles)
 
-    def _handle_view(self, name, **kwargs):
-        if not self.is_accessible():
-            return self.render('unauthorized.html', login_page=config.FS_CONFIG['LOGIN_PAGE'])
+    def inaccessible_callback(self, name, **kwargs):
+        return self.render(
+                'unauthorized.html',
+                login_page=config.FS_CONFIG['LOGIN_PAGE'],
+                target_paras='&'.join('{}={}'.format(k, v) for k, v in request.args.items()),
+                target_path=request.script_root + request.path)
 
 
 class AuthModelView(ModelView, AuthViewMixin):
