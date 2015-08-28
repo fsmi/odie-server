@@ -90,6 +90,7 @@ class AuthModelView(ModelView, AuthViewMixin):
         return super().delete_model(model)
 
 
+# obviously this won't work when running locally, as client and server won't share an origin, but it's still nice to have
 class ClientRedirectView(BaseView):
     @expose('/')
     def index(self):
