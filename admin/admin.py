@@ -166,7 +166,7 @@ class DocumentView(AuthModelView):
 
     def delete_model(self, model):
         super().delete_model(model)
-        if model.has_file:
+        if model.has_file and os.path.exists(document_path(model.id)) and not app.config['DEBUG']:
             os.unlink(document_path(model.id))
 
 
@@ -186,7 +186,7 @@ class DocumentView(AuthModelView):
     def _handle_file_upload(self, file, form, model):
         got_new_file = False
         if file.data:
-            if model.has_file:
+            if model.has_file and os.path.exists(document_path(model.id)) and not app.config['DEBUG']:
                 # delete old file
                 os.unlink(document_path(model.id))
             save_file(model, file.data)
