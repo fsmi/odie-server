@@ -18,6 +18,7 @@ class PrintJobLoadSchema(Schema):
     document_ids = fields.List(fields.Int(), required=True)
     deposit_count = fields.Int(required=True)
     printer = PrinterField()
+    price = fields.Int(required=True)  # for validation
 
 
 # all interesting actions in this route are logged by the db accounting side
@@ -37,7 +38,7 @@ def print_documents(data):
     assert data['deposit_count'] >= 0
     price = sum(doc.price for doc in documents)
     # round up to next 10 cents
-    price = 10 * (price/10 + (1 if price % 10 else 0))
+    price = 10 * (price//10 + (1 if price % 10 else 0))
 
     if documents:
         paths = [document_path(doc.id) for doc in documents]
