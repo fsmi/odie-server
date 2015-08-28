@@ -325,7 +325,7 @@ class FolderView(AuthModelView):
     }
 
 class DepositView(AuthModelView):
-    allowed_roles = ['adm']
+    allowed_roles = ['kasse', 'adm']
     column_labels = {
         'price': 'Geldwert',
         'by_user': 'Eingetragen von',

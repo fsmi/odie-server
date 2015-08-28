@@ -18,6 +18,7 @@ class PrintJobLoadSchema(Schema):
     document_ids = fields.List(fields.Int(), required=True)
     deposit_count = fields.Int(required=True)
     printer = PrinterField()
+    price = fields.Int(required=True)  # for validation
 
 
 # all interesting actions in this route are logged by the db accounting side
@@ -35,16 +36,17 @@ def print_documents(data):
     documents = [docs_by_id[id] for id in document_ids]
 
     assert data['deposit_count'] >= 0
-    price = sum(doc.price for doc in documents)
+    print_price = sum(doc.price for doc in documents)
     # round up to next 10 cents
-    price = 10 * (price/10 + (1 if price % 10 else 0))
+    print_price = 10 * (print_price//10 + (1 if print_price % 10 else 0))
+    assert print_price + data['deposit_count'] * config.FS_CONFIG['DEPOSIT_PRICE'] == data['price']
 
     if documents:
         paths = [document_path(doc.id) for doc in documents]
         usercode = config.PRINTER_USERCODES[data['cash_box']]
         config.print_documents(paths, data['cover_text'], data['printer'], usercode)
         num_pages = sum(doc.number_of_pages for doc in documents)
-        db.accounting.log_exam_sale(num_pages, price, current_user, data['cash_box'])
+        db.accounting.log_exam_sale(num_pages, print_price, current_user, data['cash_box'])
     for _ in range(data['deposit_count']):
         lectures = Lecture.query.filter(Lecture.documents.any(Document.id.in_(document_ids))).all()
         dep = Deposit(
