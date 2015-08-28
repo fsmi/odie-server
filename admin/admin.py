@@ -25,7 +25,9 @@ from wtforms.validators import Optional
 def _dateFormatter(attr_name):
     def f(v, c, m, n):
         d = getattr(m, attr_name)
-        return d.date() if d else ''
+        if isinstance(d, datetime.datetime):
+            d = d.date()
+        return d if d else ''
     return f
 
 class AuthViewMixin(BaseView):
@@ -90,6 +92,7 @@ class AuthModelView(ModelView, AuthViewMixin):
         return super().delete_model(model)
 
 
+# obviously this won't work when running locally, as client and server won't share an origin, but it's still nice to have
 class ClientRedirectView(BaseView):
     @expose('/')
     def index(self):
