@@ -303,7 +303,7 @@ class APITest(OdieTestCase):
                 ],
                 'department': 'computer science',
                 'examinants': ["Anon Ymous"],
-                'date': '2010-01-01T00:00:00',
+                'date': '2010-01-01',
                 'document_type': 'oral',
                 'student_name': UNUSED,
         }
@@ -348,10 +348,9 @@ class APITest(OdieTestCase):
         # We throw away the timezone on the date, so make sure tests and db are
         # executed in the same timezone. (this is due to strptime not supporting
         # the format of timezone info we get)
-        frmt = '%Y-%m-%dT%H:%M:%S'
-        frmtlen = (4 + 2 + 2 + 2 + 2 + 2) + 5  # length of each field + length of padding chars
-        submitted_date = datetime.datetime.strptime(self.DOCUMENT_SUBMISSION_JSON['date'][:frmtlen], frmt)
-        received_date = datetime.datetime.strptime(data[0]['date'][:frmtlen], frmt)
+        frmt = '%Y-%m-%d'
+        submitted_date = datetime.datetime.strptime(self.DOCUMENT_SUBMISSION_JSON['date'], frmt).date()
+        received_date = datetime.datetime.strptime(data[0]['date'], frmt).date()
         self.assertEqual(submitted_date, received_date)
         # This field will only be populated if the upload succeeded and the PDF was successfully processed
         self.assertEqual(data[0]['number_of_pages'], 1)

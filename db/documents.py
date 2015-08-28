@@ -46,7 +46,7 @@ class Document(sqla.Model):
             backref=sqla.backref('documents', lazy='dynamic'))
     examinants = sqla.relationship('Examinant', secondary=documentExaminants,
             backref=sqla.backref('documents', lazy='dynamic'))
-    date = Column(sqla.DateTime(timezone=True))
+    date = Column(sqla.Date())
     number_of_pages = Column(sqla.Integer, server_default='0')
     solution = Column(sqla.Enum('official', 'inofficial', 'none', name='solution', inherit_schema=True), nullable=True)
     comment = Column(sqla.String, server_default='')
