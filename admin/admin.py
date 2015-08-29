@@ -165,13 +165,12 @@ class AuthIndexView(AuthViewMixin, AdminIndexView):
         # automatically redirect to document listing
         return redirect(url_for('document.index_view'))
 
-class DocumentView(AuthModelView):
 
+class DocumentView(AuthModelView):
     def delete_model(self, model):
         super().delete_model(model)
         if model.has_file and os.path.exists(document_path(model.id)) and not app.config['DEBUG']:
             os.unlink(document_path(model.id))
-
 
     def _hide_file_upload(self, form):
         # We don't want flask-admin to handle the uploaded file, we'll do that ourselves.
@@ -251,7 +250,7 @@ class DocumentView(AuthModelView):
     column_list = (
         'id', 'department', 'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
         'document_type', 'validated', 'validation_time', 'submitted_by')
-    column_filters = ('id', 'department', 'lectures', 'examinants', 'date', 'comment', 'document_type', 'validated', 'validation_time', 'submitted_by')
+    column_filters = ('id', 'department', 'lectures', 'examinants', 'date', 'solution', 'comment', 'document_type', 'validated', 'validation_time', 'submitted_by')
     column_labels = {
         'id': 'ID',
         'department': 'Fakultät',
