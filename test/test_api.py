@@ -47,17 +47,27 @@ class APITest(OdieTestCase):
     token = None
 
     def login(self, user=VALID_USER, password=VALID_PASS):
-        self.app.post('/login', data={
+        self.post('/login', data={
                 'username': user,
                 'password': password
             })
-        res = self.app.get('/api/user_info')
+        res = self.get('/api/user_info')
         if res.status_code == 200:
             self.token = self.fromJsonResponse(res)['token']
         return res
 
+    def get(self, *args, **kwargs):
+        kwargs.setdefault('headers', {})
+        kwargs['headers']['Accept'] = 'text/html;q=0.8, application/json;q=0.9'
+        return self.app.get(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        kwargs.setdefault('headers', {})
+        kwargs['headers']['Accept'] = 'text/html;q=0.8, application/json;q=0.9'
+        return self.app.post(*args, **kwargs)
+
     def post_auth(self, *args, **kwargs):
-        return self.app.post(*args, headers={'X-CSRFToken': self.token}, **kwargs)
+        return self.post(*args, headers={'X-CSRFToken': self.token}, **kwargs)
 
     def delete_auth(self, *args, **kwargs):
         return self.app.delete(*args, headers={'X-CSRFToken': self.token}, **kwargs)
@@ -77,7 +87,7 @@ class APITest(OdieTestCase):
     ## tests for unauthenticated api ##
 
     def test_get_config(self):
-        res = self.app.get('/api/config')
+        res = self.get('/api/config')
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
         self.assertIn('DEPOSIT_PRICE', data)
@@ -85,7 +95,7 @@ class APITest(OdieTestCase):
         self.assertIn('PRICE_PER_PAGE', data)
 
     def test_get_lectures(self):
-        res = self.app.get('/api/lectures')
+        res = self.get('/api/lectures')
         data = self.fromJsonResponse(res)
         self.assertIsInstance(data, list)
         self.assertTrue(len(data) > 1)
@@ -94,7 +104,7 @@ class APITest(OdieTestCase):
         self.validate_lecture(lecture)
 
     def test_get_documents(self):
-        res = self.app.get('/api/documents')
+        res = self.get('/api/documents')
         documents = self.fromJsonResponse(res)
         for doc in documents:
             self.validate_document(doc)
@@ -102,31 +112,31 @@ class APITest(OdieTestCase):
 
     def test_get_documents_logged_in(self):
         self.login()
-        res = self.app.get('/api/documents')
+        res = self.get('/api/documents')
         documents = self.fromJsonResponse(res)
         for doc in documents:
             self.assertIn('submitted_by', doc)
 
     def test_get_documents_meta(self):
-        res = self.app.get('/api/documents/meta?filters={"includes_lectures":[1]}')
+        res = self.get('/api/documents/meta?filters={"includes_lectures":[1]}')
         data = self.fromJsonResponse(res)
         all_docs = Lecture.query.get(1).documents.all()
         self.assertEqual(len(all_docs), data['total_written'] + data['total_oral'])
 
     def test_get_examinants(self):
-        res = self.app.get('/api/examinants')
+        res = self.get('/api/examinants')
         data = self.fromJsonResponse(res)
 
 
     ## login tests ##
 
     def test_user_info_no_get_unauthenticated(self):
-        res = self.app.get('/api/user_info')
+        res = self.get('/api/user_info')
         self.assertEqual(res.status_code, 401)
 
     def test_login_logout(self):
         def is_logged_in():
-            return self.app.get('/api/user_info').status_code == 200
+            return self.get('/api/user_info').status_code == 200
         self.assertFalse(is_logged_in())
         self.login(self.VALID_USER, self.VALID_PASS)
         self.assertTrue(is_logged_in())
@@ -135,7 +145,7 @@ class APITest(OdieTestCase):
 
     def test_user_info_get_authenticated(self):
         self.login()
-        res = self.app.get('/api/user_info')
+        res = self.get('/api/user_info')
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
         self.assertIn('user', data)
@@ -146,14 +156,14 @@ class APITest(OdieTestCase):
     def test_no_printing_unauthenticated(self):
         try:
             csrf._csrf_disable = True  # let's check login_required at least once
-            res = self.app.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
+            res = self.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
             self.assertEqual(res.status_code, 401)
         finally:
             csrf._csrf_disable = False
 
     def test_no_printing_csrf(self):
         self.login()
-        res = self.app.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
+        res = self.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
         self.assertEqual(res.status_code, 403)
 
     def test_print(self):
@@ -172,7 +182,7 @@ class APITest(OdieTestCase):
         self.logout()
 
     def test_orders_no_get_unauthenticated(self):
-        res = self.app.get('/api/orders')
+        res = self.get('/api/orders')
         self.assertEqual(res.status_code, 401)
 
     def test_orders_no_delete_unauthenticated(self):
@@ -181,7 +191,7 @@ class APITest(OdieTestCase):
 
     def test_orders_state(self):
         self.login()
-        res = self.app.get('/api/orders')
+        res = self.get('/api/orders')
         orders = self.fromJsonResponse(res)
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(orders, list)
@@ -191,12 +201,12 @@ class APITest(OdieTestCase):
 
         # ensure POSTing orders is available when not logged in
         self.logout()
-        res = self.app.post('/api/orders', data=json.dumps(self.VALID_ORDER))
+        res = self.post('/api/orders', data=json.dumps(self.VALID_ORDER))
         self.fromJsonResponse(res)
         self.assertEqual(res.status_code, 200)
         self.login()
 
-        res = self.app.get('/api/orders')
+        res = self.get('/api/orders')
         self.assertEqual(res.status_code, 200)
         posted_order = [order for order in self.fromJsonResponse(res) if order['name'] == new_order_name]
         self.assertEqual(len(posted_order), 1)
@@ -204,21 +214,21 @@ class APITest(OdieTestCase):
         instance_id = posted_order[0]['id']
         res = self.delete_auth('/api/orders/' + str(instance_id))
         self.assertEqual(res.status_code, 200)
-        res = self.app.get('/api/orders')
+        res = self.get('/api/orders')
         for order in self.fromJsonResponse(res):
             self.assertNotEqual(order['name'], new_order_name)
 
     def test_deposits_no_get_unauthenticated(self):
-        res = self.app.get('/api/deposits')
+        res = self.get('/api/deposits')
         self.assertEqual(res.status_code, 401)
 
     def test_deposits_no_return_unauthenticated(self):
-        res = self.app.post('/api/log_deposit_return', data=json.dumps(self.VALID_DEPOSIT_RETURN))
+        res = self.post('/api/log_deposit_return', data=json.dumps(self.VALID_DEPOSIT_RETURN))
         self.assertEqual(res.status_code, 403)
 
     def test_deposits_state(self):
         self.login()
-        res = self.app.get('/api/deposits')
+        res = self.get('/api/deposits')
         self.assertEqual(res.status_code, 200)
         deposits = self.fromJsonResponse(res)
         self.assertIsInstance(deposits, list)
@@ -227,7 +237,7 @@ class APITest(OdieTestCase):
         data['id'] = id_to_delete
         res = self.post_auth('/api/log_deposit_return', data=json.dumps(data))
         self.assertEqual(res.status_code, 200)
-        for deposit in self.fromJsonResponse(self.app.get('/api/deposits')):
+        for deposit in self.fromJsonResponse(self.get('/api/deposits')):
             self.assertNotEqual(deposit['id'], id_to_delete)
 
     def test_log_deposit_return_with_document(self):
@@ -242,7 +252,7 @@ class APITest(OdieTestCase):
         self.assertIsNone(Document.query.get(6).submitted_by)
 
     def test_no_donation_unauthenticated(self):
-        res = self.app.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        res = self.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))
         self.assertEqual(res.status_code, 403)
 
     def test_donation(self):
@@ -251,7 +261,7 @@ class APITest(OdieTestCase):
         self.assertEqual(res.status_code, 200)
 
     def test_no_log_erroneous_sale_unauthenticated(self):
-        res = self.app.post('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
+        res = self.post('/api/log_erroneous_sale', data=json.dumps(self.VALID_ACCOUNTING_CORR))
         self.assertEqual(res.status_code, 403)
 
     def test_log_erroneous_sale(self):
@@ -265,21 +275,21 @@ class APITest(OdieTestCase):
 
     def _add_a_page_of_orders(self):
         for _ in range(config.ITEMS_PER_PAGE):
-            res = self.app.post('/api/orders', data=json.dumps(self.VALID_ORDER))
+            res = self.post('/api/orders', data=json.dumps(self.VALID_ORDER))
             self.assertEqual(res.status_code, 200)
 
     def test_pagination_items_per_page(self):
         self.enable_pagination(3)
         self._add_a_page_of_orders()
         self.login()
-        res = self.app.get('/api/orders')
+        res = self.get('/api/orders')
         data = self.fromJsonResponse(res)
         self.assertEqual(len(data), config.ITEMS_PER_PAGE)
 
     def test_pagination_out_of_range(self):
         self.enable_pagination(3)
         self.login()
-        res = self.app.get('/api/orders?q={"page":99999}')
+        res = self.get('/api/orders?q={"page":99999}')
         self.assertEqual(res.status_code, 404)
 
     def test_pagination_number_of_pages(self):
@@ -289,7 +299,7 @@ class APITest(OdieTestCase):
         self.login()
         ids_seen = []
         for page in range(1, 4):
-            res = self.app.get('/api/orders?q={"page":%d}' % page)
+            res = self.get('/api/orders?q={"page":%d}' % page)
             self.assertEqual(res.status_code, 200)
             data = json.loads(res.data.decode('utf-8'))
             self.assertIn('number_of_pages', data)
@@ -329,19 +339,19 @@ class APITest(OdieTestCase):
     def _upload_document(self):
         with open(self.PDF_PATH, 'rb') as pdf:
             self.VALID_DOCUMENT_SUBMISSION['file'] = pdf
-            res = self.app.post('/api/documents', data=self.VALID_DOCUMENT_SUBMISSION)
+            res = self.post('/api/documents', data=self.VALID_DOCUMENT_SUBMISSION)
             self.assertEqual(res.status_code, 200)
 
 
     def test_document_submission(self):
         query = json.dumps(self.SUBMITTED_DOC_QUERY, separators=(',', ':'))
-        res = self.app.get('/api/documents?q=%s' % query)
+        res = self.get('/api/documents?q=%s' % query)
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
         self.assertEqual(data, [])
         self._upload_document()
 
-        res = self.app.get('/api/documents?q=%s' % query)
+        res = self.get('/api/documents?q=%s' % query)
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
         self.assertEqual(len(data), 1)
@@ -359,20 +369,20 @@ class APITest(OdieTestCase):
 
     def test_no_document_preview_unauthenticated(self):
         self._upload_document()
-        res = self.app.get('/api/view/1')
+        res = self.get('/api/view/1')
         self.assertEqual(res.status_code, 401)
 
     def test_document_preview(self):
         self._upload_document()
         self.login()
         query = json.dumps(self.SUBMITTED_DOC_QUERY, separators=(',', ':'))
-        res = self.app.get('/api/documents?q=%s' % query)
+        res = self.get('/api/documents?q=%s' % query)
         data = self.fromJsonResponse(res)
         self.assertEqual(len(data), 1)
         id = data[0]['id']
 
         # get document
-        res = self.app.get('/api/view/%d' % id)
+        res = self.get('/api/view/%d' % id)
         self.assertEqual(res.status_code, 200)
         with open(self.PDF_PATH, 'rb') as doc:
             doc_data = doc.read()  # only ~750 bytes...
@@ -382,11 +392,11 @@ class APITest(OdieTestCase):
     ## jsonquery tests ##
 
     def test_jsonquery_in_op(self):
-        res = self.app.post('/api/orders', data=json.dumps(self.VALID_ORDER))
+        res = self.post('/api/orders', data=json.dumps(self.VALID_ORDER))
         self.assertEqual(res.status_code, 200)
         self.login()
         req = '/api/orders?q={"operator":"in_","column":"name","value":["%s"]}' % self.VALID_ORDER['name']
-        res = self.app.get(req)
+        res = self.get(req)
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
         self.assertTrue(len(data) == 1)
@@ -394,7 +404,7 @@ class APITest(OdieTestCase):
 
     def test_jsonquery_order(self):
         self.login()
-        res = self.app.get('/api/orders?q={"operator":"order_by_asc","column":"name"}')
+        res = self.get('/api/orders?q={"operator":"order_by_asc","column":"name"}')
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
         self.assertTrue(len(data) > 2)  # otherwise the ordering is moot anyways...

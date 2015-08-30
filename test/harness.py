@@ -19,7 +19,7 @@ class OdieTestCase(unittest.TestCase):
         return data['data']
 
     def logout(self):
-        return self.app.get('/logout')
+        return self.get('/logout')
 
     @classmethod
     def setUpClass(cls):

@@ -13,20 +13,23 @@ app = Flask("odie", template_folder='admin/templates', static_folder='admin/stat
 import config  # pylint: disable=unused-import
 app.config.from_object('config.FlaskConfig')
 
+csrf = SeaSurf(app)
+sqla = SQLAlchemy(app)
+
 if app.debug:
     # allow requests from default broccoli server port
     from flask.ext.cors import CORS
     CORS(app, origins=['http://localhost:4200'], supports_credentials=True)
+
+    import flask_debugtoolbar
+    toolbar = flask_debugtoolbar.DebugToolbarExtension(app)
+    csrf.exempt(flask_debugtoolbar.panels.sqlalchemy.sql_select)
 else:
     # production logger to stderr
     handler = logging.StreamHandler()
     handler.setLevel(logging.INFO)
     handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s in %(module)s: %(message)s'))
     app.logger.addHandler(handler)
-
-csrf = SeaSurf(app)
-
-sqla = SQLAlchemy(app)
 
 # sqlalchemy treats columns as nullable by default, which we don't want.
 Column = partial(sqla.Column, nullable=False)
