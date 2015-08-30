@@ -56,7 +56,7 @@ endpoint(
         schemas={
             'GET': OrderDumpSchema,
         },
-        query=Order.query)
+        query=Order.query.options(subqueryload('items.document.lectures'), subqueryload('items.document.examinants')))
 ))
 
 
@@ -81,10 +81,9 @@ endpoint(
         query=None)
 ))
 
-api_route('/api/orders/<int:instance_id>', methods=['GET', 'DELETE'])(
+api_route('/api/orders/<int:instance_id>', methods=['DELETE'])(
 login_required(
 endpoint(
-        schemas={'GET': OrderDumpSchema},
         query=Order.query,
         allow_delete=True)
 ))

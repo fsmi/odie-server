@@ -4,17 +4,15 @@ import config
 
 from odie import sqla, Column
 
-from db.documents import Document
-
 class OrderDocument(sqla.Model):
     __tablename__ = 'order_documents'
     __table_args__ = config.odie_table_args
 
     index = Column(sqla.Integer, primary_key=True)
     order_id = Column(sqla.Integer, sqla.ForeignKey('odie.orders.id'), primary_key=True)
-    order = sqla.relationship('Order', backref=sqla.backref('items', cascade='all', order_by=index))
+    order = sqla.relationship('Order', backref=sqla.backref('items', cascade='all', order_by=index, lazy='subquery'))
     document_id = Column(sqla.ForeignKey('documents.documents.id', ondelete='CASCADE'), primary_key=True)
-    document = sqla.relationship('Document')
+    document = sqla.relationship('Document', lazy='joined')
 
 
 class Order(sqla.Model):
@@ -33,7 +31,4 @@ class Order(sqla.Model):
 
     @property
     def documents(self):
-        docs = Document.query.filter(Document.id.in_([it.document_id for it in self.items])).all()
-        docs_by_id = {doc.id: doc for doc in docs}
-        return [docs_by_id[it.document_id] for it in self.items]
-
+        return [item.document for item in self.items]
