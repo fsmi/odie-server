@@ -192,10 +192,10 @@ class DocumentView(AuthModelView):
                 # delete old file
                 os.unlink(document_path(model.id))
             save_file(model, file.data)
-            if form.validated.data:
+            if model.validated:
                 got_new_file = True
 
-        if model.validation_time is None and form.validated.data:
+        if model.validation_time is None and model.validated:
             # document has just been validated for the first time
             model.validation_time = datetime.datetime.now()
             got_new_file = True
@@ -204,6 +204,10 @@ class DocumentView(AuthModelView):
             if model.document_type != 'written':
                 barcode.bake_barcode(model)
             config.document_validated(document_path(model.id))
+
+    def on_model_change(self, form, model, is_created):
+        if is_created:
+            model.validated = True
 
     def update_model(self, form, model):
         file = self._hide_file_upload(form)
@@ -225,7 +229,19 @@ class DocumentView(AuthModelView):
 
 
     list_template = 'document_list.html'
+    # no number_of_pages, validated or submitted_by
+    form_create_rules = [
+        'document_type',
+        'department',
+        'lectures',
+        'examinants',
+        'date',
+        'solution',
+        'comment',
+        'file',
+    ]
     form_edit_rules = [
+        'document_type',
         'department',
         'lectures',
         UnvalidatedList('lectures', 'lecture.edit_view'),
@@ -233,7 +249,6 @@ class DocumentView(AuthModelView):
         UnvalidatedList('examinants', 'examinant.edit_view'),
         'date',
         'solution',
-        'document_type',
         'number_of_pages',
         'comment',
         'validated',
