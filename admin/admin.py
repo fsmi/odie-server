@@ -280,6 +280,7 @@ class DocumentView(AuthModelView):
         'validation_time': 'Überprüft am',
         'submitted_by': 'Von',
     }
+    column_default_sort = ('date', True)
 
     doctype_labels = {
         'oral': 'Mündl.',
@@ -323,6 +324,7 @@ class LectureView(AuthModelView):
     }
     column_filters = ('id', 'name', 'validated')
     column_searchable_list = ['name']
+    column_default_sort = 'name'
 
 class ExaminantView(AuthModelView):
     form_excluded_columns = ('documents',)
@@ -331,6 +333,7 @@ class ExaminantView(AuthModelView):
     }
     column_filters = ('id', 'name', 'validated')
     column_searchable_list = ['name']
+    column_default_sort = 'name'
 
 class FolderView(AuthModelView):
     form_excluded_columns = ('printed_docs',)
@@ -340,6 +343,7 @@ class FolderView(AuthModelView):
         'examinants': 'Prüfer',
         'lectures': 'Vorlesungen'
     }
+    column_default_sort = 'name'
 
 class DepositView(AuthModelView):
     allowed_roles = ['kasse', 'adm']
@@ -351,9 +355,10 @@ class DepositView(AuthModelView):
     }
     column_formatters = {
         'date': _dateFormatter('date'),
-        'price': lambda v, c, m, n: str(m.price) + ' €',
+        'price': lambda v, c, m, n: str(m.price / 100) + ' €',
     }
     column_searchable_list = ['name']
+    column_default_sort = ('date', True)
 
 admin = Admin(
     app,
