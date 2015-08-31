@@ -94,11 +94,11 @@ if not config.LOCAL_SERVER:
 
 
     def log_deposit(deposit, user, cashbox: str):
-        price = deposit.price / 100,
+        price = deposit.price / 100
         app.logger.info("Deposit: {} put {} € into {}".format(user.username, price, cashbox))
         _log_deposit_action(deposit, user, cashbox, price, 'EXAM_DEPOSIT_PAYMENT')
 
     def log_deposit_return(deposit, user, cashbox: str):
-        price = deposit.price / -100,
+        price = deposit.price / -100
         app.logger.info("Deposit: {} returned deposit to {}, took {} € out of {}".format(user.username, deposit.name, price, cashbox))
         _log_deposit_action(deposit, user, cashbox, price, 'EXAM_DEPOSIT_WITHDRAWAL')
