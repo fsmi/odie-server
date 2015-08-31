@@ -48,7 +48,6 @@ class AuthModelView(ModelView, AuthViewMixin):
     page_size = 50  # the default of 20 is a bit on the low side...
 
     def _log_model_changes(self, model, state):
-
         if state == 'changed' and not sqla.session.is_modified(model):
             return
 
@@ -208,6 +207,7 @@ class DocumentView(AuthModelView):
     def on_model_change(self, form, model, is_created):
         if is_created:
             model.validated = True
+        super().on_model_change(form, model, is_created)
 
     def update_model(self, form, model):
         file = self._hide_file_upload(form)
