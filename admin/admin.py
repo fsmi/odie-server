@@ -351,7 +351,7 @@ class DepositView(AuthModelView):
     }
     column_formatters = {
         'date': _dateFormatter('date'),
-        'price': lambda v, c, m, n: str(m.price) + ' €',
+        'price': lambda v, c, m, n: str(m.price / 100) + ' €',
     }
     column_searchable_list = ['name']
 
