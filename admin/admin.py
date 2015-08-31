@@ -198,7 +198,7 @@ class DocumentView(AuthModelView):
         if model.validation_time is None and model.validated:
             # document has just been validated for the first time
             model.validation_time = datetime.datetime.now()
-            got_new_file = True
+            got_new_file = model.has_file
 
         if got_new_file:
             if model.document_type != 'written':
