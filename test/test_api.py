@@ -31,7 +31,7 @@ class APITest(OdieTestCase):
 
     VALID_ORDER = {
             'name': UNUSED,
-            'document_ids': [1],
+            'document_ids': [2, 1, 5, 4, 3],
         }
 
     VALID_DEPOSIT_RETURN = {
@@ -210,7 +210,8 @@ class APITest(OdieTestCase):
         self.assertEqual(res.status_code, 200)
         posted_order = [order for order in self.fromJsonResponse(res) if order['name'] == new_order_name]
         self.assertEqual(len(posted_order), 1)
-        self.assertEqual(posted_order[0]['documents'][0]['id'], 1)
+        self.assertEqual([doc['id'] for doc in posted_order[0]['documents']],
+                         self.VALID_ORDER['document_ids'])
         instance_id = posted_order[0]['id']
         res = self.delete_auth('/api/orders/' + str(instance_id))
         self.assertEqual(res.status_code, 200)
