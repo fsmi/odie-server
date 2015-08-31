@@ -29,6 +29,7 @@ else:
     handler = logging.StreamHandler()
     handler.setLevel(logging.INFO)
     handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s in %(module)s: %(message)s'))
+    app.logger.setLevel(logging.INFO)
     app.logger.addHandler(handler)
 
 # sqlalchemy treats columns as nullable by default, which we don't want.
