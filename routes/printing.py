@@ -42,9 +42,12 @@ def print_documents(data):
     assert print_price + data['deposit_count'] * config.FS_CONFIG['DEPOSIT_PRICE'] == data['price']
 
     if documents:
-        paths = [document_path(doc.id) for doc in documents]
-        usercode = config.PRINTER_USERCODES[data['cash_box']]
-        config.print_documents(paths, data['cover_text'], data['printer'], usercode)
+        config.print_documents(
+            doc_paths=[document_path(doc.id) for doc in documents],
+            cover_text=data['cover_text'],
+            printer=data['printer'],
+            usercode=config.PRINTER_USERCODES[data['cash_box']],
+            job_title="Odie-Druck für {}".format(data['cover_text'].split(' ')[0]))
         num_pages = sum(doc.number_of_pages for doc in documents)
         db.accounting.log_exam_sale(num_pages, print_price, current_user, data['cash_box'])
     for _ in range(data['deposit_count']):
