@@ -4,6 +4,7 @@ from functools import partial
 import logging
 
 from flask import Flask
+from flask.ext.babelex import Babel
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask.ext.seasurf import SeaSurf  # CSRF. Got it?
@@ -13,6 +14,7 @@ app = Flask("odie", template_folder='admin/templates', static_folder='admin/stat
 import config  # pylint: disable=unused-import
 app.config.from_object('config.FlaskConfig')
 
+babel = Babel(app)
 csrf = SeaSurf(app)
 sqla = SQLAlchemy(app)
 
