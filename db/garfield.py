@@ -11,6 +11,8 @@ class Location(sqla.Model):
     name = Column(sqla.String, name='location_name')
     description = Column(sqla.String, name='location_description')
 
+    folders = sqla.relationship('Folder', back_populates='location')
+
     def __str__(self):
         return self.name
 

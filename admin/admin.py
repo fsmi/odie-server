@@ -13,8 +13,9 @@ from db.documents import Document, Lecture, Examinant, Deposit, Folder
 from db.garfield import Location
 from .fields import ViewButton, UnvalidatedList
 
-from flask import redirect, request, url_for
+from flask import flash, redirect, request, url_for
 from flask_admin import Admin, BaseView, AdminIndexView, expose
+from flask_admin.actions import action
 from flask_admin.form import FileUploadField
 from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
@@ -312,6 +313,24 @@ class DocumentView(AuthModelView):
     }
 
 class LectureView(AuthModelView):
+    @action('merge', 'Zusammenfügen', 'Die Dokumente der ausgewählten Vorlesungen werden der ersten hinzugefügt und die restlichen Vorlesungen gelöscht')
+    def merge(self, ids):
+        lectures = Lecture.query.filter(Lecture.id.in_(ids)).all()
+        first = next(lecture for lecture in lectures if lecture.id == int(ids[0]))
+        all_docs = set()
+        for lecture in lectures:
+            all_docs |= set(lecture.documents)
+            if lecture != first:
+                sqla.session.delete(lecture)
+        first.documents = list(all_docs)
+        sqla.session.commit()
+        flash('Vorlesungen in "{}" zusammengefügt'.format(first.name))
+
+        config.log_admin_audit(self, first,
+                               '\n\n'.join(['Lectures merged by {}'.format(current_user.full_name),
+                                            '{}->{}'.format([l.name for l in lectures], first.name),
+                                            url_for('lecture.edit_view', id=first.id, _external=True)]))
+
     form_excluded_columns = ('documents',)
     form_args = {
         'comment': {'validators': [Optional()]},

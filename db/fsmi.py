@@ -43,6 +43,7 @@ class User(sqla.Model, UserMixin):
     first_name = Column(sqla.Text, name='vorname')
     last_name = Column(sqla.Text, name='nachname')
     pw_hash = Column(sqla.String(255), name='passwort')
+
     effective_permissions = sqla.relationship('Permission', secondary=acl.effective_permissions, lazy='joined')
 
     @property
