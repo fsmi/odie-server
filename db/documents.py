@@ -8,6 +8,17 @@ from sqlalchemy.dialects import postgres
 from db import garfield
 
 
+lecture_docs = sqla.Table('lecture_docs',
+        Column('lecture_id', sqla.Integer, sqla.ForeignKey('documents.lectures.id', ondelete='CASCADE')),
+        Column('document_id', sqla.Integer, sqla.ForeignKey('documents.documents.id', ondelete='CASCADE')),
+        **config.documents_table_args)
+
+folder_lectures = sqla.Table('folder_lectures',
+        Column('folder_id', sqla.Integer, sqla.ForeignKey('documents.folders.id', ondelete='CASCADE')),
+        Column('lecture_id', sqla.Integer, sqla.ForeignKey('documents.lectures.id', ondelete='CASCADE')),
+        **config.documents_table_args)
+
+
 class Lecture(sqla.Model):
     __tablename__ = 'lectures'
     __table_args__ = config.documents_table_args
@@ -18,18 +29,21 @@ class Lecture(sqla.Model):
     comment = Column(sqla.String, server_default='')
     validated = Column(sqla.Boolean)
 
+    documents = sqla.relationship('Document', secondary=lecture_docs, lazy='dynamic', back_populates='lectures')
+    folders = sqla.relationship('Folder', secondary=folder_lectures, back_populates='lectures')
+
     def __str__(self):
         return self.name
 
 
-lectureDocs = sqla.Table('lecture_docs',
-        Column('lecture_id', sqla.Integer, sqla.ForeignKey('documents.lectures.id', ondelete='CASCADE')),
-        Column('document_id', sqla.Integer, sqla.ForeignKey('documents.documents.id', ondelete='CASCADE')),
-        **config.documents_table_args)
-
-documentExaminants = sqla.Table('document_examinants',
+document_examinants = sqla.Table('document_examinants',
         Column('document_id', sqla.Integer, sqla.ForeignKey('documents.documents.id', ondelete='CASCADE')),
         Column('examinant_id', sqla.Integer, sqla.ForeignKey('documents.examinants.id', ondelete='CASCADE')),
+        **config.documents_table_args)
+
+folder_docs = sqla.Table('folder_docs',
+        Column('folder_id', sqla.Integer, sqla.ForeignKey('documents.folders.id', ondelete='CASCADE')),
+        Column('document_id', sqla.Integer, sqla.ForeignKey('documents.documents.id', ondelete='CASCADE')),
         **config.documents_table_args)
 
 
@@ -42,10 +56,6 @@ class Document(sqla.Model):
 
     id = Column(sqla.Integer, primary_key=True)
     department = Column(sqla.Enum('mathematics', 'computer science', 'other', name='department', inherit_schema=True))
-    lectures = sqla.relationship('Lecture', secondary=lectureDocs,
-            backref=sqla.backref('documents', lazy='dynamic'))
-    examinants = sqla.relationship('Examinant', secondary=documentExaminants,
-            backref=sqla.backref('documents', lazy='dynamic'))
     date = Column(sqla.Date())
     number_of_pages = Column(sqla.Integer, server_default='0')
     solution = Column(sqla.Enum('official', 'inofficial', 'none', name='solution', inherit_schema=True), nullable=True)
@@ -57,6 +67,10 @@ class Document(sqla.Model):
     submitted_by = Column(sqla.String, nullable=True)
     legacy_id = Column(sqla.Integer, nullable=True)  # old id from fs-deluxe, so we can recognize the old barcodes
 
+    lectures = sqla.relationship('Lecture', secondary=lecture_docs, back_populates='documents')
+    examinants = sqla.relationship('Examinant', secondary=document_examinants, back_populates='documents')
+    printed_in = sqla.relationship('Folder', secondary=folder_docs, back_populates='printed_docs')
+
     @property
     def examinants_names(self):
         return [ex.name for ex in self.examinants]
@@ -64,6 +78,12 @@ class Document(sqla.Model):
     @property
     def price(self):
         return config.FS_CONFIG['PRICE_PER_PAGE'] * self.number_of_pages
+
+
+folder_examinants = sqla.Table('folder_examinants',
+        Column('folder_id', sqla.Integer, sqla.ForeignKey('documents.folders.id', ondelete='CASCADE')),
+        Column('examinant_id', sqla.Integer, sqla.ForeignKey('documents.examinants.id', ondelete='CASCADE')),
+        **config.documents_table_args)
 
 
 class Examinant(sqla.Model):
@@ -74,24 +94,11 @@ class Examinant(sqla.Model):
     name = Column(sqla.String)
     validated = Column(sqla.Boolean)
 
+    documents = sqla.relationship('Document', secondary=document_examinants, lazy='dynamic', back_populates='examinants')
+    folders = sqla.relationship('Folder', secondary=folder_examinants, back_populates='examinants')
+
     def __str__(self):
         return self.name
-
-
-folder_docs = sqla.Table('folder_docs',
-        Column('folder_id', sqla.Integer, sqla.ForeignKey('documents.folders.id', ondelete='CASCADE')),
-        Column('document_id', sqla.Integer, sqla.ForeignKey('documents.documents.id', ondelete='CASCADE')),
-        **config.documents_table_args)
-
-folder_examinants = sqla.Table('folder_examinants',
-        Column('folder_id', sqla.Integer, sqla.ForeignKey('documents.folders.id', ondelete='CASCADE')),
-        Column('examinant_id', sqla.Integer, sqla.ForeignKey('documents.examinants.id', ondelete='CASCADE')),
-        **config.documents_table_args)
-
-folder_lectures = sqla.Table('folder_lectures',
-        Column('folder_id', sqla.Integer, sqla.ForeignKey('documents.folders.id', ondelete='CASCADE')),
-        Column('lecture_id', sqla.Integer, sqla.ForeignKey('documents.lectures.id', ondelete='CASCADE')),
-        **config.documents_table_args)
 
 
 class Folder(sqla.Model):
@@ -103,16 +110,16 @@ class Folder(sqla.Model):
     location_id = Column(sqla.Integer, sqla.ForeignKey(garfield.Location.id))
     document_type = Column(document_type)
 
-    location = sqla.relationship(garfield.Location, backref='folders', lazy='joined', uselist=False)
-    examinants = sqla.relationship('Examinant', secondary=folder_examinants, backref=sqla.backref('folders'), lazy='subquery')
-    lectures = sqla.relationship('Lecture', secondary=folder_lectures, backref=sqla.backref('folders'), lazy='subquery')
-    printed_docs = sqla.relationship('Document', secondary=folder_docs, backref=sqla.backref('printed_in'))
+    location = sqla.relationship(garfield.Location, lazy='joined', uselist=False, back_populates='folders')
+    examinants = sqla.relationship('Examinant', secondary=folder_examinants, lazy='subquery', back_populates='folders')
+    lectures = sqla.relationship('Lecture', secondary=folder_lectures, lazy='subquery', back_populates='folders')
+    printed_docs = sqla.relationship('Document', secondary=folder_docs, back_populates='printed_in')
 
     def __str__(self):
         return self.name
 
 
-depositLectures = sqla.Table('deposit_lectures',
+deposit_lectures = sqla.Table('deposit_lectures',
         Column('deposit_id', sqla.Integer, sqla.ForeignKey('documents.deposits.id', ondelete='CASCADE')),
         Column('lecture_id', sqla.Integer, sqla.ForeignKey('documents.lectures.id', ondelete='CASCADE')),
         **config.documents_table_args)
@@ -127,4 +134,5 @@ class Deposit(sqla.Model):
     name = Column(sqla.String)
     by_user = Column(sqla.String)
     date = Column(sqla.DateTime(timezone=True), server_default=sqla.func.now())
-    lectures = sqla.relationship('Lecture', secondary=depositLectures)
+
+    lectures = sqla.relationship('Lecture', secondary=deposit_lectures)
