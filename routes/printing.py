@@ -7,7 +7,7 @@ from flask.ext.login import current_user, login_required
 from marshmallow import fields, Schema
 
 from .common import CashBoxField, PrinterField
-from odie import app, sqla, ClientError
+from odie import sqla, ClientError
 from api_utils import deserialize, api_route, document_path
 from db.documents import Lecture, Deposit, Document
 
@@ -42,12 +42,17 @@ def print_documents(data):
     assert print_price + data['deposit_count'] * config.FS_CONFIG['DEPOSIT_PRICE'] == data['price']
 
     if documents:
-        config.print_documents(
-            doc_paths=[document_path(doc.id) for doc in documents],
-            cover_text=data['cover_text'],
-            printer=data['printer'],
-            usercode=config.PRINTER_USERCODES[data['cash_box']],
-            job_title="Odie-Druck für {}".format(data['cover_text'].split(' ')[0]))
+        try:
+            config.print_documents(
+                doc_paths=[document_path(doc.id) for doc in documents],
+                cover_text=data['cover_text'],
+                printer=data['printer'],
+                usercode=config.PRINTER_USERCODES[data['cash_box']],
+                job_title="Odie-Druck für {}".format(data['cover_text'].split(' ')[0]))
+        except Exception as e:
+            # This isn't really a ClientError, but this is the only endpoint we have that has proper error states,
+            # so it's not worth it to differentiate. The error code is an arbitrary unreserved 5xx code.
+            raise ClientError('Printing failed: ' + '\n'.join(e.args), status=507)
         num_pages = sum(doc.number_of_pages for doc in documents)
         db.accounting.log_exam_sale(num_pages, print_price, current_user, data['cash_box'])
     for _ in range(data['deposit_count']):
