@@ -9,9 +9,9 @@ import tempfile
 
 from marshmallow.utils import missing
 
-def print_documents(doc_paths: list, cover_text: str, printer: str, usercode: int):
+def print_documents(doc_paths: list, cover_text: str, printer: str, usercode: int, job_title: str):
     from odie import app
-    app.logger.info("Printing documents {} ({} in total) on {} for {}, usercode {}".format(doc_paths, len(doc_paths), printer, cover_text, usercode))
+    app.logger.info("Printing documents {} ({} in total) on {} for {} [{}|{}]".format(doc_paths, len(doc_paths), printer, cover_text, job_title, usercode))
 
 def document_validated(doc_path: str):
     # on the production server, this triggers prerendering the pdf as pcl5
