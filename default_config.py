@@ -31,6 +31,7 @@ class FlaskConfig(object):
     STATIC_FOLDER = 'admin/static'
     CSRF_COOKIE_NAME = 'csrf_token'  # important for flask-admin compatibility
     DEBUG_TB_INTERCEPT_REDIRECTS = False
+    BABEL_DEFAULT_LOCALE = 'de'
 
 # things specific to odie: saved orders
 odie_table_args = {
