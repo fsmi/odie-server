@@ -168,10 +168,17 @@ class AuthIndexView(AuthViewMixin, AdminIndexView):
 
 
 class DocumentView(AuthModelView):
+    def _delete_document(self, model):
+        source = document_path(model.id)
+        if model.has_file and os.path.exists(source):
+            dest = os.path.join(config.DOCUMENT_DIRECTORY, 'trash', str(model.id))
+            while os.path.exists(dest + '.pdf'):
+                dest += 'lol'
+            os.renames(source, dest + '.pdf')
+
     def delete_model(self, model):
         super().delete_model(model)
-        if model.has_file and os.path.exists(document_path(model.id)) and not app.config['DEBUG']:
-            os.unlink(document_path(model.id))
+        self._delete_document(model)
 
     def _hide_file_upload(self, form):
         # We don't want flask-admin to handle the uploaded file, we'll do that ourselves.
@@ -189,9 +196,7 @@ class DocumentView(AuthModelView):
     def _handle_file_upload(self, file, form, model):
         got_new_file = False
         if file.data:
-            if model.has_file and os.path.exists(document_path(model.id)) and not app.config['DEBUG']:
-                # delete old file
-                os.unlink(document_path(model.id))
+            self._delete_document(model)  # delete old file
             save_file(model, file.data)
             if model.validated:
                 got_new_file = True
