@@ -141,7 +141,8 @@ class PrintForFolderView(AuthViewMixin):
                 doc_paths=[document_path(doc.id) for doc in documents],
                 cover_text=None,
                 printer=config.FS_CONFIG['OFFICES'][self._get_location()]['printers'][0],
-                usercode=config.PRINTER_USERCODES['internal']
+                usercode=config.PRINTER_USERCODES['internal'],
+                job_title='Odie-Druck: Ordnerdruck'
             )
             folder.printed_docs += documents
             sqla.session.commit()
