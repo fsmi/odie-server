@@ -168,36 +168,34 @@ class AuthIndexView(AuthViewMixin, AdminIndexView):
 
 
 class DocumentView(AuthModelView):
+    class DocumentUploadField(FileUploadField):
+        def populate_obj(self, obj, name):
+            pass  # handled by DocumentView.on_model_change
+
     def _delete_document(self, model):
-        source = document_path(model.id)
-        if model.has_file and os.path.exists(source):
-            dest = os.path.join(config.DOCUMENT_DIRECTORY, 'trash', str(model.id))
-            while os.path.exists(dest + '.pdf'):
-                dest += 'lol'
-            os.renames(source, dest + '.pdf')
+        if model.has_file:
+            source = document_path(model.id)
+            if os.path.exists(source):
+                dest = os.path.join(config.DOCUMENT_DIRECTORY, 'trash', str(model.id))
+                while os.path.exists(dest + '.pdf'):
+                    dest += 'lol'
+                os.renames(source, dest + '.pdf')
 
     def delete_model(self, model):
         super().delete_model(model)
         self._delete_document(model)
 
-    def _hide_file_upload(self, form):
-        # We don't want flask-admin to handle the uploaded file, we'll do that ourselves.
-        # however, Flask-Admin is welcome to handle the rest of the model update
+    def on_model_change(self, form, model, is_created):
+        if is_created:
+            model.validated = True
 
-        file = form.file
-        # extra form fields are appended to the end of the form list, so we need to remove
-        # the last element
-        # pylint: disable=protected-access
-        assert form._unbound_fields[-1][0] == 'file'
-        form._unbound_fields = form._unbound_fields[:-1]
-        delattr(form, 'file')
-        return file
+        if model.id is None:
+            sqla.session.flush()  # acquire ID
 
-    def _handle_file_upload(self, file, form, model):
         got_new_file = False
-        if file.data:
+        if form.file.data:
             self._delete_document(model)  # delete old file
-            save_file(model, file.data)
+            save_file(model, form.file.data)
             if model.validated:
                 got_new_file = True
 
@@ -211,28 +209,7 @@ class DocumentView(AuthModelView):
                 barcode.bake_barcode(model)
             config.document_validated(document_path(model.id))
 
-    def on_model_change(self, form, model, is_created):
-        if is_created:
-            model.validated = True
         super().on_model_change(form, model, is_created)
-
-    def update_model(self, form, model):
-        file = self._hide_file_upload(form)
-        success = super().update_model(form, model)
-        if not success:
-            return False
-        self._handle_file_upload(file, form, model)
-        sqla.session.commit()
-        return True
-
-    def create_model(self, form):
-        file = self._hide_file_upload(form)
-        model = super().create_model(form)
-        if not model:
-            return model
-        self._handle_file_upload(file, form, model)
-        sqla.session.commit()
-        return model
 
 
     list_template = 'document_list.html'
