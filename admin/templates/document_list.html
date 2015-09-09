@@ -4,7 +4,9 @@
 
 {% block list_row_actions_column scoped %}
 <td style="white-space: nowrap;">
+    {%- if row.has_file -%}
     <a class="icon glyphicon glyphicon-eye-open" target="_blank" href="{{ url_for('view_document', instance_id=get_pk_value(row)) }}" title="View PDF"></a>
+    {%- endif -%}
     {%- if admin_view.can_edit -%}
     <a class="icon glyphicon glyphicon-pencil" href="{{ get_url('.edit_view', id=get_pk_value(row), url=return_url) }}" title="{{ _gettext('Edit record') }}">
     </a>
