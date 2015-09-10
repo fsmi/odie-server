@@ -21,7 +21,8 @@ from flask_admin.contrib.sqla import ModelView
 from flask.ext.login import current_user
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import RelationshipProperty
-from wtforms.validators import Optional
+from wtforms.fields import BooleanField
+from wtforms.validators import Optional, ValidationError
 
 def _dateFormatter(attr_name):
     def f(v, c, m, n):
@@ -187,6 +188,8 @@ class DocumentView(AuthModelView):
 
     def on_model_change(self, form, model, is_created):
         if is_created:
+            if bool(form.file.data) == form.no_file.data:
+                raise ValidationError('Genau ein Feld von "Datei" oder "Keine Datei" muss angegeben werden.')
             model.validated = True
 
         if model.id is None:
@@ -223,6 +226,7 @@ class DocumentView(AuthModelView):
         'solution',
         'comment',
         'file',
+        'no_file',
     ]
     form_edit_rules = [
         'document_type',
@@ -241,7 +245,10 @@ class DocumentView(AuthModelView):
         ViewButton(),
     ]
     form_excluded_columns = ('validation_time', 'has_file', 'legacy_id', 'printed_in')  # this isn't strictly necessary, but it shuts up a warning
-    form_extra_fields = {'file': FileUploadField()}
+    form_extra_fields = {
+        'file': DocumentUploadField(label='Datei'),
+        'no_file': BooleanField(label='Keine Datei'),
+    }
     form_args = {
         'comment': {'validators': [Optional()]},
         'number_of_pages': {'validators': [Optional()]},
