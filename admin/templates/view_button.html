@@ -1,7 +1,7 @@
 <div class="form-group">
   <div class="col-md-2"></div>
   <div class="col-md-10 text-center">
-    <a class="icon btn btn-default"  target="_blank" href="{{ url_for('view_document', instance_id=instance_id) }}" title="View PDF">
+    <a class="icon btn btn-default {% if not enabled %}disabled{% endif %}" target="_blank" href="{{ url_for('view_document', instance_id=instance_id) }}" title="View PDF">
     <span class="glyphicon glyphicon-eye-open"></span>
   </a>
   </div>

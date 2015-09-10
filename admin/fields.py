@@ -21,5 +21,5 @@ class UnvalidatedList(HTML):
 
 class ViewButton(BaseRule):
     def __call__(self, form, *args, **kwargs):
-        return Markup(render_template('view_button.html', instance_id=form._obj.id))
+        return Markup(render_template('view_button.html', instance_id=form._obj.id, enabled=form._obj.has_file))
 
