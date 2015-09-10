@@ -80,7 +80,7 @@ FS_CONFIG = {
         },
         'FSM': {
             'cash_boxes': ['Sprechstundenkasse Mathematik'],
-            'printers': ['FSM-Drucker'],
+            'printers': ['FSM-Drucker', 'Tisch-Drucker'],
             'scanners': [],  # initialized when barcode module is imported
         }
     },
