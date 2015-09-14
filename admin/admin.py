@@ -36,7 +36,7 @@ class AuthViewMixin(BaseView):
     allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
 
     def is_accessible(self):
-        return current_user.is_authenticated() and current_user.has_permission(*self.allowed_roles)
+        return current_user.is_authenticated and current_user.has_permission(*self.allowed_roles)
 
     def inaccessible_callback(self, name, **kwargs):
         return self.render(
