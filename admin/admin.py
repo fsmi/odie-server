@@ -63,9 +63,10 @@ class AuthModelView(ModelView, AuthViewMixin):
             changed = state == 'changed' and attr.history.has_changes()
             if changed and isinstance(attr.value, datetime.datetime):
                 old = attr.history.deleted[0]
+                val = attr.value
                 if old:
                     # special case: convert attr.value from naive to aware datetime
-                    val = attr.value.replace(tzinfo=old.tzinfo)
+                    val = val.replace(tzinfo=old.tzinfo)
                 changed = val != old
 
             if changed:
