@@ -36,7 +36,7 @@ class AuthViewMixin(BaseView):
     allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
 
     def is_accessible(self):
-        return current_user.is_authenticated() and current_user.has_permission(*self.allowed_roles)
+        return current_user.is_authenticated and current_user.has_permission(*self.allowed_roles)
 
     def inaccessible_callback(self, name, **kwargs):
         return self.render(
@@ -62,9 +62,11 @@ class AuthModelView(ModelView, AuthViewMixin):
             is_list = isinstance(prop, RelationshipProperty) and prop.uselist
             changed = state == 'changed' and attr.history.has_changes()
             if changed and isinstance(attr.value, datetime.datetime):
-                # special case: convert attr.value from naive to aware datetime
-                val = attr.value.replace(tzinfo=attr.history.deleted[0].tzinfo)
-                changed = val != attr.history.deleted[0]
+                old = attr.history.deleted[0]
+                if old:
+                    # special case: convert attr.value from naive to aware datetime
+                    val = attr.value.replace(tzinfo=old.tzinfo)
+                changed = val != old
 
             if changed:
                 if is_list:

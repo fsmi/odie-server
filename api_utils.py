@@ -103,7 +103,7 @@ def jsonify(*args, **kwargs):
             request.accept_mimetypes['text/html']
 
     data = json.dumps(dict(*args, **kwargs), indent=None if request.is_xhr else 2)
-    if not current_user.is_authenticated() or request_wants_json():
+    if not current_user.is_authenticated or request_wants_json():
         return Response(data, mimetype='application/json')
     else:
         # provide some HTML for flask-debugtoolbar to inject into

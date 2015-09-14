@@ -29,7 +29,7 @@ class DocumentDumpSchema(IdSchema):
 
     @staticmethod
     def scrub_submitted_by(obj):
-        return obj.submitted_by if current_user.is_authenticated() else missing
+        return obj.submitted_by if current_user.is_authenticated else missing
 
 
 CashBoxField = partial(fields.Str, required=True, validate=OneOf([cash_box for office in config.FS_CONFIG['OFFICES'].values() for cash_box in office['cash_boxes']]))
