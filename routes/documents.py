@@ -52,7 +52,7 @@ class LectureDumpSchema(IdSchema):
 api_route('/api/lectures')(
 endpoint(
         schemas={'GET': LectureDumpSchema},
-        query=Lecture.query,
+        query_fn=lambda: Lecture.query,
         paginate_many=False)
 )
 
@@ -65,7 +65,7 @@ class ExaminantSchema(IdSchema):
 api_route('/api/examinants')(
 endpoint(
         schemas={'GET': ExaminantSchema},
-        query=Examinant.query,
+        query_fn=lambda: Examinant.query,
         paginate_many=False)
 )
 
@@ -82,7 +82,7 @@ def documents_query():
 api_route('/api/documents')(
 endpoint(
         schemas={'GET': DocumentDumpSchema},
-        query=documents_query)
+        query_fn=documents_query)
 )
 
 # aggregate values of unpaginated source data

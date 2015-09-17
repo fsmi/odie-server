@@ -56,7 +56,7 @@ endpoint(
         schemas={
             'GET': OrderDumpSchema,
         },
-        query=Order.query.options(subqueryload('items.document.lectures'), subqueryload('items.document.examinants')))
+        query_fn=lambda: Order.query.options(subqueryload('items.document.lectures'), subqueryload('items.document.examinants')))
 ))
 
 
@@ -78,13 +78,13 @@ endpoint(
         schemas={
             'POST': OrderLoadSchema,
         },
-        query=None)
+        query_fn=None)
 ))
 
 api_route('/api/orders/<int:instance_id>', methods=['DELETE'])(
 login_required(
 endpoint(
-        query=Order.query,
+        query_fn=lambda: Order.query,
         allow_delete=True)
 ))
 
@@ -100,7 +100,7 @@ api_route('/api/deposits')(
 login_required(
 endpoint(
         schemas={'GET': DepositDumpSchema},
-        query=Deposit.query.options(subqueryload('lectures')))
+        query_fn=lambda: Deposit.query.options(subqueryload('lectures')))
 ))
 
 
