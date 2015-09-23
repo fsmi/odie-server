@@ -10,12 +10,13 @@ from flask import request, send_file, Response
 from flask.ext.login import current_user, login_required
 from marshmallow import Schema, fields
 from marshmallow.validate import OneOf
+from sqlalchemy import extract
 from sqlalchemy.orm import subqueryload
 from sqlalchemy.orm.exc import NoResultFound
 
 from .common import IdSchema, DocumentDumpSchema
 from odie import app, sqla, csrf, ClientError
-from api_utils import endpoint, api_route, handle_client_errors, document_path, save_file, serialize
+from api_utils import endpoint, api_route, handle_client_errors, document_path, save_file, serialize, deserialize
 from db.documents import Lecture, Document, Examinant
 
 
@@ -103,6 +104,45 @@ class DocumentLoadSchema(Schema):  # used by student document submission
     date = fields.Date(required=True)
     document_type = fields.Str(required=True, validate=OneOf(['oral', 'oral reexam']))
     student_name = fields.Str(required=True)
+
+
+# temporary endpoint to make migration of math transcripts easier
+# TODO: remove as soon as the migration is done
+@api_route('/api/similar', methods=['POST'])
+@login_required
+@deserialize(DocumentLoadSchema)
+def get_similar(data):
+    lectures = []
+    for lect in data['lectures']:
+        try:
+            l = Lecture.query.filter_by(name=lect).one().id
+            lectures.append(l)
+        except NoResultFound:
+            pass
+    examinants = []
+    for examinant in data['examinants']:
+        try:
+            ex = Examinant.query.filter_by(name=examinant).one().id
+            examinants.append(ex)
+        except NoResultFound:
+            pass
+    date = data['date']
+    q = Document.query
+    q = q.filter(Document.department == 'mathematics')
+    q = q.filter(Document.document_type != 'written')
+    # Let's give ourselves a leeway of a month
+    q = q.filter(extract('month', Document.date) == date.month)
+    q = q.filter(extract('year', Document.date) == date.year)
+
+    # Return all documents with non-empty intersections of lectures and examinants
+    if lectures:
+        q = q.filter(Document.lectures.any(Lecture.id.in_(lectures)))
+    if examinants:
+        q = q.filter(Document.examinants.any(Examinant.id.in_(examinants)))
+    docs = q.all()
+    if docs:
+        return serialize(docs, DocumentDumpSchema, many=True)
+    return "[]"
 
 
 def _allowed_file(filename):
