@@ -142,7 +142,7 @@ def get_similar(data):
     docs = q.all()
     if docs:
         return serialize(docs, DocumentDumpSchema, many=True)
-    return "[]"
+    return []
 
 
 def _allowed_file(filename):
