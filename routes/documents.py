@@ -103,7 +103,7 @@ class DocumentLoadSchema(Schema):  # used by student document submission
     examinants = fields.List(fields.Str(), required=True)
     date = fields.Date(required=True)
     document_type = fields.Str(required=True, validate=OneOf(['oral', 'oral reexam']))
-    student_name = fields.Str(required=True)
+    student_name = fields.Str(required=False)
 
 
 # temporary endpoint to make migration of math transcripts easier
