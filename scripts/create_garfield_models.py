@@ -32,9 +32,10 @@ def createSchema(name, bind=None):
     try:
         engine = sqla.get_engine(app, bind)
         engine.execute(CreateSchema(name))
-    except sqlalchemy.exc.ProgrammingError:
-        # schema already exists... do nothing
-        pass
+    except sqlalchemy.exc.ProgrammingError as e:
+        # schema probably already exists... do nothing
+        # but just in case it's another error, print it
+        print("Error creating schema {}, ignoring: {}".format(name, e))
 
 createSchema('public')
 createSchema('odie')
