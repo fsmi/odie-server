@@ -3,7 +3,7 @@
 import config
 
 from flask.ext.login import current_user, login_required
-from marshmallow import fields, Schema
+from marshmallow import fields, post_load, Schema
 from marshmallow.validate import Length
 from sqlalchemy.orm import subqueryload
 
@@ -64,7 +64,8 @@ class OrderLoadSchema(Schema):
     name = fields.Str(required=True, validate=Length(min=1))
     document_ids = fields.List(fields.Int(), required=True)
 
-    def make_object(self, data):
+    @post_load
+    def make_order(self, data):
         try:
             return Order(name=data['name'],
                          document_ids=data['document_ids'])
