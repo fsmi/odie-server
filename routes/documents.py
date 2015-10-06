@@ -154,8 +154,10 @@ def _allowed_file(filename):
 def submit_document_external():
     submit_documents(validate=False)
 
+# temporary endpoint to make migration of math transcripts easier
+# TODO: remove as soon as the migration is done
 @api_route('/api/documents_migration', methods=['POST'])
-@csrf.exempt
+@login_required
 def submit_document_migration():
     submit_documents(validate=True)
 
