@@ -151,7 +151,15 @@ def _allowed_file(filename):
 
 @api_route('/api/documents', methods=['POST'])
 @csrf.exempt
-def submit_document():
+def submit_document_external():
+    submit_documents(validate=False)
+
+@api_route('/api/documents_migration', methods=['POST'])
+@csrf.exempt
+def submit_document_migration():
+    submit_documents(validate=True)
+
+def submit_documents(validate):
     """Student document submission endpoint
 
     POST data must be multipart, with the `json` part conforming to
@@ -177,7 +185,7 @@ def submit_document():
             lectures.append(l)
         except NoResultFound:
             # no dice, add a new unverified lecture
-            l = Lecture(name=lect, validated=False)
+            l = Lecture(name=lect, validated=validate)
             lectures.append(l)
             sqla.session.add(l)
     examinants = []
@@ -186,7 +194,7 @@ def submit_document():
             ex = Examinant.query.filter_by(name=examinant).one()
             examinants.append(ex)
         except NoResultFound:
-            ex = Examinant(name=examinant, validated=False)
+            ex = Examinant(name=examinant, validated=validate)
             examinants.append(ex)
             sqla.session.add(ex)
     date = data['date']
@@ -198,7 +206,7 @@ def submit_document():
             date=date,
             number_of_pages=0,  # this will be filled in upon validation
             document_type=data['document_type'],
-            validated=False,
+            validated=validate,
             submitted_by=data['student_name'])
     sqla.session.add(new_doc)
 
