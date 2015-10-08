@@ -209,6 +209,7 @@ def submit_documents(validate):
             number_of_pages=0,  # this will be filled in upon validation
             document_type=data['document_type'],
             validated=validate,
+            validation_time=datetime.datetime.now() if validate else None,
             submitted_by=data['student_name'])
     sqla.session.add(new_doc)
 
