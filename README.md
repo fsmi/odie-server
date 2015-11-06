@@ -1,5 +1,7 @@
 # odie-server #
 
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/fsmi/odie?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Postgres backend for [odie](https://github.com/fsmi/odie-client).
 
 ## Setup ##
