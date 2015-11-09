@@ -152,7 +152,8 @@ def _allowed_file(filename):
 @api_route('/api/documents', methods=['POST'])
 @csrf.exempt
 def submit_document_external():
-    submit_documents(validate=False)
+    knows_what_they_are_doing = current_user.is_authenticated and current_user.has_permission('info_protokolle', 'mathe_protokolle')
+    submit_documents(validate=knows_what_they_are_doing)
 
 # temporary endpoint to make migration of math transcripts easier
 # TODO: remove as soon as the migration is done
@@ -200,7 +201,8 @@ def submit_documents(validate):
             examinants.append(ex)
             sqla.session.add(ex)
     date = data['date']
-    assert date <= datetime.date.today()
+    if not validate:
+        assert date <= datetime.date.today()
     new_doc = Document(
             department=data['department'],
             lectures=lectures,
@@ -219,6 +221,8 @@ def submit_documents(validate):
     save_file(new_doc, file)
     sqla.session.commit()
     app.logger.info("New document submitted (id: {})".format(new_doc.id))
+    if validate:
+        config.document_validated(document_path(new_doc.id))
     return {}
 
 # take heed when renaming this, it's referenced as string in the admin UI
