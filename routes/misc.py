@@ -19,8 +19,7 @@ from db.odie import Order
 
 @api_route('/api/config')
 def get_config():
-    return config.FS_CONFIG
-
+    return dict(config.FS_CONFIG, IS_KIOSK=config.is_kiosk())
 
 class UserDumpSchema(Schema):
     username = fields.Str()

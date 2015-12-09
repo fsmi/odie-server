@@ -15,7 +15,7 @@ from sqlalchemy.orm import subqueryload
 from sqlalchemy.orm.exc import NoResultFound
 
 from .common import IdSchema, DocumentDumpSchema
-from odie import app, sqla, csrf, ClientError
+from odie import app, sqla, csrf, ClientError, login_manager
 from api_utils import endpoint, api_route, handle_client_errors, document_path, save_file, serialize, deserialize
 from db.documents import Lecture, Document, Examinant
 
@@ -228,9 +228,11 @@ def submit_documents(validate):
 # take heed when renaming this, it's referenced as string in the admin UI
 @app.route('/api/view/<int:instance_id>')
 @handle_client_errors
-@login_required
 def view_document(instance_id):
-    doc = Document.query.get(instance_id)
-    if doc is None or not doc.has_file:
-        raise ClientError('document not found', status=404)
-    return send_file(document_path(doc.id))
+    if current_user.is_authenticated or config.is_kiosk():
+        doc = Document.query.get(instance_id)
+        if doc is None or not doc.has_file:
+            raise ClientError('document not found', status=404)
+        return send_file(document_path(doc.id))
+    else:
+        return login_manager.unauthorized()

@@ -84,6 +84,7 @@ FS_CONFIG = {
             'scanners': [],  # initialized when barcode module is imported
         }
     },
+    'IS_KIOSK': None # set by get_config
 }
 SUBMISSION_ALLOWED_FILE_EXTENSIONS = ['.pdf']
 LOCAL_SERVER = True
@@ -97,6 +98,9 @@ for cash_box in FS_CONFIG['OFFICES']['FSI']['cash_boxes']:
 for cash_box in FS_CONFIG['OFFICES']['FSM']['cash_boxes']:
     PRINTER_USERCODES[cash_box] = 2224
 
+
+def is_kiosk():
+    return False
 
 def try_get_office(user):
     return missing
