@@ -4,8 +4,7 @@ Flask-SQLAlchemy
 Flask-Login
 Flask-CORS
 Flask-DebugToolbar
-# Flask-Admin
-git+https://github.com/flask-admin/flask-admin.git  # for https://github.com/flask-admin/flask-admin/pull/1009
+Flask-Admin
 Flask-Seasurf
 marshmallow>=2.0.0b3
 pypdf2
