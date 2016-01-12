@@ -27,6 +27,9 @@ class PrintJobLoadSchema(Schema):
 @deserialize(PrintJobLoadSchema)
 @login_required
 def print_documents(data):
+    # On partial failure, we return ClientErrors, which should be displayed by a client.
+    # The error code for a failed print is 507,
+    # Any error that ends up with incorrect accounting data has error code 508.
     document_ids = data['document_ids']
     document_objs = Document.query.filter(Document.id.in_(document_ids)).all()
     if any(not doc.has_file for doc in document_objs):
@@ -51,10 +54,14 @@ def print_documents(data):
                 job_title="Odie-Druck für {}".format(data['cover_text'].split(' ')[0]))
         except Exception as e:
             # This isn't really a ClientError, but this is the only endpoint we have that has proper error states,
-            # so it's not worth it to differentiate. The error code is an arbitrary unreserved 5xx code.
+            # so it's not worth it to differentiate.
             raise ClientError('Printing failed: ' + '\n'.join(e.args), status=507)
         num_pages = sum(doc.number_of_pages for doc in documents)
-        db.accounting.log_exam_sale(num_pages, print_price, current_user, data['cash_box'])
+        try:
+            db.accounting.log_exam_sale(num_pages, print_price, current_user, data['cash_box'])
+        except Exception as e:
+            # in case of network troubles, we've just printed a set of documents but screwed up accounting.
+            raise ClientError('Printing succeeded, but account logging failed. Exception: ' + '\n'.join(e.args), status=508)
     for _ in range(data['deposit_count']):
         lectures = Lecture.query.filter(Lecture.documents.any(Document.id.in_(document_ids))).all()
         dep = Deposit(
@@ -62,7 +69,10 @@ def print_documents(data):
                 name=data['cover_text'],
                 by_user=current_user.full_name,
                 lectures=lectures)
-        sqla.session.add(dep)
-        db.accounting.log_deposit(dep, current_user, data['cash_box'])
+        try:
+            sqla.session.add(dep)
+            db.accounting.log_deposit(dep, current_user, data['cash_box'])
+        except Exception as e:
+            raise ClientError('Printing succeeded, but account logging failed. Exception: ' + '\n'.join(e.args), status=508)
     sqla.session.commit()
     return {}
