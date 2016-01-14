@@ -153,23 +153,32 @@ class APITest(OdieTestCase):
 
     ## tests for authenticated api ##
 
+    def do_print(self, job, auth=False):
+        self.app.set_cookie('localhost', 'print_data', json.dumps(job))
+        headers = {'Accept': 'text/event-stream'}
+        if auth:
+            headers['X-CSRFToken'] = self.token
+        return self.app.get('/api/print', headers=headers)
+
     def test_no_printing_unauthenticated(self):
         try:
             csrf._csrf_disable = True  # let's check login_required at least once
-            res = self.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
+            res = self.do_print(self.VALID_PRINTJOB)
             self.assertEqual(res.status_code, 401)
         finally:
             csrf._csrf_disable = False
 
-    def test_no_printing_csrf(self):
-        self.login()
-        res = self.post('/api/print', data=json.dumps(self.VALID_PRINTJOB))
-        self.assertEqual(res.status_code, 403)
+    # Seasurf doesn't do GET, but EventSource should be pretty XSS safe...
+    # def test_no_printing_csrf(self):
+    #     self.login()
+    #     res = self.do_print(self.VALID_PRINTJOB)
+    #     self.assertEqual(res.status_code, 403)
 
     def test_print(self):
         self.login()
-        res = self.post_auth('api/print', data=json.dumps(self.VALID_PRINTJOB))
-        self.fromJsonResponse(res)
+        res = self.do_print(self.VALID_PRINTJOB, auth=True)
+        self.assertIn("event: progress\n", res.data.decode('utf8'))
+        self.assertIn("event: complete\n", res.data.decode('utf8'))
         self.assertEqual(res.status_code, 200)
         self.logout()
 
@@ -177,7 +186,7 @@ class APITest(OdieTestCase):
         self.login()
         pj = self.VALID_PRINTJOB.copy()
         pj['document_ids'] = [3]  # see fill_data.py to ensure that this document doesn't specify has_file=True
-        res = self.post_auth('api/print', data=json.dumps(pj))
+        res = self.do_print(pj, auth=True)
         self.assertEqual(res.status_code, 400)
         self.logout()
 
