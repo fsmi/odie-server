@@ -16,32 +16,26 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from .common import IdSchema, DocumentDumpSchema
 from odie import app, sqla, csrf, ClientError, login_manager
-from api_utils import endpoint, api_route, handle_client_errors, document_path, save_file, serialize, deserialize
+from api_utils import endpoint, api_route, handle_client_errors, document_path, save_file, serialize, deserialize, event_stream
 from db.documents import Lecture, Document, Examinant
-
-
-## Barcode scanner support is achieved using long-lived HTTP(S) connections and
-## server-sent events (https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
-
-def scanner_stream(location, id, username):
-    assert location in config.FS_CONFIG['OFFICES']
-    assert 0 <= id <= len(config.LASER_SCANNERS[location])
-    (host, port) = config.LASER_SCANNERS[location][id]
-    bs = barcode.BarcodeScanner(host, port, username)
-    for doc in bs:
-        if doc is None:
-            # socket read has timeoutet, try to write to output stream
-            # If run locally, yielding the empty string would suffice, but wsgi doesn't
-            # attempt to write to the socket in that case, so we do this instead
-            yield '\n'
-        else:
-            yield 'data: ' + json.dumps(serialize(doc, DocumentDumpSchema)) + '\n\n'
 
 
 @app.route('/api/scanner/<location>/<int:id>')
 @login_required
+@event_stream
 def scanner(location, id):
-    return Response(scanner_stream(location, id, current_user.first_name), mimetype='text/event-stream', headers={'X-Accel-Buffering': 'no'})
+    assert location in config.FS_CONFIG['OFFICES']
+    assert 0 <= id <= len(config.LASER_SCANNERS[location])
+    (host, port) = config.LASER_SCANNERS[location][id]
+    bs = barcode.BarcodeScanner(host, port, current_user.first_name)
+    yield None  # exit application context, start event stream
+
+    for doc in bs:
+        if doc is None:
+            # socket read has timeouted, try to write to output stream
+            yield (None, None)
+        else:
+            yield (None, serialize(doc, DocumentDumpSchema))
 
 
 class LectureDumpSchema(IdSchema):

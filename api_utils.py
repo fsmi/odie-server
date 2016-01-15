@@ -199,3 +199,33 @@ def endpoint(query_fn, schemas=None, allow_delete=False, paginate_many=True):
     return handle_generic
 
 
+def event_stream(f):
+    """Implements Server-Sent Events (https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
+
+    f is expected to return an iterator that returns (event, data) pairs.
+    'event' can be a str or None. 'data' can be any JSON serializable object, or None as a 'keepalive' value.
+    The first datum will not be returned; instead it marks the end of the code that must be executed in the
+    application context.
+    """
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        def get_stream():
+            stream = f(*args, **kwargs)
+            next(stream)
+            try:
+                for (event, data) in stream:
+                    if event is not None:
+                        yield 'event: {}\n'.format(event)
+                    if data is not None:
+                        yield 'data: {}\n\n'.format(json.dumps(data))
+                    else:
+                        # If run locally, yielding the empty string would suffice, but wsgi doesn't
+                        # attempt to write to the socket in that case, so we do this instead
+                        yield '\n'
+            except Exception as e:
+                yield 'event: error\n"internal server error"\n\n'
+                raise e
+        stream = get_stream()
+        next(stream)
+        return Response(stream, mimetype='text/event-stream', headers={'X-Accel-Buffering': 'no'})
+    return wrapped
