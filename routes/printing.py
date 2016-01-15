@@ -62,7 +62,7 @@ def print_documents():
                     job_title="Odie-Druck für {}".format(data['cover_text'].split(' ')[0])):
                 yield ('progress', '')
         except Exception as e:
-            yield ('error', 'Printing failed: ' + '\n'.join(e.args))
+            yield ('stream-error', 'Printing failed: ' + str(e))
             return
     try:
         if documents:
@@ -80,6 +80,6 @@ def print_documents():
         sqla.session.commit()
     except Exception as e:
         # in case of network troubles, we've just printed a set of documents but screwed up accounting.
-        yield ('error', 'Printing succeeded, but account logging failed. Exception: ' + '\n'.join(e.args))
+        yield ('stream-error', 'Printing succeeded, but account logging failed. Exception: ' + str(e))
         return
     yield ('complete', '')

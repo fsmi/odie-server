@@ -223,7 +223,7 @@ def event_stream(f):
                         # attempt to write to the socket in that case, so we do this instead
                         yield '\n'
             except Exception as e:
-                yield 'event: error\n"internal server error"\n\n'
+                yield 'event: stream-error\n"internal server error"\n\n'
                 raise e
         stream = get_stream()
         next(stream)
