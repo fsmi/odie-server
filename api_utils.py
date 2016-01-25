@@ -199,6 +199,9 @@ def endpoint(query_fn, schemas=None, allow_delete=False, paginate_many=True):
     return handle_generic
 
 
+class NonConfidentialException(Exception):
+    pass
+
 def event_stream(f):
     """Implements Server-Sent Events (https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
 
@@ -222,8 +225,11 @@ def event_stream(f):
                         # If run locally, yielding the empty string would suffice, but wsgi doesn't
                         # attempt to write to the socket in that case, so we do this instead
                         yield '\n'
+            except NonConfidentialException as e:
+                yield 'event: stream-error\ndata: {}\n\n'.format(e)
+                raise e
             except Exception as e:
-                yield 'event: stream-error\n"internal server error"\n\n'
+                yield 'event: stream-error\ndata: internal server error\n\n'
                 raise e
         stream = get_stream()
         next(stream)

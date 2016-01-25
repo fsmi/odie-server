@@ -10,7 +10,7 @@ from marshmallow import fields, Schema
 
 from .common import CashBoxField, PrinterField
 from odie import app, sqla, ClientError
-from api_utils import document_path, event_stream, handle_client_errors
+from api_utils import document_path, event_stream, handle_client_errors, NonConfidentialException
 from db.documents import Lecture, Deposit, Document
 
 
@@ -62,8 +62,7 @@ def print_documents():
                     job_title="Odie-Druck für {}".format(data['cover_text'].split(' ')[0])):
                 yield ('progress', '')
         except Exception as e:
-            yield ('stream-error', 'Printing failed: ' + str(e))
-            return
+            raise NonConfidentialException('Printing failed: ' + str(e)) from e
     try:
         if documents:
             num_pages = sum(doc.number_of_pages for doc in documents)
@@ -80,6 +79,5 @@ def print_documents():
         sqla.session.commit()
     except Exception as e:
         # in case of network troubles, we've just printed a set of documents but screwed up accounting.
-        yield ('stream-error', 'Printing succeeded, but account logging failed. Exception: ' + str(e))
-        return
+        raise NonConfidentialException('Printing succeeded, but account logging failed. Exception: ' + str(e)) from e
     yield ('complete', '')
