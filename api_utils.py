@@ -227,10 +227,10 @@ def event_stream(f):
                         yield '\n'
             except NonConfidentialException as e:
                 yield 'event: stream-error\ndata: {}\n\n'.format(e)
-                raise e
+                app.logger.exception(e)
             except Exception as e:
                 yield 'event: stream-error\ndata: internal server error\n\n'
-                raise e
+                app.logger.exception(e)
         stream = get_stream()
         next(stream)
         return Response(stream, mimetype='text/event-stream', headers={'X-Accel-Buffering': 'no'})
