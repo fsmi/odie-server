@@ -100,45 +100,6 @@ class DocumentLoadSchema(Schema):  # used by student document submission
     student_name = fields.Str(required=False)
 
 
-# temporary endpoint to make migration of math transcripts easier
-# TODO: remove as soon as the migration is done
-@api_route('/api/similar', methods=['POST'])
-@login_required
-@deserialize(DocumentLoadSchema)
-def get_similar(data):
-    lectures = []
-    for lect in data['lectures']:
-        try:
-            l = Lecture.query.filter_by(name=lect).one().id
-            lectures.append(l)
-        except NoResultFound:
-            pass
-    examinants = []
-    for examinant in data['examinants']:
-        try:
-            ex = Examinant.query.filter_by(name=examinant).one().id
-            examinants.append(ex)
-        except NoResultFound:
-            pass
-    date = data['date']
-    q = Document.query
-    q = q.filter(Document.department == 'mathematics')
-    q = q.filter(Document.document_type != 'written')
-    # Let's give ourselves a leeway of a month
-    q = q.filter(extract('month', Document.date) == date.month)
-    q = q.filter(extract('year', Document.date) == date.year)
-
-    # Return all documents with non-empty intersections of lectures and examinants
-    if lectures:
-        q = q.filter(Document.lectures.any(Lecture.id.in_(lectures)))
-    if examinants:
-        q = q.filter(Document.examinants.any(Examinant.id.in_(examinants)))
-    docs = q.all()
-    if docs:
-        return serialize(docs, DocumentDumpSchema, many=True)
-    return []
-
-
 def _allowed_file(filename):
     return os.path.splitext(filename)[1] in config.SUBMISSION_ALLOWED_FILE_EXTENSIONS
 
@@ -149,12 +110,6 @@ def submit_document_external():
     knows_what_they_are_doing = current_user.is_authenticated and current_user.has_permission('info_protokolle', 'mathe_protokolle')
     submit_documents(validate=knows_what_they_are_doing)
 
-# temporary endpoint to make migration of math transcripts easier
-# TODO: remove as soon as the migration is done
-@api_route('/api/documents_migration', methods=['POST'])
-@login_required
-def submit_document_migration():
-    submit_documents(validate=True)
 
 def submit_documents(validate):
     """Student document submission endpoint
