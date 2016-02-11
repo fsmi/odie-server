@@ -10,8 +10,8 @@ import urllib.parse
 
 from api_utils import handle_client_errors
 from flask import request, redirect
-from flask.ext.login import current_user, login_user, login_required, logout_user
 from odie import app, csrf, sqla
+from login import get_user, login_required
 from db.fsmi import User, Cookie
 
 login_page_text = """<html>
@@ -40,7 +40,6 @@ def login_page():
         now = datetime.datetime.now()
         cookie = str(uuid.uuid4())
         sqla.session.add(Cookie(sid=cookie, user_id=user.id, last_action=now, lifetime=172800))
-        login_user(user)
         sqla.session.commit()
         response = app.make_response(redirect(request.args.get('target_path')))
         response.set_cookie('FSMISESSID', value=cookie)
@@ -53,10 +52,9 @@ def login_page():
 @handle_client_errors
 @login_required
 def logout():
-    Cookie.query.filter_by(user_id=current_user.id).delete()
+    Cookie.query.filter_by(user_id=get_user().id).delete()
     sqla.session.commit()
     response = app.make_response(redirect(request.args.get('target_path')))
     response.set_cookie('FSMISESSID', value='', expires=0)
-    logout_user()
     return response
 

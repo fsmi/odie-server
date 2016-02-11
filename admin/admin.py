@@ -8,6 +8,7 @@ import datetime
 import os
 
 from odie import app, sqla
+from login import get_user
 from api_utils import document_path, save_file
 from db.documents import Document, Lecture, Examinant, Deposit, Folder
 from db.garfield import Location
@@ -18,7 +19,6 @@ from flask_admin import Admin, BaseView, AdminIndexView, expose
 from flask_admin.actions import action
 from flask_admin.form import FileUploadField
 from flask_admin.contrib.sqla import ModelView
-from flask.ext.login import current_user
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import RelationshipProperty
 from wtforms.fields import BooleanField
@@ -36,7 +36,7 @@ class AuthViewMixin(BaseView):
     allowed_roles = config.ADMIN_PANEL_ALLOWED_GROUPS
 
     def is_accessible(self):
-        return current_user.is_authenticated and current_user.has_permission(*self.allowed_roles)
+        return bool(get_user() and get_user().has_permission(*self.allowed_roles))
 
     def inaccessible_callback(self, name, **kwargs):
         return self.render(
@@ -53,7 +53,7 @@ class AuthModelView(ModelView, AuthViewMixin):
         if state == 'changed' and not sqla.session.is_modified(model):
             return
 
-        msg = '{} {} by {}\n\n'.format(model.__class__.__name__, state, current_user.full_name)
+        msg = '{} {} by {}\n\n'.format(model.__class__.__name__, state, get_user().full_name)
         view = model_views[model.__class__]
         attrs = inspect(model).attrs
         for (col, _) in self.get_list_columns():
@@ -119,9 +119,9 @@ class PrintForFolderView(AuthViewMixin):
 
     def _get_location(self):
         # Nobody would ever be a member of both groups at the same time, right?
-        if current_user.has_permission('info_protokolle'):
+        if get_user().has_permission('info_protokolle'):
             return 'FSI'
-        if current_user.has_permission('mathe_protokolle'):
+        if get_user().has_permission('mathe_protokolle'):
             return 'FSM'
 
     def _get_folders_with_counts(self):
@@ -320,7 +320,7 @@ class LectureView(AuthModelView):
         flash('Vorlesungen in "{}" zusammengefügt'.format(first.name))
 
         config.log_admin_audit(self, first,
-                               '\n\n'.join(['Lectures merged by {}'.format(current_user.full_name),
+                               '\n\n'.join(['Lectures merged by {}'.format(get_user().full_name),
                                             '{}->{}'.format([l.name for l in lectures], first.name),
                                             url_for('lecture.edit_view', id=first.id, _external=True)]))
 

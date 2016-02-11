@@ -7,7 +7,6 @@ import json
 import os
 
 from flask import request, send_file, Response
-from flask.ext.login import current_user, login_required
 from marshmallow import Schema, fields
 from marshmallow.validate import OneOf
 from sqlalchemy import extract
@@ -15,7 +14,8 @@ from sqlalchemy.orm import subqueryload
 from sqlalchemy.orm.exc import NoResultFound
 
 from .common import IdSchema, DocumentDumpSchema
-from odie import app, sqla, csrf, ClientError, login_manager
+from odie import app, sqla, csrf, ClientError
+from login import login_required, get_user, unauthorized
 from api_utils import endpoint, api_route, handle_client_errors, document_path, save_file, serialize, deserialize, event_stream
 from db.documents import Lecture, Document, Examinant
 
@@ -27,7 +27,7 @@ def scanner(location, id):
     assert location in config.FS_CONFIG['OFFICES']
     assert 0 <= id <= len(config.LASER_SCANNERS[location])
     (host, port) = config.LASER_SCANNERS[location][id]
-    bs = barcode.BarcodeScanner(host, port, current_user.first_name)
+    bs = barcode.BarcodeScanner(host, port, get_user().first_name)
     yield None  # exit application context, start event stream
 
     for doc in bs:
@@ -107,8 +107,8 @@ def _allowed_file(filename):
 @api_route('/api/documents', methods=['POST'])
 @csrf.exempt
 def submit_document_external():
-    knows_what_they_are_doing = current_user.is_authenticated and current_user.has_permission('info_protokolle', 'mathe_protokolle')
-    submit_documents(validate=knows_what_they_are_doing)
+    knows_what_they_are_doing = get_user() and get_user().has_permission('info_protokolle', 'mathe_protokolle')
+    submit_documents(validate=bool(knows_what_they_are_doing))
 
 
 def submit_documents(validate):
@@ -178,10 +178,10 @@ def submit_documents(validate):
 @app.route('/api/view/<int:instance_id>')
 @handle_client_errors
 def view_document(instance_id):
-    if current_user.is_authenticated or config.is_kiosk():
+    if get_user() or config.is_kiosk():
         doc = Document.query.get(instance_id)
         if doc is None or not doc.has_file:
             raise ClientError('document not found', status=404)
         return send_file(document_path(doc.id))
     else:
-        return login_manager.unauthorized()
+        return unauthorized()

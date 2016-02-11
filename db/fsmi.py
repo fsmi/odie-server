@@ -6,8 +6,7 @@ import config
 import datetime
 import db.acl as acl
 
-from flask.ext.login import UserMixin
-from odie import sqla, login_manager, Column
+from odie import sqla, Column
 from sqlalchemy.sql import column
 
 
@@ -34,7 +33,7 @@ class Cookie(sqla.Model):
             sqla.session.add(Cookie(sid=self.sid, user_id=self.user_id, last_action=now, lifetime=self.lifetime))
 
 
-class User(sqla.Model, UserMixin):
+class User(sqla.Model):
     __tablename__ = 'benutzer'
     __table_args__ = config.fsmi_table_args
 

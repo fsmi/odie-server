@@ -3,10 +3,10 @@
 import db.accounting
 from .common import IdSchema, CashBoxField
 
-from flask.ext.login import current_user, login_required
 from marshmallow import Schema, fields
 
 from odie import sqla
+from login import get_user, login_required
 from api_utils import deserialize, api_route
 from db.documents import Deposit, Document
 
@@ -21,7 +21,7 @@ class ErroneousSaleLoadSchema(Schema):
 @login_required
 @deserialize(ErroneousSaleLoadSchema)
 def accept_erroneous_sale(data):
-    db.accounting.log_erroneous_sale(data['amount'], current_user, data['cash_box'])
+    db.accounting.log_erroneous_sale(data['amount'], get_user(), data['cash_box'])
     sqla.session.commit()
     return {}
 
@@ -42,7 +42,7 @@ def log_deposit_return(data):
 
     dep = Deposit.query.get(data['id'])
     sqla.session.delete(dep)
-    db.accounting.log_deposit_return(dep, current_user, data['cash_box'])
+    db.accounting.log_deposit_return(dep, get_user(), data['cash_box'])
     sqla.session.commit()
     return {}
 
@@ -56,6 +56,6 @@ class DonationLoadSchema(Schema):
 @login_required
 @deserialize(DonationLoadSchema)
 def log_donation(data):
-    db.accounting.log_donation(current_user, data['amount'], data['cash_box'])
+    db.accounting.log_donation(get_user(), data['amount'], data['cash_box'])
     sqla.session.commit()
     return {}

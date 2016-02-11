@@ -1,7 +1,6 @@
 psycopg2
 Flask-BabelEx  # for DB Admin
 Flask-SQLAlchemy
-Flask-Login
 Flask-CORS
 Flask-DebugToolbar
 Flask-Admin
