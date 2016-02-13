@@ -5,11 +5,11 @@ import config
 import urllib.parse
 
 from flask import request
-from flask.ext.login import current_user, login_required
 from marshmallow import fields, Schema
 
 from .common import CashBoxField, PrinterField
 from odie import app, sqla, ClientError
+from login import get_user, login_required
 from api_utils import document_path, event_stream, handle_client_errors, NonConfidentialException
 from db.documents import Lecture, Deposit, Document
 
@@ -48,8 +48,8 @@ def print_documents():
     print_price = 10 * (print_price//10 + (1 if print_price % 10 else 0))
     assert print_price + data['deposit_count'] * config.FS_CONFIG['DEPOSIT_PRICE'] == data['price']
 
-    # pull current_user out of app context
-    user = current_user._get_current_object()
+    # pull current user out of app context
+    user = get_user()
     yield None  # exit application context, start event stream
 
     if documents:

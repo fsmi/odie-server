@@ -2,13 +2,13 @@
 
 import config
 
-from flask.ext.login import current_user, login_required
 from marshmallow import fields, post_load, Schema
 from marshmallow.validate import Length
 from sqlalchemy.orm import subqueryload
 
 from .common import IdSchema, DocumentDumpSchema
 from odie import csrf
+from login import get_user, login_required
 from api_utils import endpoint, api_route, serialize
 from db.documents import Deposit
 from db.odie import Order
@@ -40,7 +40,7 @@ class LoginDumpSchema(Schema):
 @login_required
 def user_info():
     # Explicitly pass the csrf token cookie value for cross-origin clients.
-    return serialize({'user': current_user, 'token': csrf._get_token()}, LoginDumpSchema)
+    return serialize({'user': get_user(), 'token': csrf._get_token()}, LoginDumpSchema)
 
 
 class OrderDumpSchema(IdSchema):

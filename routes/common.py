@@ -2,7 +2,8 @@
 
 import config
 
-from flask.ext.login import current_user
+from login import get_user
+
 from functools import partial
 from marshmallow import fields, Schema
 from marshmallow.utils import missing
@@ -29,7 +30,7 @@ class DocumentDumpSchema(IdSchema):
 
     @staticmethod
     def scrub_submitted_by(obj):
-        return obj.submitted_by if current_user.is_authenticated else missing
+        return obj.submitted_by if get_user() else missing
 
 
 CashBoxField = partial(fields.Str, required=True, validate=OneOf([cash_box for office in config.FS_CONFIG['OFFICES'].values() for cash_box in office['cash_boxes']]))
