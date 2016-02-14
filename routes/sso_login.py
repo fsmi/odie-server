@@ -8,9 +8,9 @@ import datetime
 import uuid
 import urllib.parse
 
-from api_utils import handle_client_errors
 from flask import request, redirect
 
+from api_utils import handle_client_errors
 from config import AUTH_COOKIE
 from odie import app, csrf, sqla
 from login import get_user, login_required
