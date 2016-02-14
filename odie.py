@@ -3,7 +3,7 @@
 from functools import partial
 import logging
 
-from flask import Flask
+from flask import Flask, session
 from flask.ext.babelex import Babel
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.seasurf import SeaSurf  # CSRF. Got it?

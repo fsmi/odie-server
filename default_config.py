@@ -8,6 +8,7 @@ import os
 import tempfile
 import time
 
+from flask import session
 from marshmallow.utils import missing
 
 def print_documents(doc_paths: list, cover_text: str, printer: str, usercode: int, job_title: str):
@@ -95,6 +96,7 @@ LOCAL_SERVER = True
 ITEMS_PER_PAGE = 20
 DOCUMENT_DIRECTORY = os.path.join(tempfile.gettempdir(), 'odie')
 ADMIN_PANEL_ALLOWED_GROUPS = ['fsusers']
+AUTH_COOKIE = 'FSMISESSID'
 
 PRINTER_USERCODES = {'internal': 3974}
 for cash_box in FS_CONFIG['OFFICES']['FSI']['cash_boxes']:
@@ -102,9 +104,6 @@ for cash_box in FS_CONFIG['OFFICES']['FSI']['cash_boxes']:
 for cash_box in FS_CONFIG['OFFICES']['FSM']['cash_boxes']:
     PRINTER_USERCODES[cash_box] = 2224
 
-
-def is_kiosk():
-    return False
 
 def try_get_office(user):
     return missing

@@ -2,14 +2,15 @@
 
 import config
 
+from flask import session, make_response
 from marshmallow import fields, post_load, Schema
 from marshmallow.validate import Length
 from sqlalchemy.orm import subqueryload
 
 from .common import IdSchema, DocumentDumpSchema
-from odie import csrf
-from login import get_user, login_required
-from api_utils import endpoint, api_route, serialize
+from odie import app, csrf
+from login import get_user, is_kiosk, login_required
+from api_utils import endpoint, api_route, handle_client_errors, serialize
 from db.documents import Deposit
 from db.odie import Order
 
@@ -19,7 +20,18 @@ from db.odie import Order
 
 @api_route('/api/config')
 def get_config():
-    return dict(config.FS_CONFIG, IS_KIOSK=config.is_kiosk())
+    return dict(config.FS_CONFIG, IS_KIOSK=is_kiosk())
+
+@app.route('/kiosk')
+@handle_client_errors
+@login_required
+def kiosk_handover():
+    # if you find yourself in kiosk mode unable to escape... delete the cookie.
+    session['is_kiosk'] = True
+    # We don't want the kiosk user to still be logged in
+    response = make_response('Kiosk Mode enabled.')
+    response.set_cookie(config.AUTH_COOKIE, value='', expires=0)
+    return response
 
 class UserDumpSchema(Schema):
     username = fields.Str()

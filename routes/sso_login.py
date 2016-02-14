@@ -8,8 +8,10 @@ import datetime
 import uuid
 import urllib.parse
 
-from api_utils import handle_client_errors
 from flask import request, redirect
+
+from api_utils import handle_client_errors
+from config import AUTH_COOKIE
 from odie import app, csrf, sqla
 from login import get_user, login_required
 from db.fsmi import User, Cookie
@@ -42,7 +44,7 @@ def login_page():
         sqla.session.add(Cookie(sid=cookie, user_id=user.id, last_action=now, lifetime=172800))
         sqla.session.commit()
         response = app.make_response(redirect(request.args.get('target_path')))
-        response.set_cookie('FSMISESSID', value=cookie)
+        response.set_cookie(AUTH_COOKIE, value=cookie)
         return response
     return 'Nope'
 
@@ -55,6 +57,6 @@ def logout():
     Cookie.query.filter_by(user_id=get_user().id).delete()
     sqla.session.commit()
     response = app.make_response(redirect(request.args.get('target_path')))
-    response.set_cookie('FSMISESSID', value='', expires=0)
+    response.set_cookie(AUTH_COOKIE, value='', expires=0)
     return response
 
