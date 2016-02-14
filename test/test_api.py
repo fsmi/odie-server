@@ -9,8 +9,10 @@ import routes
 import json
 import random
 
+from flask import session
+
 from db.documents import Document, Lecture
-from odie import csrf
+from odie import app, csrf
 
 class APITest(OdieTestCase):
     VALID_USER = 'guybrush'
@@ -125,8 +127,58 @@ class APITest(OdieTestCase):
 
     def test_get_examinants(self):
         res = self.get('/api/examinants')
-        data = self.fromJsonResponse(res)
+        self.fromJsonResponse(res)
 
+    def test_no_kiosk_handover_unauthenticated(self):
+        res = self.get('/kiosk')
+        self.assertEqual(res.status_code, 401)
+
+    def test_kiosk_handover(self):
+        # since we don't have a way to reset the session from outside the request context,
+        # we apparently need a new test client for this.
+        with app.test_client() as c:
+            old_client = self.app
+            self.app = c
+
+            self.login()
+            res = self.get('/kiosk')
+            self.assertEqual(res.status_code, 200)
+            self.assertTrue(session['is_kiosk'])
+
+            self.app = old_client
+
+    def test_kiosk_mode_permissions(self):
+        with app.test_client() as c:
+            old_client = self.app
+            self.app = c
+
+            self.login()
+            self.get('/kiosk')
+            # kiosk mode doesn't mean "logged in"
+            res = self.get('/api/user_info')
+            self.assertEqual(res.status_code, 401)
+
+            # ...however, viewing PDFs is allowed
+
+            self._upload_document()
+            self.login()
+            query = json.dumps(self.SUBMITTED_DOC_QUERY, separators=(',', ':'))
+            res = self.get('/api/documents?q=%s' % query)
+            data = self.fromJsonResponse(res)
+            self.assertEqual(len(data), 1)
+            id = data[0]['id']
+            # we're still in kiosk mode, right?
+            self.logout()
+            self.assertTrue(session['is_kiosk'])
+
+            # get document
+            res = self.get('/api/view/%d' % id)
+            self.assertEqual(res.status_code, 200)
+            with open(self.PDF_PATH, 'rb') as doc:
+                doc_data = doc.read()  # only ~750 bytes...
+                self.assertEqual(res.data, doc_data)
+
+            self.app = old_client
 
     ## login tests ##
 
