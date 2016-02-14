@@ -95,6 +95,7 @@ LOCAL_SERVER = True
 ITEMS_PER_PAGE = 20
 DOCUMENT_DIRECTORY = os.path.join(tempfile.gettempdir(), 'odie')
 ADMIN_PANEL_ALLOWED_GROUPS = ['fsusers']
+AUTH_COOKIE = 'FSMISESSID'
 
 PRINTER_USERCODES = {'internal': 3974}
 for cash_box in FS_CONFIG['OFFICES']['FSI']['cash_boxes']:

@@ -3,6 +3,7 @@
 from functools import wraps
 from flask import request
 
+from config import AUTH_COOKIE
 from odie import ClientError
 from db.fsmi import Cookie
 
@@ -12,7 +13,7 @@ def unauthorized():
 
 
 def get_user():
-    cookie = request.cookies.get('FSMISESSID')
+    cookie = request.cookies.get(AUTH_COOKIE)
     if not cookie:
         return None
     active_session = Cookie.query.filter_by(sid=cookie).first()
