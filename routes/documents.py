@@ -15,7 +15,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from .common import IdSchema, DocumentDumpSchema
 from odie import app, sqla, csrf, ClientError
 from login import login_required, get_user, is_kiosk, unauthorized
-from api_utils import endpoint, api_route, handle_client_errors, document_path, save_file, serialize, deserialize, event_stream
+from api_utils import endpoint, api_route, handle_client_errors, document_path, number_of_pages, save_file, serialize, event_stream
 from db.documents import Lecture, Document, Examinant
 
 
@@ -90,13 +90,19 @@ def documents_metadata():
     }
 
 
-class DocumentLoadSchema(Schema):  # used by student document submission
+class DocumentLoadSchema(Schema):  # used by document submission
     department = fields.Str(required=True, validate=OneOf(['computer science', 'mathematics', 'other']))
     lectures = fields.List(fields.Str(), required=True)
     examinants = fields.List(fields.Str(), required=True)
     date = fields.Date(required=True)
-    document_type = fields.Str(required=True, validate=OneOf(['oral', 'oral reexam']))
+    document_type = fields.Str(required=True, validate=lambda x: get_user() and x == 'written' or x in ['oral', 'oral reexam'])
     student_name = fields.Str(required=False)
+
+class FullDocumentLoadSchema(DocumentLoadSchema):
+    # unfortunately the combination (required==False, validate is not None) is not supported by marshmallow
+    # So we need to perform additional validation in the route
+    solution = fields.Str(required=False)
+    comment = fields.Str(required=False)
 
 
 def _allowed_file(filename):
@@ -106,11 +112,41 @@ def _allowed_file(filename):
 @api_route('/api/documents', methods=['POST'])
 @csrf.exempt
 def submit_document_external():
-    knows_what_they_are_doing = get_user() and get_user().has_permission('info_protokolle', 'mathe_protokolle')
-    submit_documents(validate=bool(knows_what_they_are_doing))
+    knows_what_they_are_doing = get_user() and get_user().has_permission(
+            'info_protokolle',
+            'info_klausuren',
+            'mathe_protokolle',
+            'mathe_klausuren')
+    submit_documents(validated=bool(knows_what_they_are_doing))
 
 
-def submit_documents(validate):
+def _match_lectures(lecture_names, validated):
+    lectures = []
+    for lect in lecture_names:
+        try:
+            l = Lecture.query.filter_by(name=lect).one()
+            lectures.append(l)
+        except NoResultFound:
+            # no dice, add a new lecture
+            l = Lecture(name=lect, validated=validated)
+            lectures.append(l)
+            sqla.session.add(l)
+    return lectures
+
+def _match_examinants(examinant_names, validated):
+    examinants = []
+    for examinant in examinant_names:
+        try:
+            ex = Examinant.query.filter_by(name=examinant).one()
+            examinants.append(ex)
+        except NoResultFound:
+            ex = Examinant(name=examinant, validated=validated)
+            examinants.append(ex)
+            sqla.session.add(ex)
+    return examinants
+
+
+def submit_documents(validated):
     """Student document submission endpoint
 
     POST data must be multipart, with the `json` part conforming to
@@ -122,44 +158,35 @@ def submit_documents(validate):
     """
     # we can't use @deserialize because this endpoint uses multipart form data
     data = json.loads(request.form['json'])
-    (data, errors) = DocumentLoadSchema().load(data)
+    if get_user():
+        (data, errors) = FullDocumentLoadSchema().load(data)
+        if (data.get('document_type') == 'written' and data.get('solution') not in ['official', 'inofficial', 'none']
+                or data.get('document_type') != 'written' and data.get('solution') is not None):
+            errors['solution'] = 'Invalid value.'
+    else:
+        (data, errors) = DocumentLoadSchema().load(data)
     if errors:
         raise ClientError(*errors)
     assert 'file' in request.files
     file = request.files['file']
     if not _allowed_file(file.filename):
         raise ClientError('file extension not allowed', status=406)
-    lectures = []
-    for lect in data['lectures']:
-        try:
-            l = Lecture.query.filter_by(name=lect).one()
-            lectures.append(l)
-        except NoResultFound:
-            # no dice, add a new unverified lecture
-            l = Lecture(name=lect, validated=validate)
-            lectures.append(l)
-            sqla.session.add(l)
-    examinants = []
-    for examinant in data['examinants']:
-        try:
-            ex = Examinant.query.filter_by(name=examinant).one()
-            examinants.append(ex)
-        except NoResultFound:
-            ex = Examinant(name=examinant, validated=validate)
-            examinants.append(ex)
-            sqla.session.add(ex)
+    lectures = _match_lectures(data['lectures'], validated)
+    examinants = _match_examinants(data['examinants'], validated)
     date = data['date']
-    if not validate:
+    if not get_user():
         assert date <= datetime.date.today()
     new_doc = Document(
             department=data['department'],
             lectures=lectures,
             examinants=examinants,
             date=date,
-            number_of_pages=0,  # this will be filled in upon validation
+            number_of_pages=0,  # will be filled in later or upon validation
             document_type=data['document_type'],
-            validated=validate,
-            validation_time=datetime.datetime.now() if validate else None,
+            validated=validated,
+            validation_time=datetime.datetime.now() if validated else None,
+            comment=data.get('comment'),
+            solution=data.get('solution'),
             submitted_by=data['student_name'])
     sqla.session.add(new_doc)
 
@@ -167,9 +194,12 @@ def submit_documents(validate):
     # and tell the db where to find the file
     sqla.session.flush()  # necessary for id field to be populated
     save_file(new_doc, file)
+    if validated:
+        # we don't trust other people's PDFs...
+        new_doc.number_of_pages = number_of_pages(new_doc)
     sqla.session.commit()
     app.logger.info("New document submitted (id: {})".format(new_doc.id))
-    if validate:
+    if validated:
         config.document_validated(document_path(new_doc.id))
     return {}
 
