@@ -6,10 +6,9 @@ import datetime
 import json
 import os
 
-from flask import request, send_file, Response
+from flask import request, send_file
 from marshmallow import Schema, fields
 from marshmallow.validate import OneOf
-from sqlalchemy import extract
 from sqlalchemy.orm import subqueryload
 from sqlalchemy.orm.exc import NoResultFound
 
