@@ -52,20 +52,23 @@ def print_documents():
     user = get_user()
     yield None  # exit application context, start event stream
 
+    num_pages = sum(doc.number_of_pages for doc in documents)
+
     if documents:
         try:
+            # let's get some privacy here (I'm looking at you, Mr. 'Lineare')
+            name = data['cover_text'].split(' ')[0]
             for _ in config.print_documents(
                     doc_paths=[document_path(doc.id) for doc in documents],
                     cover_text=data['cover_text'],
                     printer=data['printer'],
                     usercode=config.PRINTER_USERCODES[data['cash_box']],
-                    job_title="Odie-Druck für {}".format(data['cover_text'].split(' ')[0])):
+                    job_title="Odie-Druck für {} [{} Seiten]".format(name, num_pages)):
                 yield ('progress', '')
         except Exception as e:
             raise NonConfidentialException('Printing failed: ' + str(e)) from e
     try:
         if documents:
-            num_pages = sum(doc.number_of_pages for doc in documents)
             db.accounting.log_exam_sale(num_pages, print_price, user, data['cash_box'])
         for _ in range(data['deposit_count']):
             lectures = Lecture.query.filter(Lecture.documents.any(Document.id.in_(document_ids))).all()
