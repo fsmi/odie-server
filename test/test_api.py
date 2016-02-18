@@ -160,7 +160,7 @@ class APITest(OdieTestCase):
 
             # ...however, viewing PDFs is allowed
 
-            self._upload_document()
+            self.assertEqual(self._upload_document().status_code, 200)
             self.login()
             query = json.dumps(self.SUBMITTED_DOC_QUERY, separators=(',', ':'))
             res = self.get('/api/documents?q=%s' % query)
@@ -380,8 +380,21 @@ class APITest(OdieTestCase):
                 'document_type': 'oral',
                 'student_name': UNUSED,
         }
+
     VALID_DOCUMENT_SUBMISSION = {
                 'json': json.dumps(DOCUMENT_SUBMISSION_JSON, separators=(',', ':')),
+                'file': None,  # needs to be reopened for every request
+            }
+
+    FULL_DOCUMENT_SUBMISSION_JSON = DOCUMENT_SUBMISSION_JSON.copy()
+    FULL_DOCUMENT_SUBMISSION_JSON.update({
+                'solution': 'official',
+                'comment': 'Meh, who cares',
+                'document_type': 'written',
+            })
+
+    VALID_FULL_DOCUMENT_SUBMISSION = {
+                'json': json.dumps(FULL_DOCUMENT_SUBMISSION_JSON, separators=(',', ':')),
                 'file': None,  # needs to be reopened for every request
             }
 
@@ -391,19 +404,19 @@ class APITest(OdieTestCase):
                     'operator': '==',
                     'column': 'validated',
                     'value': False,
-                },{
+                }, {
                     'operator': '==',
                     'column': 'submitted_by',
                     'value': UNUSED,
                 }]
             }
 
-    def _upload_document(self):
+    def _upload_document(self, full=False):
+        data = self.VALID_FULL_DOCUMENT_SUBMISSION if full else self.VALID_DOCUMENT_SUBMISSION
         with open(self.PDF_PATH, 'rb') as pdf:
-            self.VALID_DOCUMENT_SUBMISSION['file'] = pdf
-            res = self.post('/api/documents', data=self.VALID_DOCUMENT_SUBMISSION)
-            self.assertEqual(res.status_code, 200)
-
+            data['file'] = pdf
+            res = self.post('/api/documents', data=data)
+            return res
 
     def test_document_submission(self):
         query = json.dumps(self.SUBMITTED_DOC_QUERY, separators=(',', ':'))
@@ -411,7 +424,7 @@ class APITest(OdieTestCase):
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
         self.assertEqual(data, [])
-        self._upload_document()
+        self.assertEqual(self._upload_document().status_code, 200)
 
         res = self.get('/api/documents?q=%s' % query)
         self.assertEqual(res.status_code, 200)
@@ -429,13 +442,21 @@ class APITest(OdieTestCase):
         self.assertEqual(data[0]['number_of_pages'], 1)
         self.assertEqual(len(data[0]['lectures']), len(self.DOCUMENT_SUBMISSION_JSON['lectures']))
 
+    def test_no_full_document_submission_unauthenticated(self):
+        res = self._upload_document(full=True).status_code
+        self.assertTrue(res != 200 and res != 500)
+
+    def test_full_document_submission(self):
+        self.login()
+        self.assertEqual(self._upload_document(full=True).status_code, 200)
+
     def test_no_document_preview_unauthenticated(self):
-        self._upload_document()
+        self.assertEqual(self._upload_document().status_code, 200)
         res = self.get('/api/view/1')
         self.assertEqual(res.status_code, 401)
 
     def test_document_preview(self):
-        self._upload_document()
+        self.assertEqual(self._upload_document().status_code, 200)
         self.login()
         query = json.dumps(self.SUBMITTED_DOC_QUERY, separators=(',', ':'))
         res = self.get('/api/documents?q=%s' % query)
