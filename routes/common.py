@@ -28,9 +28,14 @@ class DocumentDumpSchema(IdSchema):
     validation_time = fields.Date()
     submitted_by = fields.Method('scrub_submitted_by')
 
-    @staticmethod
-    def scrub_submitted_by(obj):
-        return obj.submitted_by if get_user() else missing
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # cache DB operation
+        self._authenticated = bool(get_user())
+
+    def scrub_submitted_by(self, obj):
+        return obj.submitted_by if self._authenticated else missing
 
 
 CashBoxField = partial(fields.Str, required=True, validate=OneOf([cash_box for office in config.FS_CONFIG['OFFICES'].values() for cash_box in office['cash_boxes']]))
