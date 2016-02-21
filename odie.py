@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 from functools import partial
+from datetime import timedelta
 import logging
 
 from flask import Flask, session
@@ -16,6 +17,13 @@ app.config.from_object('config.FlaskConfig')
 babel = Babel(app)
 csrf = SeaSurf(app)
 sqla = SQLAlchemy(app)
+
+@app.before_request
+def make_session_permanent():
+    # We use flask sessions for remembering which client is in kiosk mode.
+    # By default, these sessions expire when the browser is closed. Prevent that.
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(days=2*365)  # should be long enough...
 
 if app.debug:
     # allow requests from default broccoli server port
