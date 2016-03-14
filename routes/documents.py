@@ -96,7 +96,7 @@ class DocumentLoadSchema(Schema):  # used by document submission
     examinants = fields.List(fields.Str(), required=True)
     date = fields.Date(required=True)
     document_type = fields.Str(required=True, validate=lambda x: get_user() and x == 'written' or x in ['oral', 'oral reexam'])
-    student_name = fields.Str(required=False)
+    student_name = fields.Str(required=False, allow_none=True)
 
 class FullDocumentLoadSchema(DocumentLoadSchema):
     # unfortunately the combination (required==False, validate is not None) is not supported by marshmallow
@@ -187,7 +187,7 @@ def submit_documents(validated):
             validation_time=datetime.datetime.now() if validated else None,
             comment=data.get('comment'),
             solution=data.get('solution'),
-            submitted_by=data['student_name'])
+            submitted_by=data.get('student_name'))
     sqla.session.add(new_doc)
 
     # we have the db side of things taken care of, now save the file
