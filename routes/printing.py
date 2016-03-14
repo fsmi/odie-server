@@ -35,6 +35,8 @@ def print_documents():
     if errors:
         raise ClientError(*errors)
     document_ids = data['document_ids']
+    app.logger.info("Printing document ids {} ({} in total) on {} for {}".format(document_ids, len(document_ids), data['printer'], data['cover_text']))
+
     document_objs = Document.query.filter(Document.id.in_(document_ids)).all()
     if any(not doc.has_file for doc in document_objs):
         raise ClientError('Tried to print at least one document without file', status=400)
