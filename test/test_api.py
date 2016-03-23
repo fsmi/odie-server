@@ -288,6 +288,14 @@ class APITest(OdieTestCase):
         res = self.post('/api/log_deposit_return', data=json.dumps(self.VALID_DEPOSIT_RETURN))
         self.assertEqual(res.status_code, 403)
 
+    def test_log_deposit_nonexisting_deposit(self):
+        self.login()
+        res = self.post_auth('/api/log_deposit_return', data=json.dumps({
+            'cash_box': self.CASH_BOX,
+            'id': 42,
+        }))
+        self.assertEqual(res.status_code, 400)
+
     def test_deposits_state(self):
         self.login()
         res = self.get('/api/deposits')

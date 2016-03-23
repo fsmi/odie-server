@@ -7,7 +7,7 @@ from marshmallow import Schema, fields
 
 from odie import sqla
 from login import get_user, login_required
-from api_utils import deserialize, api_route
+from api_utils import deserialize, api_route, ClientError
 from db.documents import Deposit, Document
 
 
@@ -41,6 +41,8 @@ def log_deposit_return(data):
         doc.submitted_by = None
 
     dep = Deposit.query.get(data['id'])
+    if dep is None:
+        raise ClientError('deposit not found')
     sqla.session.delete(dep)
     db.accounting.log_deposit_return(dep, get_user(), data['cash_box'])
     sqla.session.commit()
