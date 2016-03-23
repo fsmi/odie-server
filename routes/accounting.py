@@ -41,9 +41,8 @@ def log_deposit_return(data):
         doc.submitted_by = None
 
     dep = Deposit.query.get(data['id'])
-    if dep is None:
+    if Deposit.query.filter(Deposit.id == data['id']).delete() == 0:
         raise ClientError('deposit not found')
-    sqla.session.delete(dep)
     db.accounting.log_deposit_return(dep, get_user(), data['cash_box'])
     sqla.session.commit()
     return {}

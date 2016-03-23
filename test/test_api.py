@@ -230,6 +230,7 @@ class APITest(OdieTestCase):
         self.login()
         res = self.do_print(self.VALID_PRINTJOB, auth=True)
         self.assertIn("event: progress\n", res.data.decode('utf8'))
+        self.assertNotIn("event: stream-error\n", res.data.decode('utf8'))
         self.assertIn("event: complete\n", res.data.decode('utf8'))
         self.assertEqual(res.status_code, 200)
         self.logout()
@@ -239,7 +240,8 @@ class APITest(OdieTestCase):
         pj = self.VALID_PRINTJOB.copy()
         pj['document_ids'] = [3]  # see fill_data.py to ensure that this document doesn't specify has_file=True
         res = self.do_print(pj, auth=True)
-        self.assertEqual(res.status_code, 400)
+        self.assertIn("event: stream-error\n", res.data.decode('utf8'))
+        self.assertEqual(res.status_code, 200)  # connecting to the EventSource should still succeed
         self.logout()
 
     def test_orders_no_get_unauthenticated(self):

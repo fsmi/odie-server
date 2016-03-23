@@ -214,8 +214,13 @@ def event_stream(f):
     def wrapped(*args, **kwargs):
         def get_stream():
             stream = f(*args, **kwargs)
-            next(stream)
             try:
+                # skip first datum
+                try:
+                    next(stream)
+                finally:
+                    yield None
+
                 for (event, data) in stream:
                     if event is not None:
                         yield 'event: {}\n'.format(event)
@@ -225,6 +230,9 @@ def event_stream(f):
                         # If run locally, yielding the empty string would suffice, but wsgi doesn't
                         # attempt to write to the socket in that case, so we do this instead
                         yield '\n'
+            except ClientError as e:
+                yield 'event: stream-error\ndata: {}\n\n'.format('\n'.join(e.errors))
+                app.logger.exception(e)
             except NonConfidentialException as e:
                 yield 'event: stream-error\ndata: {}\n\n'.format(e)
                 app.logger.exception(e)
@@ -232,6 +240,6 @@ def event_stream(f):
                 yield 'event: stream-error\ndata: internal server error\n\n'
                 app.logger.exception(e)
         stream = get_stream()
-        next(stream)
+        next(stream)  # skip first datum
         return Response(stream, mimetype='text/event-stream', headers={'X-Accel-Buffering': 'no'})
     return wrapped
