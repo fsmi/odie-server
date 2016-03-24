@@ -11,9 +11,9 @@ import time
 from flask import session
 from marshmallow.utils import missing
 
-def print_documents(doc_paths: list, cover_text: str, printer: str, usercode: int, job_title: str):
+def print_documents(doc_paths: list, cover_text: str, printer: str, user: str, usercode: int, job_title: str):
     from odie import app
-    app.logger.info("Printing documents {} ({} in total) on {} for {} [{}|{}]".format(doc_paths, len(doc_paths), printer, cover_text, job_title, usercode))
+    app.logger.info("Printing documents {} ({} in total) on {} for {} [{}|{}|{}]".format(doc_paths, len(doc_paths), printer, cover_text, job_title, user, usercode))
     for _ in doc_paths:
         time.sleep(1)
         yield ()

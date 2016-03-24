@@ -145,6 +145,7 @@ class PrintForFolderView(AuthViewMixin):
                 doc_paths=[document_path(doc.id) for doc in documents],
                 cover_text=None,
                 printer=config.FS_CONFIG['OFFICES'][self._get_location()]['printers'][0],
+                user=get_user().username,
                 usercode=config.PRINTER_USERCODES['internal'],
                 job_title='Odie-Druck: Ordnerdruck'
             )

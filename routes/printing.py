@@ -64,6 +64,7 @@ def print_documents():
                     doc_paths=[document_path(doc.id) for doc in documents],
                     cover_text=data['cover_text'],
                     printer=data['printer'],
+                    user=user.username,
                     usercode=config.PRINTER_USERCODES[data['cash_box']],
                     job_title="Odie-Druck für {} [{} Seiten]".format(name, num_pages)):
                 yield ('progress', '')
