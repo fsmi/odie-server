@@ -27,6 +27,7 @@ def scanner(location, id):
     assert 0 <= id <= len(config.LASER_SCANNERS[location])
     (host, port) = config.LASER_SCANNERS[location][id]
     bs = barcode.BarcodeScanner(host, port, get_user().first_name)
+    schema = DocumentDumpSchema()  # __init__ requires application context
     yield None  # exit application context, start event stream
 
     for doc in bs:
@@ -34,7 +35,7 @@ def scanner(location, id):
             # socket read has timeouted, try to write to output stream
             yield (None, None)
         else:
-            yield (None, serialize(doc, DocumentDumpSchema))
+            yield (None, serialize(doc, lambda: schema))
 
 
 class LectureDumpSchema(IdSchema):
