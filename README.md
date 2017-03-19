@@ -1,6 +1,6 @@
 # odie-server #
 
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/fsmi/odie?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/fsmi/odie?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Postgres backend for [odie](https://github.com/fsmi/odie-client). See Odie in action at [our student council site](https://fsmi.uni-karlsruhe.de/odie).
 
