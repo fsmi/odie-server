@@ -3,6 +3,7 @@
 import config
 import os
 import json
+import datetime
 
 from odie import app, sqla, ClientError
 from login import get_user
@@ -14,7 +15,10 @@ from marshmallow import Schema, fields
 from sqlalchemy import inspect
 from PyPDF2 import PdfFileReader
 from PyPDF2.utils import PdfReadError
+from pytz import reference
 
+def end_of_local_date(d):
+    return datetime.datetime.combine(d, datetime.time(23, 59, 59, 999999, tzinfo=reference.LocalTimezone()))
 
 def document_path(id):
     dir = os.path.join(config.DOCUMENT_DIRECTORY, str(id % 100))

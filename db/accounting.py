@@ -36,6 +36,8 @@ def log_deposit(deposit, user, cashbox: str):
     app.logger.info("Deposit: {} put {} cents into {}".format(user.username, deposit.price, cashbox))
 def log_deposit_return(deposit, user, cashbox: str):
     app.logger.info("Deposit: {} returned deposit to {}, took {} cents out of {}".format(user.username, deposit.name, deposit.price, cashbox))
+def log_early_document_disburse(costumer: str, user, cashbox: str):
+    app.logger.info("Early Document: {} payed early document reward to {}, took {} cents out of {}".format(user.username, costumer, config.FS_CONFIG['EARLY_DOCUMENT_REWARD'], cashbox))
 
 if not config.LOCAL_SERVER:
 
@@ -102,3 +104,8 @@ if not config.LOCAL_SERVER:
         price = deposit.price / -100
         app.logger.info("Deposit: {} returned deposit to {}, took {} € out of {}".format(user.username, deposit.name, price, cashbox))
         _log_deposit_action(deposit, user, cashbox, price, 'EXAM_DEPOSIT_WITHDRAWAL')
+
+#    def log_early_document_disburse(costumer: str, user, cashbox: str):
+#       price = config.FS_CONFIG['EARLY_DOCUMENT_REWARD'] / -100
+#       app.logger.info("Early Document: {} payed early document reward to {}, took {} € out of {}".format(user.username, costumer, price, cashbox))
+#       # TODO Garfield implementieren

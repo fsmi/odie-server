@@ -11,12 +11,13 @@ from marshmallow import Schema, fields
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import subqueryload
 from sqlalchemy.orm.exc import NoResultFound
+from pytz import reference
 
 from .common import IdSchema, DocumentDumpSchema
 from odie import app, sqla, csrf, ClientError
 from login import login_required, get_user, is_kiosk, unauthorized
 from api_utils import endpoint, api_route, handle_client_errors, document_path, number_of_pages, save_file, serialize, event_stream
-from db.documents import Lecture, Document, Examinant
+from db.documents import Lecture, Document, Examinant, PaymentState
 
 
 @app.route('/api/scanner/<location>/<int:id>')
@@ -43,6 +44,8 @@ class LectureDumpSchema(IdSchema):
     aliases = fields.List(fields.Str())
     comment = fields.Str()
     validated = fields.Boolean()
+    early_document_until = fields.LocalDateTime()
+    early_document_eligible = fields.Boolean()
 
 api_route('/api/lectures')(
 endpoint(
@@ -177,6 +180,18 @@ def submit_documents(validated):
     date = data['date']
     if not get_user():
         assert date <= datetime.date.today()
+
+    student_name = data.get('student_name')
+    if student_name is None or student_name.isspace():
+        student_name = None
+    deposit_return_eligible = student_name is not None
+    early_document_eligible = False
+    for lecture in lectures:
+        if(lecture.early_document_eligible):
+            early_document_eligible = True
+            break
+    early_document_eligible = early_document_eligible and student_name is not None
+
     new_doc = Document(
             department=data['department'],
             lectures=lectures,
@@ -188,7 +203,10 @@ def submit_documents(validated):
             validation_time=datetime.datetime.now() if validated else None,
             comment=data.get('comment'),
             solution=data.get('solution'),
-            submitted_by=data.get('student_name'))
+            submitted_by=student_name,
+            early_document_state=PaymentState.ELIGIBLE if early_document_eligible else PaymentState.NOT_ELIGIBLE,
+            deposit_return_state=PaymentState.ELIGIBLE if deposit_return_eligible else PaymentState.NOT_ELIGIBLE
+    )
     sqla.session.add(new_doc)
 
     # we have the db side of things taken care of, now save the file

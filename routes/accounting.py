@@ -8,8 +8,9 @@ from marshmallow import Schema, fields
 from odie import sqla
 from login import get_user, login_required
 from api_utils import deserialize, api_route, ClientError
-from db.documents import Deposit, Document
+from db.documents import Deposit, Document, PaymentState
 
+import config
 
 class ErroneousSaleLoadSchema(Schema):
     amount = fields.Int(required=True)
@@ -30,6 +31,9 @@ class DepositReturnSchema(IdSchema):
     cash_box = CashBoxField()
     document_id = fields.Int()
 
+class EarlyDocumentDisburseSchema(IdSchema):
+    cash_box = CashBoxField()
+
 
 @api_route('/api/log_deposit_return', methods=['POST'])
 @login_required
@@ -37,8 +41,12 @@ class DepositReturnSchema(IdSchema):
 def log_deposit_return(data):
     if 'document_id' in data:
         doc = Document.query.get(data['document_id'])
+        if doc is None:
+            raise ClientError('no matching document found')
+        doc.deposit_return_state = PaymentState.DISBURSED
         # data privacy, yo
-        doc.submitted_by = None
+        if doc.early_document_state is not PaymentState.ELIGIBLE:
+            doc.submitted_by = None
 
     dep = Deposit.query.get(data['id'])
     if Deposit.query.filter(Deposit.id == data['id']).delete() == 0:
@@ -47,6 +55,26 @@ def log_deposit_return(data):
     sqla.session.commit()
     return {}
 
+@api_route('/api/log_early_document_disburse', methods=['POST'])
+@login_required
+@deserialize(EarlyDocumentDisburseSchema)
+def log_early_document_disburse(data):
+    doc = Document.query.get(data['id'])
+    if doc is None:
+        raise ClientError('no matching document found')
+    if doc.early_document_state is not PaymentState.ELIGIBLE:
+        raise ClientError('document not eligible for early document disbursion')
+
+    doc.early_document_state = PaymentState.DISBURSED
+    submitted_by = doc.submitted_by
+    # data privacy, yo
+    if doc.deposit_return_state is not PaymentState.ELIGIBLE:
+        doc.submitted_by = None
+
+    db.accounting.log_early_document_disburse(submitted_by, get_user(), data['cash_box'])
+    sqla.session.commit()
+
+    return {'disbursal': config.FS_CONFIG['EARLY_DOCUMENT_REWARD']}
 
 class DonationLoadSchema(Schema):
     amount = fields.Int(required=True, validate=lambda i: i != 0)

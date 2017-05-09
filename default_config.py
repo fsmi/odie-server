@@ -77,6 +77,9 @@ FS_CONFIG = {
     'LOGOUT_URL': '/logout',
     'DEPOSIT_PRICE': 500,  # in cents
     'PRICE_PER_PAGE': 3,   # in cents
+    'EARLY_DOCUMENT_REWARD': 500, # in cents
+    'EARLY_DOCUMENT_COUNT': 3, # number of documents counting as early (https://www.fsmi.uni-karlsruhe.de/Fachschaft/Sitzungen/ProtokollAnzeigen.html?protokoll_id=849)
+    'EARLY_DOCUMENT_EXTRA_DAYS': 14, # number of days documents count as early, afer the *_COUNT one
     'OFFICES': {
         'FSI': {
             'cash_boxes': ['Sprechstundenkasse Informatik'],

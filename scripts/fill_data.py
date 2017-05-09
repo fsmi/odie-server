@@ -12,7 +12,7 @@ import crypt
 
 from odie import sqla
 
-from db.documents import Lecture, Document, Examinant, Deposit, Folder
+from db.documents import Lecture, Document, Examinant, Deposit, Folder, PaymentState
 from db.garfield import Location
 from db.fsmi import User
 from db.acl import Permission
@@ -54,12 +54,12 @@ def fill():
 
     # assumptions in tests: the first two documents have has_file=True, the third one doesn't
     docs = [
-                Document(department='computer science', lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=date(2010, 4, 1), validation_time=datetime(2010, 4, 2), number_of_pages=4, document_type='oral', validated=True, has_file=True),
-                Document(department='computer science', lectures=[lectures[6], lectures[7]], examinants=[profs[1]], date=date(2004, 10, 4), number_of_pages=1, validation_time=datetime(2010, 10, 5), document_type='oral', validated=True, has_file=True),
-                Document(department='computer science', lectures=[lectures[4], lectures[3], lectures[2]], examinants=[profs[1], profs[0]], date=date(2004, 8, 2), validation_time=datetime(2010, 8, 3), number_of_pages=2, document_type='oral', validated=True),
-                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2000, 1, 1), validation_time=datetime(2000, 1, 2), number_of_pages=7, document_type='oral', validated=True),
-                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2000, 2, 3), validation_time=datetime(2000, 2, 4), number_of_pages=7, document_type='oral', validated=True),
-                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2001, 2, 3), validation_time=datetime(2001, 2, 4), number_of_pages=2, document_type='oral', validated=False, submitted_by='Monty Montgomery'),
+                Document(department='computer science', lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=date(2010, 4, 1), validation_time=datetime(2010, 4, 2), number_of_pages=4, document_type='oral', validated=True, has_file=True, early_document_state=PaymentState.NOT_ELIGIBLE, deposit_return_state=PaymentState.NOT_ELIGIBLE),
+                Document(department='computer science', lectures=[lectures[6], lectures[7]], examinants=[profs[1]], date=date(2004, 10, 4), number_of_pages=1, validation_time=datetime(2010, 10, 5), document_type='oral', validated=True, has_file=True, early_document_state=PaymentState.NOT_ELIGIBLE, deposit_return_state=PaymentState.NOT_ELIGIBLE),
+                Document(department='computer science', lectures=[lectures[4], lectures[3], lectures[2]], examinants=[profs[1], profs[0]], date=date(2004, 8, 2), validation_time=datetime(2010, 8, 3), number_of_pages=2, document_type='oral', validated=True, early_document_state=PaymentState.NOT_ELIGIBLE, deposit_return_state=PaymentState.NOT_ELIGIBLE),
+                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2000, 1, 1), validation_time=datetime(2000, 1, 2), number_of_pages=7, document_type='oral', validated=True, early_document_state=PaymentState.NOT_ELIGIBLE, deposit_return_state=PaymentState.NOT_ELIGIBLE),
+                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2000, 2, 3), validation_time=datetime(2000, 2, 4), number_of_pages=7, document_type='oral', validated=True, early_document_state=PaymentState.NOT_ELIGIBLE, deposit_return_state=PaymentState.NOT_ELIGIBLE),
+                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2001, 2, 3), validation_time=datetime(2001, 2, 4), number_of_pages=2, document_type='oral', validated=False, submitted_by='Monty Montgomery', early_document_state=PaymentState.ELIGIBLE, deposit_return_state=PaymentState.ELIGIBLE),
         ]
 
     for d in docs:

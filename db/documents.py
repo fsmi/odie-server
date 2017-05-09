@@ -2,10 +2,14 @@
 
 import config
 import sqlalchemy
+import datetime
 
 from odie import sqla, Column
 from sqlalchemy.dialects import postgres
+from sqlalchemy.orm import load_only
 from db import garfield
+from api_utils import end_of_local_date
+from pytz import reference
 
 
 lecture_docs = sqla.Table('lecture_docs',
@@ -32,6 +36,25 @@ class Lecture(sqla.Model):
     documents = sqla.relationship('Document', secondary=lecture_docs, lazy='dynamic', back_populates='lectures')
     folders = sqla.relationship('Folder', secondary=folder_lectures, back_populates='lectures')
 
+    @property
+    def early_document_until(self):
+        q = self.documents
+        q = q.filter(Document.validation_time.isnot(None)).filter(Document.validated.is_(True))
+        if q.count() < config.FS_CONFIG['EARLY_DOCUMENT_COUNT']:
+            return None
+
+        q = q.options(load_only("validation_time")).order_by(Document.validation_time).limit(config.FS_CONFIG['EARLY_DOCUMENT_COUNT'])
+        doc = q.all()[-1]
+        last_eligible_day = doc.validation_time + datetime.timedelta(days=config.FS_CONFIG['EARLY_DOCUMENT_EXTRA_DAYS'])
+        return end_of_local_date(last_eligible_day)
+
+    @property
+    def early_document_eligible(self):
+        until = self.early_document_until
+        return until is None or datetime.datetime.now(reference.LocalTimezone()) <= until
+
+
+
     def __str__(self):
         return self.name
 
@@ -49,6 +72,8 @@ folder_docs = sqla.Table('folder_docs',
 
 document_type = sqla.Enum('oral', 'written', 'oral reexam', name='document_type', inherit_schema=True)
 
+class PaymentState:
+    NOT_ELIGIBLE, ELIGIBLE, DISBURSED = range(3)
 
 class Document(sqla.Model):
     __tablename__ = 'documents'
@@ -66,6 +91,8 @@ class Document(sqla.Model):
     validation_time = Column(sqla.DateTime(timezone=True), nullable=True)
     submitted_by = Column(sqla.String, nullable=True)
     legacy_id = Column(sqla.Integer, nullable=True)  # old id from fs-deluxe, so we can recognize the old barcodes
+    early_document_state = Column(sqla.Integer, nullable=False)
+    deposit_return_state = Column(sqla.Integer, nullable=False)
 
     lectures = sqla.relationship('Lecture', secondary=lecture_docs, back_populates='documents')
     examinants = sqla.relationship('Examinant', secondary=document_examinants, back_populates='documents')
