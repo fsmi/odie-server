@@ -210,6 +210,9 @@ class DocumentView(AuthModelView):
             # document has just been validated for the first time
             model.validation_time = datetime.datetime.now()
             got_new_file = model.has_file
+        elif model.validation_time is not None and not model.validated:
+            # document is no longer validated => reset validation time
+            model.validation_time = None
 
         if got_new_file:
             if model.document_type != 'written':
