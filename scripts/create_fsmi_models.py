@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+# -*- coding: UTF-8 -*-
 
 # one of two scripts to create the tables, types and schemas necessary for odie.
 # Unfortunately we need to split these (nearly identical) scripts due to Flask-SQLAlchemy
