@@ -105,7 +105,15 @@ if not config.LOCAL_SERVER:
         app.logger.info("Deposit: {} returned deposit to {}, took {} € out of {}".format(user.username, deposit.name, price, cashbox))
         _log_deposit_action(deposit, user, cashbox, price, 'EXAM_DEPOSIT_WITHDRAWAL')
 
-#    def log_early_document_disburse(costumer: str, user, cashbox: str):
-#       price = config.FS_CONFIG['EARLY_DOCUMENT_REWARD'] / -100
-#       app.logger.info("Early Document: {} payed early document reward to {}, took {} € out of {}".format(user.username, costumer, price, cashbox))
-#       # TODO Garfield implementieren
+
+    def _log_early_document_disburse(costumer: str, user, cashbox: str, final_amount: float):
+        # Without these casts, the strings will end up as type 'unknown' in postgres, where the function lookup will fail due to incorrect type signature
+        username = cast(user.username, String)
+        costumer_string= cast(costumer, String)
+        proc = procs.exam_deposit_action(cash_box_ids[cashbox], final_amount, username, costumer_string)
+        sqla.session.execute(proc)
+
+    def log_early_document_disburse(costumer: str, user, cashbox: str):
+       price = config.FS_CONFIG['EARLY_DOCUMENT_REWARD'] / -100
+       app.logger.info("Early Document: {} payed early document reward to {}, took {} € out of {}".format(user.username, costumer, price, cashbox))
+       _log_early_document_disburse(costumer, user, cashbox, price)
