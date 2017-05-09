@@ -121,7 +121,7 @@ def submit_document_external():
             'info_klausuren',
             'mathe_protokolle',
             'mathe_klausuren')
-    submit_documents(validated=bool(knows_what_they_are_doing))
+    return submit_documents(validated=bool(knows_what_they_are_doing))
 
 
 def _match_lectures(lecture_names, validated):
@@ -220,7 +220,7 @@ def submit_documents(validated):
     app.logger.info("New document submitted (id: {})".format(new_doc.id))
     if validated:
         config.document_validated(document_path(new_doc.id))
-    return {}
+    return {'early_document_eligible': early_document_eligible}
 
 # take heed when renaming this, it's referenced as string in the admin UI
 @app.route('/api/view/<int:instance_id>')
