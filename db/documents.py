@@ -91,8 +91,8 @@ class Document(sqla.Model):
     validation_time = Column(sqla.DateTime(timezone=True), nullable=True)
     submitted_by = Column(sqla.String, nullable=True)
     legacy_id = Column(sqla.Integer, nullable=True)  # old id from fs-deluxe, so we can recognize the old barcodes
-    early_document_state = Column(sqla.Integer, nullable=False)
-    deposit_return_state = Column(sqla.Integer, nullable=False)
+    early_document_state = Column(sqla.Integer, nullable=False, server_default='0')
+    deposit_return_state = Column(sqla.Integer, nullable=False, server_default='0')
 
     lectures = sqla.relationship('Lecture', secondary=lecture_docs, back_populates='documents')
     examinants = sqla.relationship('Examinant', secondary=document_examinants, back_populates='documents')

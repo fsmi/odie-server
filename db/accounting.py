@@ -36,8 +36,8 @@ def log_deposit(deposit, user, cashbox: str):
     app.logger.info("Deposit: {} put {} cents into {}".format(user.username, deposit.price, cashbox))
 def log_deposit_return(deposit, user, cashbox: str):
     app.logger.info("Deposit: {} returned deposit to {}, took {} cents out of {}".format(user.username, deposit.name, deposit.price, cashbox))
-def log_early_document_disburse(costumer: str, user, cashbox: str):
-    app.logger.info("Early Document: {} payed early document reward to {}, took {} cents out of {}".format(user.username, costumer, config.FS_CONFIG['EARLY_DOCUMENT_REWARD'], cashbox))
+def log_early_document_disburse(user, cashbox: str):
+    app.logger.info("Early Document: {} payed early document reward to someone, took {} cents out of {}".format(user.username, config.FS_CONFIG['EARLY_DOCUMENT_REWARD'], cashbox))
 
 if not config.LOCAL_SERVER:
 
@@ -106,14 +106,13 @@ if not config.LOCAL_SERVER:
         _log_deposit_action(deposit, user, cashbox, price, 'EXAM_DEPOSIT_WITHDRAWAL')
 
 
-    def _log_early_document_disburse(costumer: str, user, cashbox: str, final_amount: float):
+    def _log_early_document_disburse(user, cashbox: str, final_amount: float):
         # Without these casts, the strings will end up as type 'unknown' in postgres, where the function lookup will fail due to incorrect type signature
         username = cast(user.username, String)
-        costumer_string= cast(costumer, String)
-        proc = procs.exam_deposit_action(cash_box_ids[cashbox], final_amount, username, costumer_string)
+        proc = procs.exam_deposit_action(cash_box_ids[cashbox], final_amount, username)
         sqla.session.execute(proc)
 
-    def log_early_document_disburse(costumer: str, user, cashbox: str):
+    def log_early_document_disburse(user, cashbox: str):
        price = config.FS_CONFIG['EARLY_DOCUMENT_REWARD'] / -100
-       app.logger.info("Early Document: {} payed early document reward to {}, took {} € out of {}".format(user.username, costumer, price, cashbox))
-       _log_early_document_disburse(costumer, user, cashbox, price)
+       app.logger.info("Early Document: {} payed early document reward to someone, took {} € out of {}".format(user.username, price, cashbox))
+       _log_early_document_disburse(user, cashbox, price)

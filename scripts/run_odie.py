@@ -12,5 +12,6 @@ import routes
 
 from odie import app
 
+# To make the server available externally, change the app.run line to app.run(threaded=True,host='0.0.0.0')
 if __name__ == '__main__':
     app.run(threaded=True)

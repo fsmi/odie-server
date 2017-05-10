@@ -42,7 +42,7 @@ def log_deposit_return(data):
     if 'document_id' in data:
         doc = Document.query.get(data['document_id'])
         if doc is None:
-            raise ClientError('no matching document found')
+            raise ClientError('document not found')
         doc.deposit_return_state = PaymentState.DISBURSED
         # data privacy, yo
         if doc.early_document_state is not PaymentState.ELIGIBLE:
@@ -61,17 +61,16 @@ def log_deposit_return(data):
 def log_early_document_disburse(data):
     doc = Document.query.get(data['id'])
     if doc is None:
-        raise ClientError('no matching document found')
+        raise ClientError('document not found')
     if doc.early_document_state is not PaymentState.ELIGIBLE:
         raise ClientError('document not eligible for early document disbursion')
 
     doc.early_document_state = PaymentState.DISBURSED
-    submitted_by = doc.submitted_by
     # data privacy, yo
     if doc.deposit_return_state is not PaymentState.ELIGIBLE:
         doc.submitted_by = None
 
-    db.accounting.log_early_document_disburse(submitted_by, get_user(), data['cash_box'])
+    db.accounting.log_early_document_disburse(get_user(), data['cash_box'])
     sqla.session.commit()
 
     return {'disbursal': config.FS_CONFIG['EARLY_DOCUMENT_REWARD']}
