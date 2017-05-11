@@ -60,6 +60,7 @@ def fill():
                 Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2000, 1, 1), validation_time=datetime(2000, 1, 2), number_of_pages=7, document_type='oral', validated=True, early_document_state=PaymentState.NOT_ELIGIBLE, deposit_return_state=PaymentState.NOT_ELIGIBLE),
                 Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2000, 2, 3), validation_time=datetime(2000, 2, 4), number_of_pages=7, document_type='oral', validated=True, early_document_state=PaymentState.NOT_ELIGIBLE, deposit_return_state=PaymentState.NOT_ELIGIBLE),
                 Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2001, 2, 3), validation_time=datetime(2001, 2, 4), number_of_pages=2, document_type='oral', validated=False, submitted_by='Monty Montgomery', early_document_state=PaymentState.ELIGIBLE, deposit_return_state=PaymentState.ELIGIBLE),
+                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2001, 2, 3), validation_time=datetime(2001, 2, 4), number_of_pages=2, document_type='oral', validated=False, submitted_by='Some other Monty', early_document_state=PaymentState.NOT_ELIGIBLE, deposit_return_state=PaymentState.ELIGIBLE),
         ]
 
     for d in docs:
