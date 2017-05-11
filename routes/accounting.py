@@ -31,7 +31,7 @@ class DepositReturnSchema(IdSchema):
     cash_box = CashBoxField()
     document_id = fields.Int()
 
-class EarlyDocumentDisburseSchema(IdSchema):
+class EarlyDocumentRewardSchema(IdSchema):
     cash_box = CashBoxField()
 
 
@@ -55,15 +55,15 @@ def log_deposit_return(data):
     sqla.session.commit()
     return {}
 
-@api_route('/api/log_early_document_disburse', methods=['POST'])
+@api_route('/api/log_early_document_reward', methods=['POST'])
 @login_required
-@deserialize(EarlyDocumentDisburseSchema)
-def log_early_document_disburse(data):
+@deserialize(EarlyDocumentRewardSchema)
+def log_early_document_reward(data):
     doc = Document.query.get(data['id'])
     if doc is None:
         raise ClientError('document not found')
     if doc.early_document_state is not PaymentState.ELIGIBLE:
-        raise ClientError('document not eligible for early document disbursion')
+        raise ClientError('document not eligible for early document reward')
 
     doc.early_document_state = PaymentState.DISBURSED
     # data privacy, yo
