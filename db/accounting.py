@@ -109,7 +109,7 @@ if not config.LOCAL_SERVER:
     def _log_early_document_disburse(user, cashbox: str, final_amount: float):
         # Without these casts, the strings will end up as type 'unknown' in postgres, where the function lookup will fail due to incorrect type signature
         username = cast(user.username, String)
-        proc = procs.exam_deposit_action(cash_box_ids[cashbox], final_amount, username)
+        proc = procs.exam_early_document_reward_action(cash_box_ids[cashbox], final_amount, username)
         sqla.session.execute(proc)
 
     def log_early_document_disburse(user, cashbox: str):
