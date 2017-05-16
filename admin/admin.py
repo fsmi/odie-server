@@ -199,25 +199,22 @@ class DocumentView(AuthModelView):
         if model.id is None:
             sqla.session.flush()  # acquire ID
 
-        got_new_file = False
         if form.file.data:
             self._delete_document(model)  # delete old file
             save_file(model, form.file.data)
-            if model.validated:
-                got_new_file = True
 
         if model.validation_time is None and model.validated:
             # document has just been validated for the first time
             model.validation_time = datetime.datetime.now()
-            got_new_file = model.has_file
         elif model.validation_time is not None and not model.validated:
             # document is no longer validated => reset validation time
             model.validation_time = None
 
-        if got_new_file:
+        if model.validated and not model.has_barcode:
             if model.document_type != 'written':
                 barcode.bake_barcode(model)
             config.document_validated(document_path(model.id))
+            model.has_barcode = True
 
         super().on_model_change(form, model, is_created)
 

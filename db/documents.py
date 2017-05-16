@@ -88,6 +88,7 @@ class Document(sqla.Model):
     document_type = Column(document_type)
     has_file = Column(sqla.Boolean, server_default=sqlalchemy.sql.expression.false())
     validated = Column(sqla.Boolean)
+    has_barcode = Column(sqla.Boolean, server_default=sqlalchemy.sql.expression.false())
     validation_time = Column(sqla.DateTime(timezone=True), nullable=True)
     submitted_by = Column(sqla.String, nullable=True)
     legacy_id = Column(sqla.Integer, nullable=True)  # old id from fs-deluxe, so we can recognize the old barcodes
