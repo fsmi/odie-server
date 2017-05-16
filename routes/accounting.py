@@ -8,7 +8,7 @@ from marshmallow import Schema, fields
 from odie import sqla
 from login import get_user, login_required
 from api_utils import deserialize, api_route, ClientError
-from db.documents import Deposit, Document, PaymentState
+from db.documents import Deposit, Document
 
 import config
 
@@ -43,9 +43,9 @@ def log_deposit_return(data):
         doc = Document.query.get(data['document_id'])
         if doc is None:
             raise ClientError('document not found')
-        doc.deposit_return_state = PaymentState.DISBURSED
+        doc.deposit_return_eligible = False
         # data privacy, yo
-        if doc.early_document_state is not PaymentState.ELIGIBLE:
+        if not doc.early_document_reward_eligible:
             doc.submitted_by = None
 
     dep = Deposit.query.get(data['id'])
@@ -62,12 +62,12 @@ def log_early_document_reward(data):
     doc = Document.query.get(data['id'])
     if doc is None:
         raise ClientError('document not found')
-    if doc.early_document_state is not PaymentState.ELIGIBLE:
+    if not doc.early_document_reward_eligible:
         raise ClientError('document not eligible for early document reward')
 
-    doc.early_document_state = PaymentState.DISBURSED
+    doc.early_document_reward_eligible = False
     # data privacy, yo
-    if doc.deposit_return_state is not PaymentState.ELIGIBLE:
+    if not doc.deposit_return_eligible:
         doc.submitted_by = None
 
     db.accounting.log_early_document_disburse(get_user(), data['cash_box'])

@@ -72,8 +72,6 @@ folder_docs = sqla.Table('folder_docs',
 
 document_type = sqla.Enum('oral', 'written', 'oral reexam', name='document_type', inherit_schema=True)
 
-class PaymentState:
-    NOT_ELIGIBLE, ELIGIBLE, DISBURSED = range(3)
 
 class Document(sqla.Model):
     __tablename__ = 'documents'
@@ -92,8 +90,8 @@ class Document(sqla.Model):
     validation_time = Column(sqla.DateTime(timezone=True), nullable=True)
     submitted_by = Column(sqla.String, nullable=True)
     legacy_id = Column(sqla.Integer, nullable=True)  # old id from fs-deluxe, so we can recognize the old barcodes
-    early_document_state = Column(sqla.Integer, nullable=False, server_default='0')
-    deposit_return_state = Column(sqla.Integer, nullable=False, server_default='0')
+    early_document_reward_eligible = Column(sqla.Boolean, nullable=False, server_default=sqlalchemy.sql.expression.false())
+    deposit_return_eligible = Column(sqla.Boolean, nullable=False, server_default=sqlalchemy.sql.expression.false())
 
     lectures = sqla.relationship('Lecture', secondary=lecture_docs, back_populates='documents')
     examinants = sqla.relationship('Examinant', secondary=document_examinants, back_populates='documents')
