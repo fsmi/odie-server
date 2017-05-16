@@ -90,7 +90,7 @@ class Document(sqla.Model):
     validation_time = Column(sqla.DateTime(timezone=True), nullable=True)
     submitted_by = Column(sqla.String, nullable=True)
     legacy_id = Column(sqla.Integer, nullable=True)  # old id from fs-deluxe, so we can recognize the old barcodes
-    early_document_reward_eligible = Column(sqla.Boolean, nullable=False, server_default=sqlalchemy.sql.expression.false())
+    early_document_eligible = Column(sqla.Boolean, nullable=False, server_default=sqlalchemy.sql.expression.false())
     deposit_return_eligible = Column(sqla.Boolean, nullable=False, server_default=sqlalchemy.sql.expression.false())
 
     lectures = sqla.relationship('Lecture', secondary=lecture_docs, back_populates='documents')

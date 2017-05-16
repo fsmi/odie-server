@@ -45,7 +45,7 @@ def log_deposit_return(data):
             raise ClientError('document not found')
         doc.deposit_return_eligible = False
         # data privacy, yo
-        if not doc.early_document_reward_eligible:
+        if not doc.early_document_eligible:
             doc.submitted_by = None
 
     dep = Deposit.query.get(data['id'])
@@ -62,10 +62,10 @@ def log_early_document_reward(data):
     doc = Document.query.get(data['id'])
     if doc is None:
         raise ClientError('document not found')
-    if not doc.early_document_reward_eligible:
+    if not doc.early_document_eligible:
         raise ClientError('document not eligible for early document reward')
 
-    doc.early_document_reward_eligible = False
+    doc.early_document_eligible = False
     # data privacy, yo
     if not doc.deposit_return_eligible:
         doc.submitted_by = None
