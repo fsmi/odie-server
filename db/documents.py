@@ -6,7 +6,8 @@ import datetime
 
 from odie import sqla, Column
 from sqlalchemy.dialects import postgres
-from sqlalchemy.orm import load_only
+from sqlalchemy import select, and_, join
+from sqlalchemy.orm import object_session
 from db import garfield
 from api_utils import end_of_local_date
 from pytz import reference
@@ -38,14 +39,19 @@ class Lecture(sqla.Model):
 
     @property
     def early_document_until(self):
-        q = self.documents
-        q = q.filter(Document.validation_time.isnot(None)).filter(Document.validated.is_(True))
-        if q.count() < config.FS_CONFIG['EARLY_DOCUMENT_COUNT']:
+        j = join(Document, lecture_docs, Document.id == lecture_docs.c.document_id).join(Lecture, Lecture.id == lecture_docs.c.lecture_id)
+        validation_time = object_session(self).scalar(select([Document.validation_time]).select_from(j).\
+            where(and_(
+                Document.validation_time.isnot(None),
+                Document.validated.is_(True),
+                Lecture.id == self.id,
+                #Lecture.validated.is_(True)
+            )).\
+            order_by(Document.validation_time).\
+            offset(config.FS_CONFIG['EARLY_DOCUMENT_COUNT']-1).limit(1))
+        if(validation_time is None):
             return None
-
-        q = q.options(load_only("validation_time")).order_by(Document.validation_time).limit(config.FS_CONFIG['EARLY_DOCUMENT_COUNT'])
-        doc = q.all()[-1]
-        last_eligible_day = doc.validation_time + datetime.timedelta(days=config.FS_CONFIG['EARLY_DOCUMENT_EXTRA_DAYS'])
+        last_eligible_day = validation_time + datetime.timedelta(days=config.FS_CONFIG['EARLY_DOCUMENT_EXTRA_DAYS'])
         return end_of_local_date(last_eligible_day)
 
     @property
