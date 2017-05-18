@@ -6,10 +6,9 @@ import datetime
 
 from odie import sqla, Column
 from sqlalchemy.dialects import postgres
-from sqlalchemy import select, and_, join
-from sqlalchemy.orm import object_session
+from sqlalchemy import func
+from sqlalchemy.orm import column_property
 from db import garfield
-from api_utils import end_of_local_date
 from pytz import reference
 
 
@@ -37,22 +36,46 @@ class Lecture(sqla.Model):
     documents = sqla.relationship('Document', secondary=lecture_docs, lazy='dynamic', back_populates='lectures')
     folders = sqla.relationship('Folder', secondary=folder_lectures, back_populates='lectures')
 
-    @property
-    def early_document_until(self):
-        j = join(Document, lecture_docs, Document.id == lecture_docs.c.document_id).join(Lecture, Lecture.id == lecture_docs.c.lecture_id)
-        validation_time = object_session(self).scalar(select([Document.validation_time]).select_from(j).\
-            where(and_(
-                Document.validation_time.isnot(None),
-                Document.validated.is_(True),
-                Lecture.id == self.id,
-                #Lecture.validated.is_(True)
-            )).\
-            order_by(Document.validation_time).\
-            offset(config.FS_CONFIG['EARLY_DOCUMENT_COUNT']-1).limit(1))
-        if(validation_time is None):
-            return None
-        last_eligible_day = validation_time + datetime.timedelta(days=config.FS_CONFIG['EARLY_DOCUMENT_EXTRA_DAYS'])
-        return end_of_local_date(last_eligible_day)
+    early_document_until = column_property(
+        func.garfield.lecture_early_document_reward_until(id,config.FS_CONFIG['EARLY_DOCUMENT_COUNT'])
+    )
+
+    '''
+-- the following function returns the early document reward deadline for a given lecture.
+    TODO implement +x days grace period
+SET search_path = garfield;
+CREATE OR REPLACE FUNCTION lecture_early_document_reward_until(lec_id int, early_document_count int) RETURNS timestamptz AS $$
+DECLARE
+	result timestamptz;
+BEGIN
+	LOCK TABLE documents.lectures, documents.documents, documents.lecture_docs IN SHARE MODE;
+	IF NOT exists(select 1 from documents.lectures where id=lec_id) THEN
+		RAISE EXCEPTION 'Lecture % does not exist', lec_id;
+	END IF;
+	IF early_document_count = 0 THEN
+		return null;
+	END IF;
+
+	select doc.validation_time into result
+	from documents.documents as doc
+	join documents.lecture_docs as jt on jt.document_id = doc.id
+	join documents.lectures as lec on jt.lecture_id = lec.id
+	where doc.validation_time is not null
+	and lec.id = lec_id
+	and doc.validated = true
+	--and lec.validated = true
+	order by doc.validation_time ASC
+	limit 1 offset (early_document_count-1);
+	IF NOT FOUND THEN
+		return null;
+	END IF;
+
+	return result;
+
+END
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = garfield, pg_temp;
+    '''
+
 
     @property
     def early_document_eligible(self):
