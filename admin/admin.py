@@ -213,8 +213,8 @@ class DocumentView(AuthModelView):
         if model.validated and not model.has_barcode:
             if model.document_type != 'written':
                 barcode.bake_barcode(model)
+                model.has_barcode = True
             config.document_validated(document_path(model.id))
-            model.has_barcode = True
 
         super().on_model_change(form, model, is_created)
 
