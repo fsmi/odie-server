@@ -228,3 +228,25 @@ def view_document(instance_id):
         return send_file(document_path(doc.id))
     else:
         return unauthorized()
+
+@api_route('/api/documents/<int:id>', methods=['DELETE'])
+@login_required
+def delete_document(id):
+    doc = Document.query.get(id)
+    if doc is None:
+        raise ClientError('document not found')
+    if doc.validated or (not doc.early_document_eligible and not doc.deposit_return_eligible):
+        raise ClientError('document not eligible for deletion')
+
+    sqla.session.delete(doc)
+    sqla.session.commit()
+
+    if doc.has_file:
+        source = document_path(doc.id)
+        if os.path.exists(source):
+            dest = os.path.join(config.DOCUMENT_DIRECTORY, 'trash', str(doc.id))
+            while os.path.exists(dest + '.pdf'):
+                dest += 'lol'
+            os.renames(source, dest + '.pdf')
+
+    return {}
