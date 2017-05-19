@@ -27,6 +27,45 @@ class Lecture(sqla.Model):
     __tablename__ = 'lectures'
     __table_args__ = config.documents_table_args
 
+    early_document_until_stored_procedure_calls = [sqla.text("""
+CREATE OR REPLACE FUNCTION documents.lectures_early_document_reward_until(lec_id int, early_document_count int, grace_period_days int) RETURNS timestamptz AS $$
+DECLARE
+	result timestamptz;
+BEGIN
+	LOCK TABLE documents.lectures, documents.documents, documents.lecture_docs IN SHARE MODE;
+	IF NOT exists(SELECT 1 FROM documents.lectures WHERE id=lec_id) THEN
+		RAISE EXCEPTION 'Lecture % does not exist', lec_id;
+	END IF;
+	IF early_document_count <= 0 THEN
+		RAISE EXCEPTION 'early_document_count must be positive';
+	END IF;
+	IF grace_period_days < 0 THEN
+		RAISE EXCEPTION 'grace_period_days must be positive or zero';
+	END IF;
+
+	SELECT doc.validation_time into result
+	FROM documents.documents AS doc
+	JOIN documents.lecture_docs AS jt ON jt.document_id = doc.id
+	JOIN documents.lectures AS lec ON jt.lecture_id = lec.id
+	WHERE doc.validation_time IS NOT NULL
+	AND lec.id = lec_id
+	AND doc.validated = true
+	--and lec.validated = true
+	ORDER BY doc.validation_time ASC
+	LIMIT 1 offset (early_document_count-1);
+	IF NOT FOUND THEN
+		return null;
+	END IF;
+
+	return result + interval '1' day * grace_period_days;
+END
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = documents, pg_temp;
+"""),
+sqla.text("""
+REVOKE ALL ON FUNCTION documents.lectures_early_document_reward_until(int, int, int) FROM PUBLIC;
+    """)]
+
+
     id = Column(sqla.Integer, primary_key=True)
     name = Column(sqla.String)
     aliases = Column(postgres.ARRAY(sqla.String), server_default='{}')
@@ -39,7 +78,6 @@ class Lecture(sqla.Model):
     early_document_until = column_property(
         func.documents.lectures_early_document_reward_until(id,config.FS_CONFIG['EARLY_DOCUMENT_COUNT'],config.FS_CONFIG['EARLY_DOCUMENT_EXTRA_DAYS'])
     )
-
 
     @property
     def early_document_eligible(self):

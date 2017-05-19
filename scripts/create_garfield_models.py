@@ -28,6 +28,7 @@ import db.odie  # pylint: disable=unused-import
 
 from sqlalchemy.schema import CreateSchema
 from odie import sqla, app
+from db.documents import Lecture
 
 def createSchema(name, bind=None):
     try:
@@ -44,3 +45,12 @@ createSchema('garfield')
 createSchema('documents')
 
 sqla.create_all()
+
+# create stored procedure for early document rewards
+try:
+    engine = sqla.get_engine(app,None)
+    for call in Lecture.early_document_until_stored_procedure_calls:
+        engine.execute(call)
+except sqlalchemy.exc.ProgrammingError as e:
+        print("Error creating stored procedure, ignoring: {}".format(e))
+
