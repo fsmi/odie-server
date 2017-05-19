@@ -37,44 +37,8 @@ class Lecture(sqla.Model):
     folders = sqla.relationship('Folder', secondary=folder_lectures, back_populates='lectures')
 
     early_document_until = column_property(
-        func.garfield.lecture_early_document_reward_until(id,config.FS_CONFIG['EARLY_DOCUMENT_COUNT'])
+        func.documents.lectures_early_document_reward_until(id,config.FS_CONFIG['EARLY_DOCUMENT_COUNT'],config.FS_CONFIG['EARLY_DOCUMENT_EXTRA_DAYS'])
     )
-
-    '''
--- the following function returns the early document reward deadline for a given lecture.
-    TODO implement +x days grace period
-SET search_path = garfield;
-CREATE OR REPLACE FUNCTION lecture_early_document_reward_until(lec_id int, early_document_count int) RETURNS timestamptz AS $$
-DECLARE
-	result timestamptz;
-BEGIN
-	LOCK TABLE documents.lectures, documents.documents, documents.lecture_docs IN SHARE MODE;
-	IF NOT exists(select 1 from documents.lectures where id=lec_id) THEN
-		RAISE EXCEPTION 'Lecture % does not exist', lec_id;
-	END IF;
-	IF early_document_count = 0 THEN
-		return null;
-	END IF;
-
-	select doc.validation_time into result
-	from documents.documents as doc
-	join documents.lecture_docs as jt on jt.document_id = doc.id
-	join documents.lectures as lec on jt.lecture_id = lec.id
-	where doc.validation_time is not null
-	and lec.id = lec_id
-	and doc.validated = true
-	--and lec.validated = true
-	order by doc.validation_time ASC
-	limit 1 offset (early_document_count-1);
-	IF NOT FOUND THEN
-		return null;
-	END IF;
-
-	return result;
-
-END
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = garfield, pg_temp;
-    '''
 
 
     @property
