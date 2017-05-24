@@ -8,6 +8,8 @@ from odie import sqla, Column
 from sqlalchemy.dialects import postgres
 from sqlalchemy import func
 from sqlalchemy.orm import column_property
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.sql import not_, select
 from db import garfield
 from pytz import reference
 
@@ -49,8 +51,6 @@ BEGIN
 	JOIN documents.lectures AS lec ON jt.lecture_id = lec.id
 	WHERE doc.validation_time IS NOT NULL
 	AND lec.id = lec_id
-	AND doc.validated = true
-	--and lec.validated = true
 	ORDER BY doc.validation_time ASC
 	LIMIT 1 offset (early_document_count-1);
 	IF NOT FOUND THEN
@@ -116,7 +116,6 @@ class Document(sqla.Model):
     comment = Column(sqla.String, server_default='')
     document_type = Column(document_type)
     has_file = Column(sqla.Boolean, server_default=sqlalchemy.sql.expression.false())
-    validated = Column(sqla.Boolean)
     has_barcode = Column(sqla.Boolean, server_default=sqlalchemy.sql.expression.false())
     validation_time = Column(sqla.DateTime(timezone=True), nullable=True)
     submitted_by = Column(sqla.String, nullable=True)
@@ -131,6 +130,14 @@ class Document(sqla.Model):
     @property
     def examinants_names(self):
         return [ex.name for ex in self.examinants]
+
+    @hybrid_property
+    def validated(self):
+        return self.validation_time is not None
+
+    @validated.expression
+    def validated(self):
+        return Document.validation_time.isnot(None).label('validated')
 
     @property
     def price(self):

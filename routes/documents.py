@@ -149,7 +149,6 @@ def _match_examinants(examinant_names, validated):
             sqla.session.add(ex)
     return examinants
 
-
 def submit_documents(validated):
     """Student document submission endpoint
 
@@ -194,7 +193,6 @@ def submit_documents(validated):
             date=date,
             number_of_pages=0,  # will be filled in later or upon validation
             document_type=data['document_type'],
-            validated=validated,
             validation_time=datetime.datetime.now() if validated else None,
             comment=data.get('comment'),
             solution=data.get('solution'),

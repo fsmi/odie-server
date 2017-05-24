@@ -10,7 +10,7 @@ ALTER TABLE documents ADD COLUMN deposit_return_eligible BOOLEAN NOT NULL DEFAUL
 ALTER TABLE documents ADD COLUMN has_barcode BOOLEAN NOT NULL DEFAULT FALSE;
 
 
-CREATE OR REPLACE FUNCTION lectures_early_document_reward_until(lec_id int, early_document_count int, grace_period_days int) RETURNS timestamptz AS $$
+CREATE OR REPLACE FUNCTION documents.lectures_early_document_reward_until(lec_id int, early_document_count int, grace_period_days int) RETURNS timestamptz AS $$
 DECLARE
 	result timestamptz;
 BEGIN
@@ -31,7 +31,6 @@ BEGIN
 	JOIN documents.lectures AS lec ON jt.lecture_id = lec.id
 	WHERE doc.validation_time IS NOT NULL
 	AND lec.id = lec_id
-	AND doc.validated = true
 	--and lec.validated = true
 	ORDER BY doc.validation_time ASC
 	LIMIT 1 offset (early_document_count-1);
@@ -43,11 +42,13 @@ BEGIN
 END
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = documents, pg_temp;
 REVOKE ALL ON FUNCTION lectures_early_document_reward_until(int, int, int) FROM PUBLIC;
+ALTER FUNCTION lectures_early_document_reward_until OWNER TO odie;
 
 
 UPDATE documents SET deposit_return_eligible = true WHERE submitted_by IS NOT NULL;
 UPDATE documents SET has_barcode = true WHERE validation_time IS NOT NULL;
 UPDATE documents SET validation_time = null where validated = false OR validated IS NULL;
+ALTER TABLE documents DROP COLUMN validated;
 UPDATE documents SET early_document_eligible = true
 WHERE submitted_by IS NOT NULL AND id IN
 (
