@@ -21,7 +21,7 @@ from flask_admin.form import FileUploadField
 from flask_admin.contrib.sqla import ModelView
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import RelationshipProperty
-from wtforms.fields import BooleanField
+from wtforms.fields import BooleanField, DateTimeField
 from wtforms.validators import Optional, ValidationError
 
 def _dateFormatter(attr_name):
@@ -186,6 +186,13 @@ class DocumentView(AuthModelView):
                     dest += 'lol'
                 os.renames(source, dest + '.pdf')
 
+    def on_form_prefill(self, form, id):
+        form.form_validated.data = False
+        doc = Document.query.get(id)
+        if doc is not None:
+            form.form_validated.data = doc.validated
+            form.form_validation_time.data = doc.validation_time
+
     def delete_model(self, model):
         super().delete_model(model)
         self._delete_document(model)
@@ -194,7 +201,6 @@ class DocumentView(AuthModelView):
         if is_created:
             if bool(form.file.data) == form.no_file.data:
                 raise ValidationError('Genau ein Feld von "Datei" oder "Keine Datei" muss angegeben werden.')
-            model.validated = True
 
         if model.id is None:
             sqla.session.flush()  # acquire ID
@@ -203,18 +209,17 @@ class DocumentView(AuthModelView):
             self._delete_document(model)  # delete old file
             save_file(model, form.file.data)
 
-        if model.validation_time is None and model.validated:
-            # document has just been validated for the first time
-            model.validation_time = datetime.datetime.now()
-        elif model.validation_time is not None and not model.validated:
-            # document is no longer validated => reset validation time
-            model.validation_time = None
+        if form.form_validated.data != model.validated:  # validation state changed
+            if form.form_validated.data:
+                model.validation_time = datetime.datetime.now()
+            else:
+                model.validation_time = None
 
         if model.validated and not model.has_barcode:
             if model.document_type != 'written':
                 barcode.bake_barcode(model)
             config.document_validated(document_path(model.id))
-            model.has_barcode = True
+            model.has_barcode = True  # this is the correct behaviour, although the has_barcode name does not indicate it
 
         super().on_model_change(form, model, is_created)
 
@@ -231,6 +236,7 @@ class DocumentView(AuthModelView):
         'comment',
         'file',
         'no_file',
+        'form_validated',
     ]
     form_edit_rules = [
         'document_type',
@@ -243,15 +249,24 @@ class DocumentView(AuthModelView):
         'solution',
         'number_of_pages',
         'comment',
-        'validated',
         'submitted_by',
         'file',
+        'form_validated',
+        'form_validation_time',
         ViewButton(),
     ]
-    form_excluded_columns = ('validation_time', 'has_file', 'legacy_id', 'printed_in')  # this isn't strictly necessary, but it shuts up a warning
+    form_widget_args = {
+        'form_validation_time': {
+            'disabled': True,
+            'readonly': True,
+        },
+    }
+    form_excluded_columns = ('validation_time', 'has_file', 'legacy_id', 'printed_in', 'validated', 'early_document_until')  # this isn't strictly necessary, but it shuts up a warning
     form_extra_fields = {
         'file': DocumentUploadField(label='Datei'),
         'no_file': BooleanField(label='Keine Datei'),
+        'form_validated': BooleanField(label='Überprüft'),
+        'form_validation_time': DateTimeField(label='Überprüft am'),
     }
     form_args = {
         'comment': {'validators': [Optional()]},
@@ -259,8 +274,8 @@ class DocumentView(AuthModelView):
     }
     column_list = (
         'id', 'department', 'lectures', 'examinants', 'date', 'number_of_pages', 'solution', 'comment',
-        'document_type', 'validated', 'validation_time', 'submitted_by')
-    column_filters = ('id', 'department', 'lectures', 'examinants', 'date', 'solution', 'comment', 'document_type', 'validated', 'validation_time', 'submitted_by')
+        'document_type', 'validation_time', 'submitted_by')
+    column_filters = ('id', 'department', 'lectures', 'examinants', 'date', 'solution', 'comment', 'document_type', 'validation_time', 'submitted_by')
     column_labels = {
         'id': 'ID',
         'department': 'Fakultät',
@@ -271,7 +286,6 @@ class DocumentView(AuthModelView):
         'solution': 'Lösung',
         'comment': 'Kommentar',
         'document_type': 'Typ',
-        'validated': 'Überprüft',
         'validation_time': 'Überprüft am',
         'submitted_by': 'Von',
     }
@@ -303,7 +317,6 @@ class DocumentView(AuthModelView):
         'document_type': lambda v, c, m, n: DocumentView.doctype_labels[m.document_type],
         'solution': format_solution,
         'date': _dateFormatter('date'),
-        'validation_time': _dateFormatter('validation_time'),
     }
 
 class LectureView(AuthModelView):
