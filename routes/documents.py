@@ -237,7 +237,6 @@ def delete_document(id):
         raise ClientError('document not eligible for deletion')
 
     sqla.session.delete(doc)
-    sqla.session.commit()
 
     if doc.has_file:
         source = document_path(doc.id)
@@ -247,4 +246,5 @@ def delete_document(id):
                 dest += 'lol'
             os.renames(source, dest + '.pdf')
 
+    sqla.session.commit()
     return {}
