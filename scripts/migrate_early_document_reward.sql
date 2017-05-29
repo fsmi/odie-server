@@ -30,10 +30,11 @@ BEGIN
 	JOIN documents.lecture_docs AS jt ON jt.document_id = doc.id
 	JOIN documents.lectures AS lec ON jt.lecture_id = lec.id
 	WHERE doc.validation_time IS NOT NULL
+	AND doc.document_type = 'oral'
 	AND lec.id = lec_id
 	--and lec.validated = true
 	ORDER BY doc.validation_time ASC
-	LIMIT 1 offset (early_document_count-1);
+	LIMIT 1 OFFSET (early_document_count-1);
 	IF NOT FOUND THEN
 		return null;
 	END IF;
@@ -50,7 +51,7 @@ UPDATE documents SET has_barcode = true WHERE validation_time IS NOT NULL;
 UPDATE documents SET validation_time = null where validated = false OR validated IS NULL;
 ALTER TABLE documents DROP COLUMN validated;
 UPDATE documents SET early_document_eligible = true
-WHERE submitted_by IS NOT NULL AND id IN
+WHERE submitted_by IS NOT NULL AND document_type = 'oral' AND id IN
 (
 	SELECT DISTINCT out_of_identifiers.document_id FROM lecture_docs AS out_of_identifiers 
 	JOIN

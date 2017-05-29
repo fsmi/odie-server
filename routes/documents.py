@@ -180,11 +180,12 @@ def submit_documents(validated):
     if not get_user():
         assert date <= datetime.date.today()
 
+    doc_type = data.get('document_type')
     student_name = data.get('student_name')
     if student_name is None or student_name.isspace():
         student_name = None
     deposit_return_eligible = student_name is not None
-    early_document_eligible = student_name is not None and any(lecture.early_document_eligible for lecture in lectures)
+    early_document_eligible = student_name is not None and doc_type == 'oral' and any(lecture.early_document_eligible for lecture in lectures)
 
     new_doc = Document(
             department=data['department'],
@@ -192,7 +193,7 @@ def submit_documents(validated):
             examinants=examinants,
             date=date,
             number_of_pages=0,  # will be filled in later or upon validation
-            document_type=data['document_type'],
+            document_type=doc_type,
             validation_time=datetime.datetime.now() if validated else None,
             comment=data.get('comment'),
             solution=data.get('solution'),
