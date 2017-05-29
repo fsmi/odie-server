@@ -50,16 +50,16 @@ UPDATE documents SET deposit_return_eligible = true WHERE submitted_by IS NOT NU
 UPDATE documents SET has_barcode = true WHERE validation_time IS NOT NULL;
 UPDATE documents SET validation_time = null where validated = false OR validated IS NULL;
 ALTER TABLE documents DROP COLUMN validated;
-UPDATE documents SET early_document_eligible = true
-WHERE submitted_by IS NOT NULL AND document_type = 'oral' AND id IN
-(
-	SELECT DISTINCT out_of_identifiers.document_id FROM lecture_docs AS out_of_identifiers 
-	JOIN
-	(
-		SELECT lectures.id AS id, lectures_early_document_reward_until(lectures.id, 5, 14) AS until 
-		FROM lectures
-	) AS sq1
-	ON out_of_identifiers.lecture_id = sq1.id
-	WHERE sq1.until IS NULL OR sq1.until > now()
-);
-
+UPDATE documents SET early_document_eligible = false;
+-- UPDATE documents SET early_document_eligible = true
+-- WHERE submitted_by IS NOT NULL AND document_type = 'oral' AND id IN
+-- (
+-- 	SELECT DISTINCT out_of_identifiers.document_id FROM lecture_docs AS out_of_identifiers
+-- 	JOIN
+-- 	(
+-- 		SELECT lectures.id AS id, lectures_early_document_reward_until(lectures.id, 5, 14) AS until
+-- 		FROM lectures
+-- 	) AS sq1
+-- 	ON out_of_identifiers.lecture_id = sq1.id
+-- 	WHERE sq1.until IS NULL OR sq1.until > now()
+-- );
