@@ -10,6 +10,7 @@ from login import get_user, login_required
 from api_utils import deserialize, api_route, ClientError
 from db.documents import Deposit, Document
 
+import config
 
 class ErroneousSaleLoadSchema(Schema):
     amount = fields.Int(required=True)
@@ -30,6 +31,9 @@ class DepositReturnSchema(IdSchema):
     cash_box = CashBoxField()
     document_id = fields.Int()
 
+class EarlyDocumentRewardSchema(IdSchema):
+    cash_box = CashBoxField()
+
 
 @api_route('/api/log_deposit_return', methods=['POST'])
 @login_required
@@ -37,8 +41,12 @@ class DepositReturnSchema(IdSchema):
 def log_deposit_return(data):
     if 'document_id' in data:
         doc = Document.query.get(data['document_id'])
+        if doc is None:
+            raise ClientError('document not found')
+        doc.deposit_return_eligible = False
         # data privacy, yo
-        doc.submitted_by = None
+        if not doc.early_document_eligible:
+            doc.submitted_by = None
 
     dep = Deposit.query.get(data['id'])
     if Deposit.query.filter(Deposit.id == data['id']).delete() == 0:
@@ -47,6 +55,25 @@ def log_deposit_return(data):
     sqla.session.commit()
     return {}
 
+@api_route('/api/log_early_document_reward', methods=['POST'])
+@login_required
+@deserialize(EarlyDocumentRewardSchema)
+def log_early_document_reward(data):
+    doc = Document.query.get(data['id'])
+    if doc is None:
+        raise ClientError('document not found')
+    if not doc.early_document_eligible:
+        raise ClientError('document not eligible for early document reward')
+
+    doc.early_document_eligible = False
+    # data privacy, yo
+    if not doc.deposit_return_eligible:
+        doc.submitted_by = None
+
+    db.accounting.log_early_document_disburse(get_user(), data['cash_box'])
+    sqla.session.commit()
+
+    return {'disbursal': config.FS_CONFIG['EARLY_DOCUMENT_REWARD']}
 
 class DonationLoadSchema(Schema):
     amount = fields.Int(required=True, validate=lambda i: i != 0)

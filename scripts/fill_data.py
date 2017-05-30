@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-
+# -*- coding: UTF-8 -*-
 """Fills the sample database with some sample data"""
 
 try:
@@ -54,13 +54,33 @@ def fill():
 
     # assumptions in tests: the first two documents have has_file=True, the third one doesn't
     docs = [
-                Document(department='computer science', lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]], date=date(2010, 4, 1), validation_time=datetime(2010, 4, 2), number_of_pages=4, document_type='oral', validated=True, has_file=True),
-                Document(department='computer science', lectures=[lectures[6], lectures[7]], examinants=[profs[1]], date=date(2004, 10, 4), number_of_pages=1, validation_time=datetime(2010, 10, 5), document_type='oral', validated=True, has_file=True),
-                Document(department='computer science', lectures=[lectures[4], lectures[3], lectures[2]], examinants=[profs[1], profs[0]], date=date(2004, 8, 2), validation_time=datetime(2010, 8, 3), number_of_pages=2, document_type='oral', validated=True),
-                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2000, 1, 1), validation_time=datetime(2000, 1, 2), number_of_pages=7, document_type='oral', validated=True),
-                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2000, 2, 3), validation_time=datetime(2000, 2, 4), number_of_pages=7, document_type='oral', validated=True),
-                Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]], examinants=[profs[3], profs[0], profs[2]], date=date(2001, 2, 3), validation_time=datetime(2001, 2, 4), number_of_pages=2, document_type='oral', validated=False, submitted_by='Monty Montgomery'),
-        ]
+        Document(department='computer science', lectures=[lectures[0], lectures[1], lectures[5]], examinants=[profs[3]],
+                 date=date(2010, 4, 1), validation_time=datetime(2010, 4, 2), number_of_pages=4, document_type='oral',
+                 has_file=True, early_document_eligible=False, deposit_return_eligible=False),
+        Document(department='computer science', lectures=[lectures[6], lectures[7]], examinants=[profs[1]],
+                 date=date(2004, 10, 4), number_of_pages=1, validation_time=datetime(2010, 10, 5), document_type='oral',
+                 has_file=True, early_document_eligible=False, deposit_return_eligible=False),
+        Document(department='computer science', lectures=[lectures[4], lectures[3], lectures[2]],
+                 examinants=[profs[1], profs[0]], date=date(2004, 8, 2), validation_time=datetime(2010, 8, 3),
+                 number_of_pages=2, document_type='oral', early_document_eligible=False,
+                 deposit_return_eligible=False),
+        Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]],
+                 examinants=[profs[3], profs[0], profs[2]], date=date(2000, 1, 1), validation_time=datetime(2000, 1, 2),
+                 number_of_pages=7, document_type='oral', early_document_eligible=False,
+                 deposit_return_eligible=False),
+        Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]],
+                 examinants=[profs[3], profs[0], profs[2]], date=date(2000, 2, 3), validation_time=datetime(2000, 2, 4),
+                 number_of_pages=7, document_type='oral', early_document_eligible=False,
+                 deposit_return_eligible=False),
+        Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]],
+                 examinants=[profs[3], profs[0], profs[2]], date=date(2001, 2, 3), validation_time=None,
+                 number_of_pages=2, document_type='oral', submitted_by='Monty Montgomery',
+                 early_document_eligible=True, deposit_return_eligible=True),
+        Document(department='mathematics', lectures=[lectures[5], lectures[6], lectures[7]],
+                 examinants=[profs[3], profs[0], profs[2]], date=date(2001, 2, 3), validation_time=None,
+                 number_of_pages=2, document_type='oral', submitted_by='Some other Monty',
+                 early_document_eligible=False, deposit_return_eligible=True),
+    ]
 
     for d in docs:
         sqla.session.add(d)

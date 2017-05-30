@@ -41,6 +41,11 @@ class APITest(OdieTestCase):
             'id': 1,
         }
 
+    VALID_EARLY_DOCUMENT_REWARD = {
+            'cash_box': CASH_BOX,
+            'id': 6,
+        }
+
     VALID_ACCOUNTING_CORR = {
             'cash_box': CASH_BOX,
             'amount': 42,
@@ -286,6 +291,42 @@ class APITest(OdieTestCase):
         res = self.get('/api/deposits')
         self.assertEqual(res.status_code, 401)
 
+    def test_early_document_reward_no_return_unauthenticated(self):
+        res = self.post('/api/log_early_document_reward', data=json.dumps(self.VALID_EARLY_DOCUMENT_REWARD))
+        self.assertEqual(res.status_code, 403)
+
+    def test_log_early_document_reward_not_eligible_reward(self):
+        self.login()
+        res = self.post_auth('/api/log_early_document_reward', data=json.dumps({
+            'cash_box': self.CASH_BOX,
+            'id': 2,
+        }))
+        self.assertEqual(res.status_code, 400)
+
+    def test_early_document_reward_disbursal(self):
+        self.login()
+        res = self.post_auth('/api/log_early_document_reward', data=json.dumps(self.VALID_EARLY_DOCUMENT_REWARD))
+        self.assertEqual(res.status_code, 200)
+        responseJson = self.fromJsonResponse(res)
+        self.assertEqual(responseJson['disbursal'], config.FS_CONFIG['EARLY_DOCUMENT_REWARD'])
+
+    def test_early_document_reward_no_double_disbursal(self):
+        self.login()
+        res = self.post_auth('/api/log_early_document_reward', data=json.dumps(self.VALID_EARLY_DOCUMENT_REWARD))
+        self.assertEqual(res.status_code, 200)
+        responseJson = self.fromJsonResponse(res)
+        self.assertEqual(responseJson['disbursal'], config.FS_CONFIG['EARLY_DOCUMENT_REWARD'])
+
+        res = self.post_auth('/api/log_early_document_reward', data=json.dumps(self.VALID_EARLY_DOCUMENT_REWARD))
+        self.assertEqual(res.status_code, 400)
+
+    def test_early_document_reward_not_eligible(self):
+        self.login()
+        invalid = self.VALID_EARLY_DOCUMENT_REWARD
+        invalid['id'] = 1
+        res = self.post_auth('/api/log_early_document_reward', data=json.dumps(invalid))
+        self.assertEqual(res.status_code, 400)
+
     def test_deposits_no_return_unauthenticated(self):
         res = self.post('/api/log_deposit_return', data=json.dumps(self.VALID_DEPOSIT_RETURN))
         self.assertEqual(res.status_code, 403)
@@ -313,15 +354,15 @@ class APITest(OdieTestCase):
             self.assertNotEqual(deposit['id'], id_to_delete)
 
     def test_log_deposit_return_with_document(self):
-        self.assertIsNotNone(Document.query.get(6).submitted_by)
+        self.assertIsNotNone(Document.query.get(7).submitted_by)
         self.login()
         res = self.post_auth('/api/log_deposit_return', data=json.dumps({
             'cash_box': self.CASH_BOX,
             'id': 1,
-            'document_id': 6
+            'document_id': 7
         }))
         self.assertEqual(res.status_code, 200)
-        self.assertIsNone(Document.query.get(6).submitted_by)
+        self.assertIsNone(Document.query.get(7).submitted_by)
 
     def test_no_donation_unauthenticated(self):
         res = self.post('/api/donation', data=json.dumps(self.VALID_ACCOUNTING_CORR))

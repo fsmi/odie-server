@@ -11,6 +11,7 @@ from marshmallow import Schema, fields
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import subqueryload
 from sqlalchemy.orm.exc import NoResultFound
+from pytz import reference
 
 from .common import IdSchema, DocumentDumpSchema
 from odie import app, sqla, csrf, ClientError
@@ -43,6 +44,8 @@ class LectureDumpSchema(IdSchema):
     aliases = fields.List(fields.Str())
     comment = fields.Str()
     validated = fields.Boolean()
+    early_document_until = fields.LocalDateTime()
+    early_document_eligible = fields.Boolean()
 
 api_route('/api/lectures')(
 endpoint(
@@ -118,7 +121,7 @@ def submit_document_external():
             'info_klausuren',
             'mathe_protokolle',
             'mathe_klausuren')
-    submit_documents(validated=bool(knows_what_they_are_doing))
+    return submit_documents(validated=bool(knows_what_they_are_doing))
 
 
 def _match_lectures(lecture_names, validated):
@@ -145,7 +148,6 @@ def _match_examinants(examinant_names, validated):
             examinants.append(ex)
             sqla.session.add(ex)
     return examinants
-
 
 def submit_documents(validated):
     """Student document submission endpoint
@@ -177,18 +179,28 @@ def submit_documents(validated):
     date = data['date']
     if not get_user():
         assert date <= datetime.date.today()
+
+    doc_type = data.get('document_type')
+    student_name = data.get('student_name')
+    if student_name is None or student_name.isspace():
+        student_name = None
+    deposit_return_eligible = student_name is not None
+    early_document_eligible = student_name is not None and doc_type == 'oral' and any(lecture.early_document_eligible for lecture in lectures)
+
     new_doc = Document(
             department=data['department'],
             lectures=lectures,
             examinants=examinants,
             date=date,
             number_of_pages=0,  # will be filled in later or upon validation
-            document_type=data['document_type'],
-            validated=validated,
+            document_type=doc_type,
             validation_time=datetime.datetime.now() if validated else None,
             comment=data.get('comment'),
             solution=data.get('solution'),
-            submitted_by=data.get('student_name'))
+            submitted_by=student_name,
+            early_document_eligible=early_document_eligible,
+            deposit_return_eligible=deposit_return_eligible
+    )
     sqla.session.add(new_doc)
 
     # we have the db side of things taken care of, now save the file
@@ -202,7 +214,7 @@ def submit_documents(validated):
     app.logger.info("New document submitted (id: {})".format(new_doc.id))
     if validated:
         config.document_validated(document_path(new_doc.id))
-    return {}
+    return {'early_document_eligible': early_document_eligible}
 
 # take heed when renaming this, it's referenced as string in the admin UI
 @app.route('/api/view/<int:instance_id>')

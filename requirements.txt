@@ -1,9 +1,10 @@
-psycopg2
+SQLAlchemy==0.9.8
+psycopg2==2.5.4
 Flask-BabelEx  # for DB Admin
-Flask-SQLAlchemy
+Flask-SQLAlchemy==1.0
 Flask-CORS
 Flask-DebugToolbar
 Flask-Admin
 Flask-Seasurf
 marshmallow>=2.0.0b3
-pypdf2
+pypdf2==1.23
