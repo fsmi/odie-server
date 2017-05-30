@@ -50,9 +50,10 @@ BEGIN
 	JOIN documents.lecture_docs AS jt ON jt.document_id = doc.id
 	JOIN documents.lectures AS lec ON jt.lecture_id = lec.id
 	WHERE doc.validation_time IS NOT NULL
+	AND doc.document_type = 'oral'
 	AND lec.id = lec_id
 	ORDER BY doc.validation_time ASC
-	LIMIT 1 offset (early_document_count-1);
+	LIMIT 1 OFFSET (early_document_count-1);
 	IF NOT FOUND THEN
 		return null;
 	END IF;
