@@ -9,7 +9,7 @@ import os
 from flask import request, send_file
 from marshmallow import Schema, fields
 from marshmallow.validate import OneOf
-from sqlalchemy.orm import subqueryload
+from sqlalchemy.orm import subqueryload, undefer
 from sqlalchemy.orm.exc import NoResultFound
 from pytz import reference
 
@@ -50,7 +50,7 @@ class LectureDumpSchema(IdSchema):
 api_route('/api/lectures')(
 endpoint(
         schemas={'GET': LectureDumpSchema},
-        query_fn=lambda: Lecture.query,
+        query_fn=lambda: Lecture.query.options(undefer('early_document_until')),
         paginate_many=False)
 )
 

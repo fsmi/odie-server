@@ -77,7 +77,9 @@ REVOKE ALL ON FUNCTION documents.lectures_early_document_reward_until(int, int, 
     folders = sqla.relationship('Folder', secondary=folder_lectures, back_populates='lectures')
 
     early_document_until = column_property(
-        func.documents.lectures_early_document_reward_until(id,config.FS_CONFIG['EARLY_DOCUMENT_COUNT'],config.FS_CONFIG['EARLY_DOCUMENT_EXTRA_DAYS'])
+        func.documents.lectures_early_document_reward_until(id,config.FS_CONFIG['EARLY_DOCUMENT_COUNT'],config.FS_CONFIG['EARLY_DOCUMENT_EXTRA_DAYS']),
+        deferred=True # The stored procedure is not robust in every join scenario.
+        # This is due to id getting set to null in some cases (ie loading a document without lectures), which correctly raises an exception
     )
 
     @property
