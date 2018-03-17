@@ -104,7 +104,7 @@ folder_docs = sqla.Table('folder_docs',
         **config.documents_table_args)
 
 
-document_type = sqla.Enum('oral', 'written', 'oral reexam', name='document_type', inherit_schema=True)
+document_type = sqla.Enum('oral', 'written', 'oral reexam', 'mock exam', name='document_type', inherit_schema=True)
 
 
 class Document(sqla.Model):

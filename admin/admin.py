@@ -295,6 +295,7 @@ class DocumentView(AuthModelView):
         'oral': 'Mündl.',
         'written': 'Schriftl.',
         'oral reexam': 'Nachprüfung',
+        'mock exam': 'Probeklausur'
     }
     department_labels = {
         'computer science': 'Informatik',
