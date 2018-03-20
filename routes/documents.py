@@ -92,6 +92,7 @@ def documents_metadata():
         'total_written': q.filter_by(document_type='written').count(),
         'total_oral': q.filter_by(document_type='oral').count(),
         'total_oral_reexam': q.filter_by(document_type='oral reexam').count(),
+        'total_mock_exam': q.filter_by(document_type='mock exam').count(),
     }
 
 
@@ -100,7 +101,7 @@ class DocumentLoadSchema(Schema):  # used by document submission
     lectures = fields.List(fields.Str(), required=True)
     examinants = fields.List(fields.Str(), required=True)
     date = fields.Date(required=True)
-    document_type = fields.Str(required=True, validate=lambda x: get_user() and x == 'written' or x in ['oral', 'oral reexam'])
+    document_type = fields.Str(required=True, validate=lambda x: get_user() and x == 'written' or x in ['oral', 'oral reexam', 'mock exam'])
     student_name = fields.Str(required=False, allow_none=True)
 
 class FullDocumentLoadSchema(DocumentLoadSchema):
