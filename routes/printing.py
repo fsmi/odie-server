@@ -3,6 +3,7 @@
 import db.accounting
 import config
 import urllib.parse
+import marshmallow
 
 from flask import request
 from marshmallow import fields, Schema
@@ -31,9 +32,10 @@ class PrintJobLoadSchema(Schema):
 @event_stream
 def print_documents():
     # GET params could be too limited. therefore, cookies.
-    (data, errors) = PrintJobLoadSchema().loads(urllib.parse.unquote(request.cookies['print_data']))
-    if errors:
-        raise ClientError(*errors)
+    try:
+        data = PrintJobLoadSchema().loads(urllib.parse.unquote(request.cookies['print_data']))
+    except marshmallow.exception.ValidationError as e:
+        raise ClientError(str(e), status=500)
     document_ids = data['document_ids']
     app.logger.info("Printing document ids {} ({} in total) on {} for {}".format(document_ids, len(document_ids), data['printer'], data['cover_text']))
 

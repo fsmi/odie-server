@@ -5,9 +5,9 @@ from datetime import timedelta
 import logging
 
 from flask import Flask, session
-from flask.ext.babelex import Babel
-from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.seasurf import SeaSurf  # CSRF. Got it?
+from flask_babelex import Babel
+from flask_sqlalchemy import SQLAlchemy
+from flask_seasurf import SeaSurf  # CSRF. Got it?
 
 app = Flask("odie", template_folder='admin/templates', static_folder='admin/static')
 
@@ -27,7 +27,7 @@ def make_session_permanent():
 
 if app.debug:
     # allow requests from default broccoli server port
-    from flask.ext.cors import CORS
+    from flask_cors import CORS
     CORS(app, origins=['http://localhost:4200'], supports_credentials=True)
 
     import flask_debugtoolbar

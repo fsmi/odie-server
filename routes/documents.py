@@ -5,6 +5,7 @@ import config
 import datetime
 import json
 import os
+import marshmallow
 
 from flask import request, send_file
 from marshmallow import Schema, fields
@@ -162,14 +163,18 @@ def submit_documents(validated):
     # we can't use @deserialize because this endpoint uses multipart form data
     data = json.loads(request.form['json'])
     if get_user():
-        (data, errors) = FullDocumentLoadSchema().load(data)
+        try:
+            data = FullDocumentLoadSchema().load(data)
+        except marshmallow.exceptions.ValidationError as e:
+            raise ClientError(str(e), status=500)
         if (data.get('document_type') == 'written' and data.get('solution') not in ['official', 'inofficial', 'none']
                 or data.get('document_type') != 'written' and data.get('solution') is not None):
-            errors['solution'] = 'Invalid value.'
+            raise ClientError('Invalid value.', status=400)
     else:
-        (data, errors) = DocumentLoadSchema().load(data)
-    if errors:
-        raise ClientError(*errors)
+        try:
+            data = DocumentLoadSchema().load(data)
+        except marshmallow.exceptions.ValidationError as e:
+            raise ClientError(str(e), status=400)
     assert 'file' in request.files
     file = request.files['file']
     if not _allowed_file(file.filename):

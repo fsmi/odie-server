@@ -4,12 +4,13 @@ import config
 import os
 import json
 import datetime
+import marshmallow
 
 from odie import app, sqla, ClientError
 from login import get_user
 
 from functools import wraps
-from flask import Flask, json, Response, request
+from flask import Flask, Response, request
 from jsonquery import jsonquery
 from marshmallow import Schema, fields
 from sqlalchemy import inspect
@@ -44,12 +45,10 @@ def save_file(document, file_storage):
 
 
 def serialize(data, schema, many=False):
-    res = schema().dump(data, many)
-    if res.errors:
-        raise ClientError(*res.errors)
-    else:
-        return res.data
-
+    try:
+        return schema().dump(data, many)
+    except marshmallow.exceptions.ValidationError as e:
+        raise ClientError(str(e), status=400)
 
 class PaginatedResult(object):
     """Wraps results with pagination metadata"""
@@ -67,9 +66,10 @@ def deserialize(schema):
     def _decorator(f):
         @wraps(f)
         def wrapped_f(*args, **kwargs):
-            (obj, errors) = schema().load(request.get_json(force=True))
-            if errors:
-                raise ClientError(*errors)
+            try:
+                obj = schema().load(request.get_json(force=True))
+            except marshmallow.exceptions.ValidationError as e:
+                raise ClientError(str(e), status=500)
             return f(*args, data=obj, **kwargs)
         return wrapped_f
     return _decorator

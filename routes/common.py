@@ -27,8 +27,8 @@ class DocumentDumpSchema(IdSchema):
     validated = fields.Boolean()
     validation_time = fields.Date()
     submitted_by = fields.Method('scrub_submitted_by')
-    early_document_eligible = fields.Integer()
-    deposit_return_eligible = fields.Integer()
+    early_document_eligible = fields.Boolean()
+    deposit_return_eligible = fields.Boolean()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -5,7 +5,7 @@ import sqlalchemy
 import datetime
 
 from odie import sqla, Column
-from sqlalchemy.dialects import postgres
+from sqlalchemy.dialects import postgresql
 from sqlalchemy import func
 from sqlalchemy.orm import column_property
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -69,7 +69,7 @@ REVOKE ALL ON FUNCTION documents.lectures_early_document_reward_until(int, int, 
 
     id = Column(sqla.Integer, primary_key=True)
     name = Column(sqla.String)
-    aliases = Column(postgres.ARRAY(sqla.String), server_default='{}')
+    aliases = Column(postgresql.ARRAY(sqla.String), server_default='{}')
     comment = Column(sqla.String, server_default='')
     validated = Column(sqla.Boolean)
 
