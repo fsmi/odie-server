@@ -13,6 +13,7 @@ from odie import app, sqla, ClientError
 from login import get_user, login_required
 from api_utils import document_path, event_stream, handle_client_errors, NonConfidentialException
 from db.documents import Lecture, Deposit, Document
+from db.userHash import userHash
 
 
 class PrintJobLoadSchema(Schema):
@@ -31,6 +32,9 @@ class PrintJobLoadSchema(Schema):
 @login_required
 @event_stream
 def print_documents():
+
+    printName = userHash.returnLastUsedId()
+
     # GET params could be too limited. therefore, cookies.
     try:
         data = PrintJobLoadSchema().loads(urllib.parse.unquote(request.cookies['print_data']))
@@ -61,10 +65,11 @@ def print_documents():
     if documents:
         try:
             # let's get some privacy here (I'm looking at you, Mr. 'Lineare')
-            name = data['cover_text'].split(' ')[0]
+            #name = data['cover_text'].split(' ')[0]
+            name = printName
             for _ in config.print_documents(
                     doc_paths=[document_path(doc.id) for doc in documents],
-                    cover_text=data['cover_text'],
+                    cover_text=printName,
                     printer=data['printer'],
                     user=user.username,
                     usercode=config.PRINTER_USERCODES[data['cash_box']],
@@ -88,4 +93,4 @@ def print_documents():
     except Exception as e:
         # in case of network troubles, we've just printed a set of documents but screwed up accounting.
         raise NonConfidentialException('Printing succeeded, but account logging failed. Exception: ' + str(e)) from e
-    yield ('complete', '')
+    yield (str(printName), '')
