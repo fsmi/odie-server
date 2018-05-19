@@ -79,7 +79,7 @@ class OrderLoadSchema(Schema):
     @post_load
     def make_order(self, data):
         try:
-            uh = userHash
+            uh = userHash()
             rand = uh.returnIdCard()
         except Exception as e:
             if e.args[0] != 'to many attempts':

@@ -166,7 +166,7 @@ def submit_documents(validated):
     data = json.loads(request.form['json'])
 
     try:
-        uh = userHash
+        uh = userHash()
         generated = uh.returnIdUpload()
     except Exception as e:
         if e.args[0] != 'to many attempts':
