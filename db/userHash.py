@@ -2,7 +2,8 @@
 
 import config
 from odie import sqla, Column
-from db.documents import Deposit
+from db.documents import Deposit, Document
+from db.odie import Order
 
 import random
 from marshmallow import Schema, fields
@@ -32,8 +33,7 @@ class userHash:
         ret += str(integer)
         return ret
 
-    # this function returns the last used id
-    # @param table is the table which should be used
+    # this function create and returns the sales id
     def returnIdSales(self):
         for i in range(0,6):
             if i == 6:
@@ -50,3 +50,36 @@ class userHash:
 
         return rand
 
+    # this function create and returns the card id
+    def returnIdCard(self):
+        for i in range(0,6):
+            if i == 6:
+                raise Exception('to many attempts')
+
+            min = 0
+            max = 99999999
+            rand = 'c' + self.setLength(random.randint(min, max))
+
+            db = Order.query.filter(Order.name == rand)
+            if db is None:
+                break
+
+
+        return rand
+
+    # this function create and returns the upload id
+    def returnIdUpload(self):
+        for i in range(0,6):
+            if i == 6:
+                raise Exception('to many attempts')
+
+            min = 0
+            max = 99999999
+            rand = 's' + self.setLength(random.randint(min, max))
+
+            db = Document.query.filter(Document.submitted_by == rand)
+            if db is None:
+                break
+
+
+        return rand
