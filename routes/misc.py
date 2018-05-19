@@ -13,6 +13,7 @@ from login import get_user, is_kiosk, login_required
 from api_utils import endpoint, api_route, handle_client_errors, serialize
 from db.documents import Deposit
 from db.odie import Order
+from db.userHash import userHash
 
 ## Routes may either return something which can be turned into json using
 ## flask.jsonify or a api_utils.PaginatedResult. The actual response is assembled
@@ -78,8 +79,17 @@ class OrderLoadSchema(Schema):
     @post_load
     def make_order(self, data):
         try:
-            return Order(name=data['name'],
-                         document_ids=data['document_ids'])
+            uh = userHash
+            rand = userHash.returnIdCard()
+        except Exception as e:
+            if e.args[0] != 'to many attempts':
+                raise Exception(e.args)
+            return None
+        try:
+            ret = Order(rand, document_ids=data['document_ids'])
+            if ret is None:
+                return rand
+            return False
         except KeyError:
             return None
 
