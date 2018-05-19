@@ -167,7 +167,7 @@ def submit_documents(validated):
 
     try:
         uh = userHash
-        generated = userHash.returnIdUpload()
+        generated = uh.returnIdUpload()
     except Exception as e:
         if e.args[0] != 'to many attempts':
             raise Exception(e.args)
