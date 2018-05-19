@@ -19,6 +19,7 @@ from odie import app, sqla, csrf, ClientError
 from login import login_required, get_user, is_kiosk, unauthorized
 from api_utils import endpoint, api_route, handle_client_errors, document_path, number_of_pages, save_file, serialize, event_stream
 from db.documents import Lecture, Document, Examinant
+from db.userHash import userHash
 
 
 @app.route('/api/scanner/<location>/<int:id>')
@@ -163,6 +164,15 @@ def submit_documents(validated):
     """
     # we can't use @deserialize because this endpoint uses multipart form data
     data = json.loads(request.form['json'])
+
+    try:
+        uh = userHash
+        generated = userHash.returnIdUpload()
+    except Exception as e:
+        if e.args[0] != 'to many attempts':
+            raise Exception(e.args)
+        ClientError("""to many wrong id's, please write an email to odie@fsmi.uni-karlsruhe.de""", status=500)
+
     if get_user():
         try:
             data = FullDocumentLoadSchema().load(data)
@@ -187,8 +197,9 @@ def submit_documents(validated):
         assert date <= datetime.date.today()
 
     doc_type = data.get('document_type')
-    student_name = data.get('student_name')
-    if student_name is None or student_name.isspace():
+    if doc_type == 'oral' and not hasattr(data, 'donate'):
+        student_name = generated
+    else:
         student_name = None
     deposit_return_eligible = student_name is not None
     early_document_eligible = student_name is not None and doc_type == 'oral' and any(lecture.early_document_eligible for lecture in lectures)
@@ -220,7 +231,12 @@ def submit_documents(validated):
     app.logger.info("New document submitted (id: {})".format(new_doc.id))
     if validated:
         config.document_validated(document_path(new_doc.id))
-    return {'early_document_eligible': early_document_eligible}
+    if early_document_eligible and deposit_return_eligible:
+        return generated
+    elif early_document_eligible:
+        return True
+    else:
+        return False
 
 # take heed when renaming this, it's referenced as string in the admin UI
 @app.route('/api/view/<int:instance_id>')
