@@ -22,7 +22,7 @@ class userHash:
 
     # this function set the length of the string
     # it retuns an id in the coressponding length
-    def setLength(integer):
+    def setLength(self, integer):
         defined_length = 8
         ret = ""
 
