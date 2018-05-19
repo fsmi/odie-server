@@ -43,9 +43,11 @@ class userHash:
             max = 99999999
             rand = 's' + self.setLength(random.randint(min, max))
 
-            db = Deposit.query.filter(Deposit.name == rand)
-            if db is None:
-                break
+            break
+
+           # db = Deposit.query.filter(Deposit.name == rand)
+           # if db is None:
+            #    break
 
 
         return rand
@@ -60,9 +62,11 @@ class userHash:
             max = 99999999
             rand = 'c' + self.setLength(random.randint(min, max))
 
-            db = Order.query.filter(Order.name == rand)
-            if db is None:
-                break
+            break
+
+            #db = Order.query.filter(Order.name == rand)
+            #if db is None:
+             #   break
 
 
         return rand
@@ -77,9 +81,10 @@ class userHash:
             max = 99999999
             rand = 's' + self.setLength(random.randint(min, max))
 
-            db = Document.query.filter(Document.submitted_by == rand)
-            if db is None:
-                break
+            break
 
+            #db = Document.query.filter(Document.submitted_by == rand)
+            #if db is None:
+            #    break
 
         return rand
