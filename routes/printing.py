@@ -33,7 +33,14 @@ class PrintJobLoadSchema(Schema):
 @event_stream
 def print_documents():
 
-    printName = userHash.returnLastUsedId()
+    printName = ""
+    try:
+        uH = userHash()
+        printName = uH.returnLastUsedId()
+    except Exception as e:
+        if e.args[0] != 'to many attempts':
+            raise Exception(e.args)
+        ClientError("""to many wrong id's wirte an email to odie@fsmi.uni-karlsruhe.de""", status=500)
 
     # GET params could be too limited. therefore, cookies.
     try:
