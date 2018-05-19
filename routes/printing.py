@@ -14,7 +14,7 @@ from login import get_user, login_required
 from api_utils import document_path, event_stream, handle_client_errors, NonConfidentialException
 from db.documents import Lecture, Deposit, Document
 from db.userHash import userHash
-
+from email import  sendEmail
 
 class PrintJobLoadSchema(Schema):
     cover_text = fields.Str(required=True)
@@ -56,6 +56,12 @@ def print_documents():
     # sort the docs into the same order they came in the request
     docs_by_id = {doc.id: doc for doc in document_objs}
     documents = [docs_by_id[id] for id in document_ids]
+
+    try:
+        if hasattr(data, 'e-mail'):
+            sendEmail(data['e-mail'], printName)
+    except Exception as e:
+        raise ClientError('can not send an email ' + str(e), status=500)
 
     assert data['deposit_count'] >= 0
     print_price = sum(doc.price for doc in documents)
@@ -100,4 +106,4 @@ def print_documents():
     except Exception as e:
         # in case of network troubles, we've just printed a set of documents but screwed up accounting.
         raise NonConfidentialException('Printing succeeded, but account logging failed. Exception: ' + str(e)) from e
-    yield (str(printName), '')
+    yield (printName, '')
