@@ -14,7 +14,7 @@ from login import get_user, login_required
 from api_utils import document_path, event_stream, handle_client_errors, NonConfidentialException
 from db.documents import Lecture, Deposit, Document
 from db.userHash import userHash
-from email import  sendEmail
+from mail import  sendEmail
 
 class PrintJobLoadSchema(Schema):
     cover_text = fields.Str(required=True)
