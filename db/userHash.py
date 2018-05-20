@@ -45,9 +45,9 @@ class userHash:
 
             break
 
-           # db = Deposit.query.filter(Deposit.name == rand)
-           # if db is None:
-            #    break
+            db = Deposit.query.filter(Deposit.name == rand)
+            if db is None:
+                break
 
 
         return rand
@@ -64,9 +64,9 @@ class userHash:
 
             break
 
-            #db = Order.query.filter(Order.name == rand)
-            #if db is None:
-             #   break
+            db = Order.query.filter(Order.name == rand)
+            if db is None:
+                break
 
 
         return rand
@@ -83,8 +83,8 @@ class userHash:
 
             break
 
-            #db = Document.query.filter(Document.submitted_by == rand)
-            #if db is None:
-            #    break
+            db = Document.query.filter(Document.submitted_by == rand)
+            if db is None:
+                break
 
         return rand
