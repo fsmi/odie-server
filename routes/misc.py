@@ -78,7 +78,6 @@ class OrderLoadSchema(Schema):
 
     @post_load
     def make_order(self, data):
-        rand = ""
         try:
             uh = userHash()
             rand = uh.returnIdCard()
