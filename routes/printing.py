@@ -13,7 +13,7 @@ from odie import app, sqla, ClientError
 from login import get_user, login_required
 from api_utils import document_path, event_stream, handle_client_errors, NonConfidentialException
 from db.documents import Lecture, Deposit, Document
-from db.userHash import userHash
+from db.userHash import userHash, ToManyAttempts
 from mail import  sendEmail
 
 class PrintJobLoadSchema(Schema):
@@ -37,9 +37,7 @@ def print_documents():
     try:
         uH = userHash()
         printName = uH.returnLastUsedId()
-    except Exception as e:
-        if e.args[0] != 'to many attempts':
-            raise Exception(e.args)
+    except ToManyAttempts as e:
         ClientError("""to many wrong id's wirte an email to odie@fsmi.uni-karlsruhe.de""", status=500)
 
     # GET params could be too limited. therefore, cookies.

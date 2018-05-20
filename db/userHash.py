@@ -44,7 +44,7 @@ class userHash:
     def returnIdSales(self):
         for i in range(0,6):
             if i == 5:
-                raise Exception('to many attempts')
+                raise ToManyAttempts('to many attempts')
 
             min = 0
             max = 99999999
@@ -79,7 +79,7 @@ class userHash:
     def returnIdUpload(self):
         for i in range(0,6):
             if i == 5:
-                raise Exception('to many attempts')
+                raise ToManyAttempts('to many attempts')
 
             min = 0
             max = 99999999

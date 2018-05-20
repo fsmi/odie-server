@@ -19,7 +19,7 @@ from odie import app, sqla, csrf, ClientError
 from login import login_required, get_user, is_kiosk, unauthorized
 from api_utils import endpoint, api_route, handle_client_errors, document_path, number_of_pages, save_file, serialize, event_stream
 from db.documents import Lecture, Document, Examinant
-from db.userHash import userHash
+from db.userHash import userHash, ToManyAttempts
 
 
 @app.route('/api/scanner/<location>/<int:id>')
@@ -168,9 +168,7 @@ def submit_documents(validated):
     try:
         uh = userHash()
         generated = uh.returnIdUpload()
-    except Exception as e:
-        if e.args[0] != 'to many attempts':
-            raise Exception(e.args)
+    except ToManyAttempts as e:
         ClientError("""to many wrong id's, please write an email to odie@fsmi.uni-karlsruhe.de""", status=500)
 
     if get_user():
