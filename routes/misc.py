@@ -84,9 +84,9 @@ class OrderLoadSchema(Schema):
         except Exception as e:
             if e.args[0] != 'to many attempts':
                 raise Exception(e.args)
-            return None
+           #TODO return something
         try:
-            ret = Order(rand, document_ids=data['document_ids'])
+            return Order(rand, document_ids=data['document_ids'])
             if ret is None:
                 return rand
             return False
