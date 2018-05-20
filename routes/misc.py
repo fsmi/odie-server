@@ -12,8 +12,9 @@ from odie import app, csrf
 from login import get_user, is_kiosk, login_required
 from api_utils import endpoint, api_route, handle_client_errors, serialize
 from db.documents import Deposit
-from db.odie import Order
+from db.odie import Order, OrderDocument
 from db.userHash import userHash, ToManyAttempts
+import json
 
 ## Routes may either return something which can be turned into json using
 ## flask.jsonify or a api_utils.PaginatedResult. The actual response is assembled
@@ -81,7 +82,12 @@ class OrderLoadSchema(Schema):
         try:
             uh = userHash()
             rand = uh.returnIdCard()
-            ret = Order(rand, document_ids=data['document_ids'])
+            order = Order(name=rand, document_ids=data['document_ids'])
+            print(order.name)
+            for doc in order.items:
+                print(doc.document_id)
+            #return order
+            return '{"data":{"name":"' + order.name + '"}}'
         except KeyError:
             return None
         except ToManyAttempts:

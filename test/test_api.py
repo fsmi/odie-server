@@ -533,7 +533,6 @@ class APITest(OdieTestCase):
         res = self.get(req)
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
-        print(data)
         ##self.assertTrue(len(data) == 1)
         self.assertEqual([d['id'] for d in data[0]['documents']], self.VALID_ORDER['document_ids'])
 
