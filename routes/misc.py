@@ -78,18 +78,16 @@ class OrderLoadSchema(Schema):
 
     @post_load
     def make_order(self, data):
+        rand = ""
         try:
             uh = userHash()
             rand = uh.returnIdCard()
         except Exception as e:
             if e.args[0] != 'to many attempts':
                 raise Exception(e.args)
-           #TODO return something
+            return None
         try:
-            return Order(rand, document_ids=data['document_ids'])
-            if ret is None:
-                return rand
-            return False
+            ret = Order(rand, document_ids=data['document_ids'])
         except KeyError:
             return None
 
