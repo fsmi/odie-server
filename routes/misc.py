@@ -82,12 +82,7 @@ class OrderLoadSchema(Schema):
         try:
             uh = userHash()
             rand = uh.returnIdCard()
-            order = Order(name=rand, document_ids=data['document_ids'])
-            print(order.name)
-            for doc in order.items:
-                print(doc.document_id)
-            #return order
-            return '{"data":{"name":"' + order.name + '"}}'
+            return Order(name=rand, document_ids=data['document_ids'])
         except KeyError:
             return None
         except ToManyAttempts:
