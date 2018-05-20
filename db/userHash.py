@@ -43,16 +43,14 @@ class userHash:
     # this function create and returns the sales id
     def returnIdSales(self):
         for i in range(0,6):
-            if i == 6:
+            if i == 5:
                 raise Exception('to many attempts')
 
             min = 0
             max = 99999999
             rand = 's' + self.setLength(random.randint(min, max))
 
-            break
-
-            db = Deposit.query.filter(Deposit.name == rand)
+            db = Deposit.query.filter(name = rand).first()
             if db is None:
                 break
 
@@ -62,16 +60,15 @@ class userHash:
     # this function create and returns the card id
     def returnIdCard(self):
         for i in range(0,6):
-            if i == 6:
+            if i == 5:
                 raise ToManyAttempts('to many attempts')
 
             min = 0
             max = 99999999
             rand = 'c' + self.setLength(random.randint(min, max))
 
-            break
-
-            db = Order.query.filter(Order.name == rand)
+            db = Order.query.filter_by(name = rand).first()
+            print(i)
             if db is None:
                 break
 
@@ -81,7 +78,7 @@ class userHash:
     # this function create and returns the upload id
     def returnIdUpload(self):
         for i in range(0,6):
-            if i == 6:
+            if i == 5:
                 raise Exception('to many attempts')
 
             min = 0
@@ -90,7 +87,7 @@ class userHash:
 
             break
 
-            db = Document.query.filter(Document.submitted_by == rand)
+            db = Document.query.filter(submitted_by = rand).first()
             if db is None:
                 break
 
