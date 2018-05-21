@@ -2,17 +2,17 @@
 
 import config
 
-from flask import session, make_response
+from flask import session, make_response, request
 from marshmallow import fields, post_load, Schema
 from marshmallow.validate import Length
 from sqlalchemy.orm import subqueryload
 
 from .common import IdSchema, DocumentDumpSchema
-from odie import app, csrf
+from odie import app, csrf, ClientError, sqla
 from login import get_user, is_kiosk, login_required
 from api_utils import endpoint, api_route, handle_client_errors, serialize
 from db.documents import Deposit
-from db.odie import Order, OrderDocument
+from db.odie import Order
 from db.userHash import userHash, ToManyAttempts
 import json
 
@@ -77,25 +77,44 @@ class OrderLoadSchema(Schema):
     name = fields.Str(required=True, validate=Length(min=1))
     document_ids = fields.List(fields.Int(), required=True)
 
-    @post_load
-    def make_order(self, data):
-        try:
-            uh = userHash()
-            rand = uh.returnIdCard()
-            return Order(name=rand, document_ids=data['document_ids'])
-        except KeyError:
-            return None
-        except ToManyAttempts:
-            return None
+  #  @post_load
+  # def make_order(self, data):
+  #      try:
+  #          uh = userHash()
+  #          rand = uh.returnIdCard()
+  #          session['placed_orders'] = rand
+  #          return Order(name=rand, document_ids=data['document_ids'])
+  #      except KeyError:
+  #          return None
+  #      except ToManyAttempts:
+  #          return None
 
-api_route('/api/orders', methods=['POST'])(
-csrf.exempt(
-endpoint(
-        schemas={
-            'POST': OrderLoadSchema,
-        },
-        query_fn=None)
-))
+
+@app.route("/api/orders", methods=["POST"])
+@csrf.exempt
+def submit_orders():
+    try:
+        uh = userHash()
+        rand = uh.returnIdCard()
+        data = OrderLoadSchema().loads(request.data)
+        order = Order(name=rand, document_ids=data['document_ids'])
+        sqla.session.add(order)
+        sqla.session.commit()
+        return '{"id":' + json.dumps(rand) + '}'
+    except ToManyAttempts:
+        ClientError('to many attempts to generate an id, please send a mail to odie@fsmi.uka.de', status=500)
+    except KeyError:
+        ClientError('error recievd, please send a mail to odie@fsmi.uka.de', status=500)
+
+
+#api_route('/api/orders', methods=['POST'])(
+#csrf.exempt(
+#endpoint(
+#        schemas={
+#            'POST': OrderLoadSchema,
+#        },
+#        query_fn=None)
+#))
 
 api_route('/api/orders/<int:instance_id>', methods=['DELETE'])(
 login_required(
