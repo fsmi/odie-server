@@ -528,8 +528,9 @@ class APITest(OdieTestCase):
     def test_jsonquery_in_op(self):
         res = self.post('/api/orders', data=json.dumps(self.VALID_ORDER))
         self.assertEqual(res.status_code, 200)
+        name = json.loads(res.data)
         self.login()
-        req = '/api/orders?q={"operator":"in_","column":"name","value":["%s"]}' % self.VALID_ORDER['name']
+        req = '/api/orders?q={"operator":"in_","column":"name","value":["%s"]}' % name  # self.VALID_ORDER['name']
         res = self.get(req)
         self.assertEqual(res.status_code, 200)
         data = self.fromJsonResponse(res)
