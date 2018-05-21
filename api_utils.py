@@ -169,7 +169,7 @@ def endpoint(query_fn, schemas=None, allow_delete=False, paginate_many=True):
             return filtered_results(query_fn(), schema, paginate_many)
         else:  # GET SINGLE
             result = query_fn().get(instance_id)
-            obj = serialize(result, schema)
+            obj = serialize(result, schemas)
             return obj
 
     def handle_delete(instance_id):
