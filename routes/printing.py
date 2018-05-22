@@ -17,7 +17,6 @@ from db.userHash import userHash, ToManyAttempts
 from mail import  sendEmail
 
 class PrintJobLoadSchema(Schema):
-    cover_text = fields.Str(required=True)
     cash_box = CashBoxField()
     document_ids = fields.List(fields.Int(), required=True)
     deposit_count = fields.Int(required=True)
