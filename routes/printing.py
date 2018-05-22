@@ -36,7 +36,7 @@ def print_documents():
     printName = ""
     try:
         uH = userHash()
-        printName = uH.returnLastUsedId()
+        printName = uH.returnIdSales()
     except ToManyAttempts as e:
         ClientError("""to many wrong id's wirte an email to odie@fsmi.uni-karlsruhe.de""", status=500)
 
