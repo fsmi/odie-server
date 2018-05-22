@@ -68,7 +68,6 @@ class userHash:
             rand = 'c' + self.setLength(random.randint(min, max))
 
             db = Order.query.filter_by(name = rand).first()
-            print(i)
             if db is None:
                 break
 
