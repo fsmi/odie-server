@@ -33,13 +33,13 @@ class PrintJobLoadSchema(Schema):
 @event_stream
 def print_documents():
 
-    printName = ""
     try:
         uH = userHash()
         printName = uH.returnIdSales()
     except ToManyAttempts as e:
-        ClientError("""to many wrong id's wirte an email to odie@fsmi.uni-karlsruhe.de""", status=500)
+        ClientError("""to many wrong id's write an email to odie@fsmi.uni-karlsruhe.de""", status=500)
 
+    #printName = "lkdsjf"
     # GET params could be too limited. therefore, cookies.
     try:
         data = PrintJobLoadSchema().loads(urllib.parse.unquote(request.cookies['print_data']))
