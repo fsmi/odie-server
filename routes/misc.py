@@ -104,7 +104,7 @@ def submit_orders():
     except ToManyAttempts:
         ClientError('to many attempts to generate an id, please send a mail to odie@fsmi.uka.de', status=500)
     except KeyError:
-        ClientError('error recievd, please send a mail to odie@fsmi.uka.de', status=500)
+        ClientError('error received, please send a mail to odie@fsmi.uka.de', status=500)
 
 
 #api_route('/api/orders', methods=['POST'])(
