@@ -23,6 +23,7 @@ class PrintJobLoadSchema(Schema):
     deposit_count = fields.Int(required=True)
     printer = PrinterField()
     price = fields.Int(required=True)  # for validation
+    e_mail = fields.Email()
 
 
 # all interesting actions in this route are logged by the db accounting side
@@ -56,8 +57,11 @@ def print_documents():
     documents = [docs_by_id[id] for id in document_ids]
 
     try:
-        if hasattr(data, 'e-mail'):
-            sendEmail(data['e-mail'], printName)
+        if 'e_mail' in data:
+            print('send mail')
+            sendEmail(data['e_mail'], printName)
+        else:
+            print('sending non mail')
     except Exception as e:
         raise ClientError('can not send an email ' + str(e), status=500)
 
