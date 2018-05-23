@@ -82,7 +82,7 @@ class userHash:
 
             min = 0
             max = 99999999
-            rand = 's' + self.setLength(random.randint(min, max))
+            rand = 'u' + self.setLength(random.randint(min, max))
 
             break
 
