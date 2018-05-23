@@ -36,17 +36,19 @@ def print_documents():
     try:
         uH = userHash()
         printName = uH.returnIdSales()
-    except ToManyAttempts as e:
+    except ToManyAttempts:
         ClientError("""to many wrong id's write an email to odie@fsmi.uni-karlsruhe.de""", status=500)
 
-    #printName = "lkdsjf"
+    # printName = "lkdsjf"
     # GET params could be too limited. therefore, cookies.
     try:
         data = PrintJobLoadSchema().loads(urllib.parse.unquote(request.cookies['print_data']))
     except marshmallow.exception.ValidationError as e:
+        print("error marshmallow")
         raise ClientError(str(e), status=500)
     document_ids = data['document_ids']
-    app.logger.info("Printing document ids {} ({} in total) on {} for {}".format(document_ids, len(document_ids), data['printer'], data['cover_text']))
+    app.logger.info("Printing document ids {} ({} in total) on {} for {}".format(document_ids, len(document_ids), data['printer'], printName))
+    #print("Printing document ids {} ({} in total) on {} for {}".format(document_ids, len(document_ids), data['printer'], data['cover_text']))
 
     document_objs = Document.query.filter(Document.id.in_(document_ids)).all()
     if any(not doc.has_file for doc in document_objs):
@@ -57,7 +59,7 @@ def print_documents():
 
     try:
         if 'e_mail' in data:
-            print('send mail')
+            # print('send mail')
             sendEmail(data['e_mail'], printName)
         else:
             print('sending non mail')
@@ -98,7 +100,7 @@ def print_documents():
             lectures = Lecture.query.filter(Lecture.documents.any(Document.id.in_(document_ids))).all()
             dep = Deposit(
                     price=config.FS_CONFIG['DEPOSIT_PRICE'],
-                    name=data['cover_text'],
+                    name=printName,
                     by_user=user.full_name,
                     lectures=lectures)
             sqla.session.add(dep)
