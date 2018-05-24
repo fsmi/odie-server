@@ -14,11 +14,28 @@ from api_utils import endpoint, api_route, handle_client_errors, serialize
 from db.documents import Deposit
 from db.odie import Order
 from db.userHash import userHash, ToManyAttempts
+from mail import sendEmail
 import json
 
 ## Routes may either return something which can be turned into json using
 ## flask.jsonify or a api_utils.PaginatedResult. The actual response is assembled
 ## in api_utils.api_route.
+
+class ResendMail(Schema):
+    id = fields.Str()
+    mail = fields.Email()
+
+
+@api_route('api/resend_mail')
+@login_required
+def send_mail():
+    try:
+        data = ResendMail(request.data)
+        sendEmail(data['mail'], data['id'])
+        return '{"status":"success"}'
+    except Exception as e:
+        ClientError(e.args, status=500)
+
 
 @api_route('/api/config')
 def get_config():
