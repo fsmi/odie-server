@@ -26,7 +26,7 @@ class ResendMail(Schema):
     mail = fields.Email()
 
 
-@api_route('api/resend_mail')
+@api_route('/api/resend_mail')
 @login_required
 def send_mail():
     try:
