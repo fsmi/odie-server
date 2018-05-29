@@ -66,6 +66,7 @@ def print_documents():
     except Exception as e:
         raise ClientError('can not send an email ' + str(e), status=500)
 
+    print("actual deposit: " + str(data['deposit_count']))
     assert data['deposit_count'] >= 0
     print_price = sum(doc.price for doc in documents)
     # round up to next 10 cents
@@ -109,4 +110,4 @@ def print_documents():
     except Exception as e:
         # in case of network troubles, we've just printed a set of documents but screwed up accounting.
         raise NonConfidentialException('Printing succeeded, but account logging failed. Exception: ' + str(e)) from e
-    yield (printName, '')
+    yield ('complete', printName)
