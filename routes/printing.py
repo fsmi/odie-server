@@ -44,7 +44,6 @@ def print_documents():
     try:
         data = PrintJobLoadSchema().loads(urllib.parse.unquote(request.cookies['print_data']))
     except marshmallow.exception.ValidationError as e:
-        print("error marshmallow")
         raise ClientError(str(e), status=500)
     document_ids = data['document_ids']
     app.logger.info("Printing document ids {} ({} in total) on {} for {}".format(document_ids, len(document_ids), data['printer'], printName))
@@ -57,16 +56,6 @@ def print_documents():
     docs_by_id = {doc.id: doc for doc in document_objs}
     documents = [docs_by_id[id] for id in document_ids]
 
-    try:
-        if 'e_mail' in data:
-            # print('send mail')
-            sendEmail(data['e_mail'], printName)
-        else:
-            print('sending non mail')
-    except Exception as e:
-        raise ClientError('can not send an email ' + str(e), status=500)
-
-    print("actual deposit: " + str(data['deposit_count']))
     assert data['deposit_count'] >= 0
     print_price = sum(doc.price for doc in documents)
     # round up to next 10 cents
@@ -110,4 +99,11 @@ def print_documents():
     except Exception as e:
         # in case of network troubles, we've just printed a set of documents but screwed up accounting.
         raise NonConfidentialException('Printing succeeded, but account logging failed. Exception: ' + str(e)) from e
-    yield ('complete', printName)
+    try:
+        if 'e_mail' in data:
+            sendEmail(data['e_mail'], printName)
+    except Exception as e:
+        yield ('id', printName)
+        raise ClientError('can not send an email ' + str(e), status=500)
+    yield ('id', printName)
+    yield ('complete', '')
