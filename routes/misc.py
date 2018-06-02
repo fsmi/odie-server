@@ -21,16 +21,17 @@ import json
 ## flask.jsonify or a api_utils.PaginatedResult. The actual response is assembled
 ## in api_utils.api_route.
 
-class ResendMail(Schema):
-    id = fields.Str()
-    mail = fields.Email()
 
-
-@api_route('/api/resend_mail')
+@api_route('/api/resend_mail', methods=['GET'])
 @login_required
 def send_mail():
     try:
-        data = ResendMail(request.data)
+        data = json.loads(request.args['data'])
+        if "mail" not in data:
+            ClientError("missing field: mail", status=400)
+        if "id" not in data:
+            ClientError("missing field: id", status=400)
+
         sendEmail(data['mail'], data['id'])
         return '{"status":"success"}'
     except Exception as e:
