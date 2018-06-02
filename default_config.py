@@ -29,6 +29,7 @@ class FlaskConfig(object):
         'fsmi': 'postgres:///fsmi',
         'garfield': SQLALCHEMY_DATABASE_URI,
     }
+    SQLALCHEMY_POOL_RECYCLE = 60
 
     SECRET_KEY = 'supersikkrit'
     DEBUG = True
