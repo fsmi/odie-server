@@ -14,7 +14,7 @@ def sendEmail(address, id):
     msg['To'] = address
 
     mail = "Hallo,\n du hast heute Protokolle bei der Fachschaft Mathematik und Informatik am KIT gekauft.\n"
-    mail += "Dafür möchten wir uns bei dir bedanken.\n Deine ID, die du für die Rückgabe des Protokolles benötigst lautet:\n"
+    mail += "Dafür möchten wir uns bei dir bedanken.\n Deine ID, die du für die Rückgabe des Protokolles benötigst, lautet:\n"
     mail += id
 
     msg.set_content(mail)
