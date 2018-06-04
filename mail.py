@@ -6,10 +6,9 @@ from email.message import EmailMessage
 
 def sendEmail(address, id):
     today = date.today()
-    isoFormat = str(today.year) + "-" + str(today.month) + "-" + str(today.day)
 
     msg = EmailMessage()
-    msg['Subject'] = 'ID Protokollkauf vom ' + isoFormat
+    msg['Subject'] = 'ID Protokollkauf vom ' + today.isoformat()
     msg['From'] = 'odie@fsmi.uni-karlsruhe.de'
     msg['To'] = address
 
