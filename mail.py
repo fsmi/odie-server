@@ -1,24 +1,25 @@
 #! /usr/bin/env python3
 
-import smtplib
 from datetime import date
-from email.message import EmailMessage
+from email.mime.text import MIMEText
+from subprocess import Popen, PIPE
 
 def sendEmail(address, id):
     today = date.today()
-    isoFormat = str(today.year) + "-" + str(today.month) + "-" + str(today.day)
 
-    msg = EmailMessage()
-    msg['Subject'] = 'ID Protokollkauf vom ' + isoFormat
+    mail = "Hallo,\ndu hast heute Protokolle bei der Fachschaft Mathematik und Informatik am KIT gekauft.\n"
+    mail += "Dafür möchten wir uns bei dir bedanken.\nDeine ID, die du für die Rückgabe des Protokolles benötigst, lautet:\n"
+    mail += id + "\n\n"
+    mail += "Dein Protokollverkauf\n"
+    mail += "--\n"
+    mail += "Fachschaft Mathematik und Informatik\n"
+    mail += "Karlsruher Institut für Technologie\n"
+    mail += "Am Fasanengarten 5, 76131 Karlsruhe"
+
+    msg = MIMEText(mail, _charset="utf-8")
+    msg['Subject'] = 'ID Protokollkauf vom ' + today.isoformat()
     msg['From'] = 'odie@fsmi.uni-karlsruhe.de'
     msg['To'] = address
 
-    mail = "Hallo,\n du hast heute Protokolle bei der Fachschaft Mathematik und Informatik am KIT gekauft.\n"
-    mail += "Dafür möchten wir uns bei dir bedanken.\n Deine ID, die du für die Rückgabe des Protokolles benötigst, lautet:\n"
-    mail += id
-
-    msg.set_content(mail)
-
-    s = smtplib.SMTP('localhost')
-    s.send_message(msg)
-    s.quit()
+    p = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE, universal_newlines=True)
+    p.communicate(msg.as_string())
