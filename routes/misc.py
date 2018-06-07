@@ -27,6 +27,7 @@ import json
 def send_mail():
     try:
         data = json.loads(request.args['data'])
+        print(data['mail'])
         if "mail" not in data:
             ClientError("missing field: mail", status=400)
         if "id" not in data:
@@ -35,7 +36,7 @@ def send_mail():
         sendEmail(data['mail'], data['id'])
         return '{"status":"success"}'
     except Exception as e:
-        ClientError(e.args, status=500)
+        ClientError(str(e), status=500)
 
 
 @api_route('/api/config')
