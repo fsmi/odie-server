@@ -115,7 +115,7 @@ def submit_orders():
     try:
         uh = userHash()
         rand = uh.returnIdCard()
-        data = OrderLoadSchema().loads(request.data)
+        data = OrderLoadSchema().loads(request.get_data(as_text=True))
         order = Order(name=rand, document_ids=data['document_ids'])
         sqla.session.add(order)
         sqla.session.commit()
