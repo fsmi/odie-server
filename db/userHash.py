@@ -85,7 +85,7 @@ class userHash:
             rand = 'u' + self.setLength(random.randint(min, max))
 
             db = Document.query.filter_by(submitted_by = rand).first()
-            print(db)
+
             if db is None:
                 break
 
