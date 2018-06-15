@@ -84,9 +84,8 @@ class userHash:
             max = 99999999
             rand = 'u' + self.setLength(random.randint(min, max))
 
-            break
-
-            db = Document.query.filter(submitted_by = rand).first()
+            db = Document.query.filter_by(submitted_by = rand).first()
+            print(db)
             if db is None:
                 break
 
