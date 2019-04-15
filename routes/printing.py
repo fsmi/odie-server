@@ -58,20 +58,6 @@ def print_documents():
 
     num_pages = sum(doc.number_of_pages for doc in documents)
 
-    if documents:
-        try:
-            # let's get some privacy here (I'm looking at you, Mr. 'Lineare')
-            name = data['cover_text'].split(' ')[0]
-            for _ in config.print_documents(
-                    doc_paths=[document_path(doc.id) for doc in documents],
-                    cover_text=data['cover_text'],
-                    printer=data['printer'],
-                    user=user.username,
-                    usercode=config.PRINTER_USERCODES[data['cash_box']],
-                    job_title="Odie-Druck für {} [{} Seiten]".format(name, num_pages)):
-                yield ('progress', '')
-        except Exception as e:
-            raise NonConfidentialException('Printing failed: ' + str(e)) from e
     try:
         if documents:
             db.accounting.log_exam_sale(num_pages, print_price, user, data['cash_box'])
@@ -84,8 +70,25 @@ def print_documents():
                     lectures=lectures)
             sqla.session.add(dep)
             db.accounting.log_deposit(dep, user, data['cash_box'])
+            if documents:
+                try:
+                    name = data['cover_text'].split(' ')[0]
+                    for _ in config.print_documents(
+                        doc_paths=[document_path(doc.id) for doc in documents],
+                        cover_text=data['cover_text'],
+                        printer=data['printer'],
+                        user=user.username,
+                        usercode=config.PRINTER_USERCODES[data['cash_box']],
+                        job_title="Odie-Druck für {} [{} Seiten]".format(name, num_pages)):
+                            unused = "unused"
+                except Exception as e:
+                    sqla.session.rollback()
+                    raise NonConfidentialException('printing failed. Exception: ' + str(e)) from e
         sqla.session.commit()
+        yield('accounting succeeded', '')
+    except NonConfidentialException as e:
+        raise NonConfidentialException(str(e)) from e
     except Exception as e:
         # in case of network troubles, we've just printed a set of documents but screwed up accounting.
-        raise NonConfidentialException('Printing succeeded, but account logging failed. Exception: ' + str(e)) from e
+        raise NonConfidentialException('accounting failed. Exception: ' + str(e)) from e
     yield ('complete', '')
