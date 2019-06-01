@@ -234,7 +234,7 @@ class APITest(OdieTestCase):
     def test_print(self):
         self.login()
         res = self.do_print(self.VALID_PRINTJOB, auth=True)
-        self.assertIn("event: progress\n", res.data.decode('utf8'))
+        self.assertIn("event: accounting succeeded\n", res.data.decode('utf8'))
         self.assertNotIn("event: stream-error\n", res.data.decode('utf8'))
         self.assertIn("event: complete\n", res.data.decode('utf8'))
         self.assertEqual(res.status_code, 200)
