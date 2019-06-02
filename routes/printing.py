@@ -80,7 +80,7 @@ def print_documents():
                         user=user.username,
                         usercode=config.PRINTER_USERCODES[data['cash_box']],
                         job_title="Odie-Druck für {} [{} Seiten]".format(name, num_pages)):
-                            unused = "unused"
+                            pass
                 except Exception as e:
                     sqla.session.rollback()
                     raise NonConfidentialException('printing failed. Exception: ' + str(e)) from e
