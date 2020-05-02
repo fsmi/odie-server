@@ -1,8 +1,8 @@
 language: python
 python:
-  - "3.6"
+  - "3.7"
 addons:
-  - postgres: "9.5"
+  - postgres: "11"
 sudo: false
 cache: pip
 before_script:
