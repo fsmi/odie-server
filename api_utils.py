@@ -5,6 +5,7 @@ import os
 import json
 import datetime
 import marshmallow
+import traceback
 
 from odie import app, sqla, ClientError
 from login import get_user
@@ -46,7 +47,7 @@ def save_file(document, file_storage):
 
 def serialize(data, schema, many=False):
     try:
-        return schema().dump(data, many)
+        return schema().dump(data, many=many)
     except marshmallow.exceptions.ValidationError as e:
         raise ClientError(str(e), status=400)
 
@@ -106,7 +107,7 @@ def jsonify(*args, **kwargs):
             request.accept_mimetypes[best] > \
             request.accept_mimetypes['text/html']
 
-    data = json.dumps(dict(*args, **kwargs), indent=None if request.is_xhr else 2)
+    data = json.dumps(dict(*args, **kwargs))
     if not get_user() or request_wants_json():
         return Response(data, mimetype='application/json')
     else:
@@ -241,7 +242,7 @@ def event_stream(f):
                 yield 'event: stream-error\ndata: {}\n\n'.format(e)
                 app.logger.exception(e)
             except Exception as e:
-                yield 'event: stream-error\ndata: internal server error\n\n'
+                yield 'event: stream-error\ndata: internal server error: ' + str(e) + '  traceback: ' + str(traceback.print_exc()) + '\n\n'
                 app.logger.exception(e)
         stream = get_stream()
         next(stream)  # skip first datum

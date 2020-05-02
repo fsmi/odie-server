@@ -45,7 +45,7 @@ class LectureDumpSchema(IdSchema):
     aliases = fields.List(fields.Str())
     comment = fields.Str()
     validated = fields.Boolean()
-    early_document_until = fields.LocalDateTime()
+    early_document_until = fields.AwareDateTime(default_timezone=reference.LocalTimezone())
     early_document_eligible = fields.Boolean()
 
 api_route('/api/lectures')(
