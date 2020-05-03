@@ -388,7 +388,7 @@ class DepositView(AuthModelView):
 
 admin = Admin(
     app,
-    name='Odie (admin)',
+    name='Odie DB-Admin',
     base_template='main.html',
     template_mode='bootstrap3',
     index_view=AuthIndexView())
