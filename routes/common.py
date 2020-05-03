@@ -24,6 +24,7 @@ class DocumentDumpSchema(IdSchema):
     comment = fields.Str()
     document_type = fields.Str()
     available = fields.Boolean(attribute='has_file')
+    publicly_available = fields.Boolean()
     validated = fields.Boolean()
     validation_time = fields.Date()
     submitted_by = fields.Method('scrub_submitted_by')
