@@ -226,11 +226,12 @@ def submit_documents(validated):
 @app.route('/api/view/<int:instance_id>')
 @handle_client_errors
 def view_document(instance_id):
-    if get_user() or is_kiosk():
-        doc = Document.query.get(instance_id)
+    doc = Document.query.get(instance_id)
+
+    if get_user() or is_kiosk() or doc.publicly_available:
         if doc is None or not doc.has_file:
             raise ClientError('document not found', status=404)
-        return send_file(document_path(doc.id))
+        return send_file(document_path(doc.id), as_attachment=(request.args.get('download') is not None))
     else:
         return unauthorized()
 
