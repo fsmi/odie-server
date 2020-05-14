@@ -126,6 +126,8 @@ class Document(sqla.Model):
     early_document_eligible = Column(sqla.Boolean, nullable=False, server_default=sqlalchemy.sql.expression.false())
     deposit_return_eligible = Column(sqla.Boolean, nullable=False, server_default=sqlalchemy.sql.expression.false())
 
+    publicly_available = Column(sqla.Boolean, server_default=sqlalchemy.sql.expression.false())
+
     lectures = sqla.relationship('Lecture', secondary=lecture_docs, back_populates='documents')
     examinants = sqla.relationship('Examinant', secondary=document_examinants, back_populates='documents')
     printed_in = sqla.relationship('Folder', secondary=folder_docs, back_populates='printed_docs')

@@ -187,9 +187,11 @@ class DocumentView(AuthModelView):
                 os.renames(source, dest + '.pdf')
 
     def on_form_prefill(self, form, id):
+        form.publicly_available.data = False
         form.form_validated.data = False
         doc = Document.query.get(id)
         if doc is not None:
+            form.publicly_available.data = doc.publicly_available
             form.form_validated.data = doc.validated
             form.form_validation_time.data = doc.validation_time
 
@@ -235,6 +237,7 @@ class DocumentView(AuthModelView):
         'solution',
         'comment',
         'file',
+        'publicly_available',
         'no_file',
         'form_validated',
     ]
@@ -251,6 +254,7 @@ class DocumentView(AuthModelView):
         'comment',
         'submitted_by',
         'file',
+        'publicly_available',
         'form_validated',
         'form_validation_time',
         ViewButton(),
@@ -265,6 +269,7 @@ class DocumentView(AuthModelView):
     form_extra_fields = {
         'file': DocumentUploadField(label='Datei'),
         'no_file': BooleanField(label='Keine Datei'),
+        'publicly_available': BooleanField(label='Digital verfügbar'),
         'form_validated': BooleanField(label='Überprüft'),
         'form_validation_time': DateTimeField(label='Überprüft am'),
     }
