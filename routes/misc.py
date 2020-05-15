@@ -75,8 +75,9 @@ class OrderLoadSchema(Schema):
     name = fields.Str(required=True, validate=Length(min=1))
     document_ids = fields.List(fields.Int(), required=True)
 
+    # https://marshmallow.readthedocs.io/en/stable/api_reference.html#module-marshmallow.decorators
     @post_load
-    def make_order(self, data):
+    def make_order(self, data, many, **kwargs):
         try:
             return Order(name=data['name'],
                          document_ids=data['document_ids'])
@@ -114,5 +115,3 @@ endpoint(
         schemas={'GET': DepositDumpSchema},
         query_fn=lambda: Deposit.query.options(subqueryload('lectures')))
 ))
-
-
