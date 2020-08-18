@@ -27,7 +27,9 @@ Here's a small map of the api side of the project:
 * `db/*.py`  
   Declarative definition of the database tables we use. These include parts of the `garfield` database (into which we save all documents and their associated data) and parts of the `fsmi` database (which we query for user auth)
 * `api_utils.py`  
-  We're using Flask, Flask-login, SQLAlchemy, jsonquery and marshmallow. That means a lot of work is done for us and what's left of most API endpoints is mostly boilerplate for stringing all of this together. `api_utils.py` is where we abstract all of that away, too, so most API endpoints can be generated with a simple call to `api_utils.endpoint`. Also found there: grab bag of small utility functions that would only clutter routes.py.
+  We're using Flask, Flask-login, SQLAlchemy, jsonquery and marshmallow. That means a lot of work is done for us and what's left of most API endpoints is mostly boilerplate for stringing all of this together. `api_utils.py` is where we abstract all of that away, too, <s>so most API endpoints can be generated with a simple call to `api_utils.endpoint`</s>.  
+  _As it turned out years later, this idea was rather flawed: Allowing arbitrary queries by anonymous users (in particular it allows the `WHERE` clauses of `SELECT` queries to be arbitrarily set) can have unintended security consequences, because even columns that are not directly output [can be efficiently leaked](https://github.com/fsmi/odie-server/pull/168) by bruteforcing valid restrictions to these columns._  
+  Also found in `api_utils.py`: grab bag of small utility functions that would only clutter routes.py.
 * `barcode/barcode.py`  
   This is where barcode scanner support lives. It also handles putting barcodes on transcripts.
 * `admin/`

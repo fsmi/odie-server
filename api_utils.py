@@ -83,9 +83,12 @@ class PaginatedResultSchema(Schema):
     total = fields.Int(attribute='pagination.total')
 
 
-def filtered_results(query, schema, paginate=True):
+# `allow_insecure` is *insecure* -- see comment in endpoint() regarding the `allow_insecure_authenticated`
+# parameter. Note that in this function, `allow_insecure` does also apply to anonymous users.
+def filtered_results(query, schema, paginate=True, allow_insecure=False):
     q = json.loads(request.args.get('q', '{}'))
-    query = jsonquery(query, q) if q else query
+    if allow_insecure:
+        query = jsonquery(query, q) if q else query
     # ensure deterministic ordering
     # (we need this for paginated results with queries involving subqueries)
     # We assume that all queriable tables have an 'id' column
@@ -142,7 +145,7 @@ def api_route(url, *args, **kwargs):
 ROUTE_ID = 0
 
 
-def endpoint(query_fn, schemas=None, allow_delete=False, paginate_many=True):
+def endpoint(query_fn, schemas=None, allow_delete=False, paginate_many=True, allow_insecure_authenticated=False):
     """Creates and returns an API endpoint handler
 
     Can create both SINGLE-style and MANY-style endpoints. The generated route simply
@@ -156,6 +159,14 @@ def endpoint(query_fn, schemas=None, allow_delete=False, paginate_many=True):
     query_fn: A callable returning a Query object. Mustn't be None for GET-enabled endpoints.
     paginate_many: whether to return paginated results (default:True)
             The 'page' GET-parameter selects the page
+    allow_insecure_authenticated: If true, the 'q' parameter (JSON) will be parsed into an SQLAlchemy Query using the
+                                  jsonquery library if the user is logged in. If the user is not logged in, this feature
+                                  will stay disabled.
+                                  As the name implies, this is insecure as it allows near-arbitrary user-controlled
+                                  WHERE clauses in SELECT queries. This feature should be avoided as much as possible
+                                  and only still exists for legacy compatibility reasons.
+                                  It allows for non-obvious data leaks even when restricting the selected columns;
+                                  see https://github.com/fsmi/odie-server/pull/168 for details.
     """
     if schemas is None:
         schemas = {}
@@ -167,7 +178,8 @@ def endpoint(query_fn, schemas=None, allow_delete=False, paginate_many=True):
         if instance_id is None:  # GET MANY
             assert 'GET' in schemas, "GET schema missing"
             schema = schemas['GET']
-            return filtered_results(query_fn(), schema, paginate_many)
+            allow_insecure = allow_insecure_authenticated and get_user()
+            return filtered_results(query_fn(), schema, paginate_many, allow_insecure=allow_insecure)
         else:  # GET SINGLE
             result = query_fn().get(instance_id)
             obj = serialize(result, schema)

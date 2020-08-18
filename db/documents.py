@@ -104,6 +104,8 @@ folder_docs = sqla.Table('folder_docs',
         **config.documents_table_args)
 
 
+# Note that if you extend this enum, make sure to adjust the validation in routes/documents.py's documents_query()
+# accordingly.
 document_type = sqla.Enum('oral', 'written', 'oral reexam', 'mock exam', name='document_type', inherit_schema=True)
 
 

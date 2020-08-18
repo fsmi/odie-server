@@ -63,11 +63,13 @@ class OrderDumpSchema(IdSchema):
 
 api_route('/api/orders', methods=['GET'])(
 login_required(
-endpoint(
+    endpoint(
         schemas={
             'GET': OrderDumpSchema,
         },
-        query_fn=lambda: Order.query.options(subqueryload('items.document.lectures'), subqueryload('items.document.examinants')))
+        query_fn=lambda: Order.query.options(subqueryload('items.document.lectures'), subqueryload('items.document.examinants')),
+        allow_insecure_authenticated=True
+    )
 ))
 
 
@@ -111,7 +113,9 @@ class DepositDumpSchema(IdSchema):
 
 api_route('/api/deposits')(
 login_required(
-endpoint(
+    endpoint(
         schemas={'GET': DepositDumpSchema},
-        query_fn=lambda: Deposit.query.options(subqueryload('lectures')))
+        query_fn=lambda: Deposit.query.options(subqueryload('lectures')),
+        allow_insecure_authenticated=True
+    ),
 ))
